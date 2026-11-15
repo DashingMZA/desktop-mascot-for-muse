@@ -663,4 +663,36 @@ describe('main.js UI Logic & Regression Suite', () => {
       { x: 492, y: 45, width: 120, height: 170 },
     ]);
   });
+
+  it('マスコットからセッション画面を開いた際・visibility切替時にホバー状態(is-hovered)がクリアされる (Issue #61)', async () => {
+    const avatarColumn = document.getElementById('avatar-column');
+    const avatarContainer = document.getElementById('avatar-container');
+    const mascotRestoreBtn = document.getElementById('mascot-restore-btn');
+    const quickInputBtn = document.getElementById('btn-mascot-quick-input');
+
+    // ホバーで is-hovered が付与される
+    avatarColumn.dispatchEvent(new Event('pointerenter'));
+    avatarContainer.dispatchEvent(new Event('pointerenter'));
+    mascotRestoreBtn.dispatchEvent(new Event('pointerenter'));
+    quickInputBtn.dispatchEvent(new Event('pointerenter'));
+    expect(avatarColumn.classList.contains('is-hovered')).toBe(true);
+    expect(avatarContainer.classList.contains('is-hovered')).toBe(true);
+    expect(mascotRestoreBtn.classList.contains('is-hovered')).toBe(true);
+    expect(quickInputBtn.classList.contains('is-hovered')).toBe(true);
+
+    // ⤢ ボタンクリックでセッション画面を開くと即座に全ホバー状態が解除される
+    mascotRestoreBtn.click();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(avatarColumn.classList.contains('is-hovered')).toBe(false);
+    expect(avatarContainer.classList.contains('is-hovered')).toBe(false);
+    expect(mascotRestoreBtn.classList.contains('is-hovered')).toBe(false);
+    expect(quickInputBtn.classList.contains('is-hovered')).toBe(false);
+
+    // session-visibility-changed(false)（セッション最小化でマスコット復帰）でも残留しない
+    avatarContainer.classList.add('is-hovered');
+    mascotRestoreBtn.classList.add('is-hovered');
+    eventListeners['session-visibility-changed']?.({ payload: false });
+    expect(avatarContainer.classList.contains('is-hovered')).toBe(false);
+    expect(mascotRestoreBtn.classList.contains('is-hovered')).toBe(false);
+  });
 });

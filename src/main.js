@@ -2156,8 +2156,19 @@ async function enterMascotMode() {
   }
 }
 
+/**
+ * WebView2 でウィンドウ非表示時に :hover 相当の状態が残留するのを防ぐため、
+ * JS 管理のホバークラス (.is-hovered) を明示的にリセットする (Issue #61)
+ */
+function clearMascotHoverState() {
+  [avatarColumn, avatarContainer, mascotRestoreBtn, btnMascotQuickInput].forEach((el) => {
+    if (el) el.classList.remove('is-hovered');
+  });
+}
+
 async function restoreFromMascot() {
   try {
+    clearMascotHoverState();
     hideMascotBubble();
     clearUnreadBadge();
     if (liveQuotesPrevChatUrl) {
@@ -2324,6 +2335,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // ホバー状態管理 (Issue #61: ウィンドウ非表示時の :hover 残留防止)
+  [avatarColumn, avatarContainer, mascotRestoreBtn, btnMascotQuickInput].forEach((el) => {
+    if (!el) return;
+    el.addEventListener('pointerenter', () => el.classList.add('is-hovered'));
+    el.addEventListener('pointerleave', () => el.classList.remove('is-hovered'));
+  });
+  window.addEventListener('blur', clearMascotHoverState);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearMascotHoverState();
+  });
+
   // 吹き出しクリック（通常画面へ復帰）
   if (mascotBubble) {
     mascotBubble.addEventListener('click', (e) => {
@@ -2473,11 +2495,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (window.__TAURI__ && window.__TAURI__.event && typeof window.__TAURI__.event.listen === 'function') {
     window.__TAURI__.event.listen('clear-unread', () => {
       isSessionVisible = true;
+      clearMascotHoverState();
       hideMascotBubble();
       clearUnreadBadge();
     });
     window.__TAURI__.event.listen('session-visibility-changed', (event) => {
       isSessionVisible = !!event.payload;
+      clearMascotHoverState();
       if (isSessionVisible) {
         hideMascotBubble();
         clearUnreadBadge();
