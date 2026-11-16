@@ -522,11 +522,11 @@ where
         *guard = Some(normalized);
     }
     CONFIG_DIRTY.store(true, Ordering::SeqCst);
-    let gen = CONFIG_SAVE_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+    let generation = CONFIG_SAVE_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(Duration::from_millis(500)).await;
-        if CONFIG_SAVE_GENERATION.load(Ordering::SeqCst) == gen {
+        if CONFIG_SAVE_GENERATION.load(Ordering::SeqCst) == generation {
             flush_config_to_disk(&app_clone);
         }
     });
