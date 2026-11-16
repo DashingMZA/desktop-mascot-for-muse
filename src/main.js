@@ -2671,6 +2671,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   // §16 5 分ごとの利用枠定期自動取得（ガードレール①: セッション画面が非表示のときのみ実行, Issue #49）
   setInterval(async () => {
     await updateSessionStatus();
+    invoke('log_session_recovery_event', {
+      event: 'usage_limit_timer_5m',
+      detail: `isSessionVisible=${isSessionVisible}`
+    }).catch(() => {});
     if (!isSessionVisible) {
       await loadUsageLimit(true);
     }

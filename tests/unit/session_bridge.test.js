@@ -487,4 +487,86 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(res.state).toBe('working');
     expect(res.statusText).toBe('');
   });
+
+  it('fetchUsageLimit / inspectReloadSafety (Issue #63): Desktop 等の部分一致や無効な停止ボタンを生成中と誤検出しない', async () => {
+    let settingsClicked = false;
+    document.body.innerHTML = `
+      <button aria-label="Desktop mode">Desktop</button>
+      <button aria-label="Stop generating" disabled>Stop</button>
+      <button aria-label="Stop response" style="display: none">Stop</button>
+      <button aria-label="設定" id="btn-settings">設定</button>
+    `;
+    Object.defineProperty(document.body, 'innerText', { value: '', configurable: true });
+    document.getElementById('btn-settings').addEventListener('click', () => {
+      settingsClicked = true;
+      const dlg = document.createElement('div');
+      dlg.setAttribute('role', 'dialog');
+      dlg.innerHTML = '<div role="progressbar" aria-valuenow="25"></div><span>25% 使用済み</span>';
+      document.body.appendChild(dlg);
+      Object.defineProperty(document.body, 'innerText', { value: '25% 使用済み', configurable: true });
+    });
+
+    const safety = window.__MUSE_BRIDGE__.inspectReloadSafety();
+    expect(safety.isGenerating).toBe(false);
+
+    const res = await window.__MUSE_BRIDGE__.fetchUsageLimit(false, {
+      pollIntervalMs: 10,
+      maxTabWaitMs: 50,
+      maxLimitWaitMs: 50,
+      closeWaitMs: 10,
+      navWaitMs: 10,
+    });
+    expect(settingsClicked).toBe(true);
+    expect(res.used_percent).toBe(25);
+    expect(res.remaining_percent).toBe(75);
+  });
+
+  it('fetchUsageLimit (Issue #63): 2段階メニュー（設定ボタン → ポップオーバー内「設定」 → 設定モーダル）を辿って利用枠を取得する', async () => {
+    document.body.innerHTML = `<button aria-label="設定" id="btn-settings">設定</button>`;
+    Object.defineProperty(document.body, 'innerText', { value: '', configurable: true });
+
+    let subSettingsClicked = false;
+    document.getElementById('btn-settings').addEventListener('click', () => {
+      const popover = document.createElement('div');
+      popover.setAttribute('role', 'dialog');
+      popover.id = 'popover-menu';
+      popover.innerHTML = `
+        <button>キーボードショートカット</button>
+        <button>アプリをダウンロード</button>
+        <button>問題を報告</button>
+        <button id="btn-sub-settings">設定</button>
+      `;
+      document.body.appendChild(popover);
+
+      document.getElementById('btn-sub-settings').addEventListener('click', () => {
+        subSettingsClicked = true;
+        popover.remove();
+        const modal = document.createElement('div');
+        modal.setAttribute('role', 'dialog');
+        modal.innerHTML = `
+          <button role="tab" id="tab-general">一般</button>
+          <button aria-label="閉じる" id="btn-close">×</button>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('tab-general').addEventListener('click', () => {
+          const content = document.createElement('div');
+          content.innerHTML = '<div role="progressbar" aria-valuenow="21"></div><span>21% 使用済み</span>';
+          modal.appendChild(content);
+          Object.defineProperty(document.body, 'innerText', { value: '21% 使用済み', configurable: true });
+        });
+        document.getElementById('btn-close').addEventListener('click', () => modal.remove());
+      });
+    });
+
+    const res = await window.__MUSE_BRIDGE__.fetchUsageLimit(false, {
+      pollIntervalMs: 10,
+      maxTabWaitMs: 80,
+      maxLimitWaitMs: 80,
+      closeWaitMs: 10,
+      navWaitMs: 10,
+    });
+    expect(subSettingsClicked).toBe(true);
+    expect(res.used_percent).toBe(21);
+    expect(res.remaining_percent).toBe(79);
+  });
 });

@@ -109,6 +109,25 @@ function queryAllFirst(candidates, root = document) {
   return { list: [], selector: null };
 }
 
+/**
+ * 回答生成中の停止ボタンが有効状態で存在するか検出する (Issue #63)
+ * "Desktop" 等の無関係な単語に含まれる "stop" 部分一致での誤検出を防ぐため単語境界で判定する。
+ */
+function findActiveStopButton() {
+  const buttons = document.querySelectorAll('button[aria-label], button[title]');
+  for (const btn of buttons) {
+    if (btn.disabled || btn.getAttribute('aria-disabled') === 'true' || btn.hidden) continue;
+    const style = typeof window.getComputedStyle === 'function' ? window.getComputedStyle(btn) : null;
+    if (style && (style.display === 'none' || style.visibility === 'hidden')) continue;
+    const label = `${btn.getAttribute('aria-label') || ''} ${btn.getAttribute('title') || ''}`.trim();
+    if (!label) continue;
+    if (/停止/.test(label) || /(?:^|[\s_-])stop(?:$|[\s_-])/i.test(label)) {
+      return btn;
+    }
+  }
+  return null;
+}
+
 function triggerReactClick(el) {
   if (!el) return;
   try { el.click(); } catch (_) {}
@@ -275,6 +294,25 @@ function findGeneralTab() {
     return txt === '一般' || /^general$/i.test(txt) || (txt.length <= 10 && txt.includes('一般'));
   });
   return exactLeaf || null;
+}
+
+/**
+ * 1段目の「設定」ボタンクリック後に開くポップオーバーメニュー内の「設定」項目を検出する (Issue #63)
+ */
+function findSettingsSubmenuItem(excludeEl) {
+  const scopes = Array.from(document.querySelectorAll('[role="dialog"], [role="menu"]'));
+  for (const scope of scopes) {
+    const candidates = Array.from(
+      scope.querySelectorAll('[role="menuitem"], button, a, [role="button"]')
+    );
+    const found = candidates.find(el => {
+      if (el === excludeEl) return false;
+      const txt = (el.textContent || '').trim();
+      return txt === '設定' || /^settings$/i.test(txt);
+    });
+    if (found) return found;
+  }
+  return null;
 }
 
 // パッシブ監視: ユーザーまたはスクリプトが「設定 ＞ 一般」を開いた際に自動的に利用枠をキャッシュ (Issue #49)
@@ -905,18 +943,28 @@ window.__MUSE_BRIDGE__ = {
       return !!document.querySelector('[role="dialog"]') || !!queryFirst(SELECTORS.modalCloseButton).el;
     };
 
+    const setTrace = (trace) => {
+      window.__MUSE_LAST_LIMIT_TRACE__ = trace;
+    };
+
     // 1. まず現在の画面でスキャン
     const immediate = scanDomForLimit();
     if (immediate && (immediate.remaining_percent !== null || immediate.used_percent !== null)) {
       window.__MUSE_CACHED_LIMIT__ = immediate;
+      setTrace(`immediate_hit(used=${immediate.used_percent},rem=${immediate.remaining_percent})`);
       return immediate;
     }
 
-    const fallbackResult = () => window.__MUSE_CACHED_LIMIT__ || immediate || {
-      plan_name: '無料プラン',
-      used_percent: null,
-      remaining_percent: null,
-      reset_text: 'セッション画面の[設定>一般]で自動取得'
+    const fallbackResult = (reason = 'unknown') => {
+      const base = window.__MUSE_CACHED_LIMIT__ || immediate || {
+        plan_name: '無料プラン',
+        used_percent: null,
+        remaining_percent: null,
+        reset_text: 'セッション画面の[設定>一般]で自動取得'
+      };
+      const cacheTag = window.__MUSE_CACHED_LIMIT__ ? 'cached' : (immediate ? 'immediate_partial' : 'empty');
+      setTrace(`${reason}:${cacheTag}`);
+      return base;
     };
 
     const pollIntervalMs = Math.max(10, Number(options?.pollIntervalMs) || 100);
@@ -934,35 +982,47 @@ window.__MUSE_BRIDGE__ = {
           const scanned = scanDomForLimit();
           if (scanned && (scanned.used_percent !== null || scanned.remaining_percent !== null)) {
             window.__MUSE_CACHED_LIMIT__ = scanned;
+            setTrace('dialog_open_scanned');
             return scanned;
           }
         }
       }
-      return fallbackResult();
+      const dlgEl = document.querySelector('[role="dialog"]');
+      const dlgSnap = dlgEl ? (dlgEl.innerText || dlgEl.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120) : 'no_role_dialog';
+      return fallbackResult(`dialog_open_fallback(snap=${dlgSnap})`);
     }
 
     // ガードレール①: session WebView が可視中、AIが回答生成中、または別リクエスト実行中の場合は自動遷移・Escape送信を抑止 (Issue #34, #49)
-    const isGenerating = !!document.querySelector('button[aria-label*="停止" i], button[aria-label*="stop" i], button[title*="停止" i], button[title*="stop" i]');
+    const stopBtn = findActiveStopButton();
+    const isGenerating = !!stopBtn;
     if (passiveOnly || isGenerating || isSessionVisible() || window.__MUSE_FETCHING_LIMIT__) {
-      return fallbackResult();
+      const stopLabel = stopBtn ? (stopBtn.getAttribute('aria-label') || stopBtn.getAttribute('title') || '').slice(0, 32) : '';
+      return fallbackResult(`guard_skip(passive=${!!passiveOnly},gen=${isGenerating},vis=${isSessionVisible()},busy=${!!window.__MUSE_FETCHING_LIMIT__}${stopLabel ? `,stop=${stopLabel}` : ''})`);
     }
 
     window.__MUSE_FETCHING_LIMIT__ = true;
     try {
       // 2. 非表示時は「設定 ＞ 一般」を開いて確認し、ガードレール③に従いメインチャットへ明示的に戻す
-      const { el: settingsBtn } = queryFirst(SELECTORS.settingsButton);
+      const { el: settingsBtn, selector: settingsSel } = queryFirst(SELECTORS.settingsButton);
       if (settingsBtn) {
+        const sBtnDesc = (settingsBtn.getAttribute('aria-label') || settingsBtn.getAttribute('title') || settingsBtn.textContent || '').trim().slice(0, 30);
         triggerReactClick(settingsBtn);
 
-        // 設定クリック後、「一般」タブまたは利用枠の描画完了まで最大 maxTabWaitMs ポーリング待機 (Issue #49)
+        // 設定クリック後、「一般」タブまたは利用枠の描画完了まで最大 maxTabWaitMs ポーリング待機 (Issue #49, #63)
+        // 2段階メニュー（「設定」ボタン → ポップオーバー内の「設定」項目 → 設定モーダル）にも対応
         let afterClick = null;
         let generalTab = null;
+        let clickedSubSettings = false;
         const tabMaxSteps = Math.ceil(maxTabWaitMs / pollIntervalMs);
         for (let i = 0; i < tabMaxSteps; i++) {
           await new Promise(r => setTimeout(r, pollIntervalMs));
           // ポーリング中にユーザーがセッション画面を表示した場合は即座に中断し、勝手に閉じない
           if (isSessionVisible()) {
-            return afterClick || fallbackResult();
+            if (afterClick) {
+              setTrace('aborted_visible_tab_wait');
+              return afterClick;
+            }
+            return fallbackResult('aborted_visible_tab_wait');
           }
           afterClick = scanDomForLimit();
           if (afterClick && (afterClick.used_percent !== null || afterClick.remaining_percent !== null)) {
@@ -973,6 +1033,13 @@ window.__MUSE_BRIDGE__ = {
             triggerReactClick(generalTab);
             break;
           }
+          if (!clickedSubSettings) {
+            const subSettings = findSettingsSubmenuItem(settingsBtn);
+            if (subSettings) {
+              triggerReactClick(subSettings);
+              clickedSubSettings = true;
+            }
+          }
         }
 
         // まだ利用枠が取得できていない場合、非同期API通信・DOM描画完了まで最大 maxLimitWaitMs ポーリング待機 (Issue #49)
@@ -981,7 +1048,11 @@ window.__MUSE_BRIDGE__ = {
           for (let i = 0; i < limitMaxSteps; i++) {
             await new Promise(r => setTimeout(r, pollIntervalMs));
             if (isSessionVisible()) {
-              return afterClick || fallbackResult();
+              if (afterClick) {
+                setTrace('aborted_visible_limit_wait');
+                return afterClick;
+              }
+              return fallbackResult('aborted_visible_limit_wait');
             }
             afterClick = scanDomForLimit();
             if (afterClick && (afterClick.used_percent !== null || afterClick.remaining_percent !== null)) {
@@ -991,6 +1062,12 @@ window.__MUSE_BRIDGE__ = {
               generalTab = findGeneralTab();
               if (generalTab) {
                 triggerReactClick(generalTab);
+              } else if (!clickedSubSettings) {
+                const subSettings = findSettingsSubmenuItem(settingsBtn);
+                if (subSettings) {
+                  triggerReactClick(subSettings);
+                  clickedSubSettings = true;
+                }
               }
             }
           }
@@ -1000,9 +1077,22 @@ window.__MUSE_BRIDGE__ = {
         if (isSessionVisible()) {
           if (afterClick && (afterClick.used_percent !== null || afterClick.remaining_percent !== null)) {
             window.__MUSE_CACHED_LIMIT__ = afterClick;
+            setTrace('aborted_visible_before_close');
             return afterClick;
           }
-          return fallbackResult();
+          return fallbackResult('aborted_visible_before_close');
+        }
+
+        // 失敗時の診断用スナップショット（モーダルを閉じる前に取得）
+        let failDiag = '';
+        if (!afterClick || (afterClick.used_percent === null && afterClick.remaining_percent === null)) {
+          const dlg = document.querySelector('[role="dialog"]');
+          const scope = dlg || document.querySelector('[role="menu"], [role="tablist"]') || document;
+          const items = Array.from(scope.querySelectorAll('[role="tab"], [role="menuitem"], button, a'))
+            .map(el => (el.textContent || el.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' '))
+            .filter(Boolean)
+            .slice(0, 12);
+          failDiag = `,sel=${settingsSel},btn=${sBtnDesc},dlg=${!!dlg},items=[${items.join('|')}]`.slice(0, 220);
         }
 
         // §16 ガードレール③: Escape 任せにせず、閉じるボタン＋Escape＋チャットナビゲーションで明示的にメインチャットへ戻す
@@ -1027,11 +1117,13 @@ window.__MUSE_BRIDGE__ = {
 
         if (afterClick && (afterClick.used_percent !== null || afterClick.remaining_percent !== null)) {
           window.__MUSE_CACHED_LIMIT__ = afterClick;
+          setTrace(`modal_ok(general=${!!generalTab},used=${afterClick.used_percent},rem=${afterClick.remaining_percent})`);
           return afterClick;
         }
+        return fallbackResult(`modal_no_limit(general=${!!generalTab}${failDiag})`);
       }
 
-      return fallbackResult();
+      return fallbackResult('no_settings_btn');
     } finally {
       window.__MUSE_FETCHING_LIMIT__ = false;
     }
@@ -1074,9 +1166,7 @@ window.__MUSE_BRIDGE__ = {
    * - isDialogOpen: 設定等のモーダルが開いているか
    */
   inspectReloadSafety() {
-    const isGenerating = !!document.querySelector(
-      'button[aria-label*="停止" i], button[aria-label*="stop" i], button[title*="停止" i], button[title*="stop" i]'
-    );
+    const isGenerating = !!findActiveStopButton();
     const { el: ta } = queryFirst(SELECTORS.chatInput);
     let draftText = '';
     if (ta) {
@@ -1129,9 +1219,11 @@ window.__MUSE_BRIDGE__ = {
         case 'send_message':
           result = await this.sendMessage(args?.text);
           break;
-        case 'fetch_limit':
-          result = await this.fetchUsageLimit(!!args?.passiveOnly, args?.options);
+        case 'fetch_limit': {
+          const limitRes = await this.fetchUsageLimit(!!args?.passiveOnly, args?.options);
+          result = limitRes ? { ...limitRes, debug_trace: window.__MUSE_LAST_LIMIT_TRACE__ || 'none' } : limitRes;
           break;
+        }
         default:
           throw new Error(`Unknown action: ${action}`);
       }

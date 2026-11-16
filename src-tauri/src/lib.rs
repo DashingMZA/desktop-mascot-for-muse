@@ -1562,13 +1562,31 @@ async fn get_usage_limit(
     // §16 ガードレール①: session WebView が可視状態（フルUI表示中）のとき、または非強制取得（定期ポーリング）時は自動画面遷移を抑止 (Issue #49)
     let is_session_visible = session.is_visible().unwrap_or(false) && !session.is_minimized().unwrap_or(false);
     let passive_only = is_session_visible || !force;
-    let res = run_bridge_action(
+    let res = match run_bridge_action(
         &session,
         "fetch_limit",
         &serde_json::json!({ "passiveOnly": passive_only }),
         15000,
     )
-    .await?;
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            if force {
+                append_recovery_log(
+                    &app,
+                    "usage_limit_trace",
+                    &format!("force={}, visible={}, bridge_err={}", force, is_session_visible, e),
+                );
+            }
+            return Err(e);
+        }
+    };
+
+    let debug_trace = res
+        .get("debug_trace")
+        .and_then(|v| v.as_str())
+        .unwrap_or("none");
 
     let plan_name = res
         .get("plan_name")
@@ -1612,6 +1630,16 @@ async fn get_usage_limit(
     if info.used_percent.is_some() || info.remaining_percent.is_some() {
         let prev_cfg = load_config_internal(&app);
         let changed = has_usage_limit_changed(prev_cfg.last_limit_info.as_ref(), &info);
+        if force {
+            append_recovery_log(
+                &app,
+                "usage_limit_trace",
+                &format!(
+                    "force={}, visible={}, passive={}, trace={}, rem={:?}, used={:?}, changed={}",
+                    force, is_session_visible, passive_only, debug_trace, info.remaining_percent, info.used_percent, changed
+                ),
+            );
+        }
         let saved = info.clone();
         if changed {
             update_config_internal(&app, |cfg| {
@@ -1623,6 +1651,17 @@ async fn get_usage_limit(
             });
         }
         return Ok(info);
+    }
+
+    if force {
+        append_recovery_log(
+            &app,
+            "usage_limit_trace",
+            &format!(
+                "force={}, visible={}, passive={}, trace={}, result=no_percent_fallback_to_prev",
+                force, is_session_visible, passive_only, debug_trace
+            ),
+        );
     }
 
     let latest_cfg = load_config_internal(&app);
