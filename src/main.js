@@ -2289,6 +2289,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         invoke('drag_window').then(() => {
           isPointerDownOnAvatar = false;
           isDraggingAvatar = false;
+          // ドラッグ終了時にカーソルがアバター上に残っている場合はホバー表示を復元 (Issue #62)
+          [avatarColumn, avatarContainer, mascotRestoreBtn, btnMascotQuickInput].forEach((el) => {
+            if (el && typeof el.matches === 'function' && el.matches(':hover')) {
+              el.classList.add('is-hovered');
+            }
+          });
           setTimeout(updateMascotBubbleDirection, 40);
         }).catch(console.error);
       }
@@ -2335,10 +2341,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ホバー状態管理 (Issue #61: ウィンドウ非表示時の :hover 残留防止)
+  // ホバー状態管理 (Issue #61: ウィンドウ非表示時の :hover 残留防止 / Issue #62: ドラッグ後の復帰)
   [avatarColumn, avatarContainer, mascotRestoreBtn, btnMascotQuickInput].forEach((el) => {
     if (!el) return;
-    el.addEventListener('pointerenter', () => el.classList.add('is-hovered'));
+    el.addEventListener('pointerenter', () => {
+      if (!isDraggingAvatar) el.classList.add('is-hovered');
+    });
+    el.addEventListener('pointermove', () => {
+      if (!isDraggingAvatar && !el.classList.contains('is-hovered')) {
+        el.classList.add('is-hovered');
+      }
+    });
     el.addEventListener('pointerleave', () => el.classList.remove('is-hovered'));
   });
   window.addEventListener('blur', clearMascotHoverState);

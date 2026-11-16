@@ -695,4 +695,24 @@ describe('main.js UI Logic & Regression Suite', () => {
     expect(avatarContainer.classList.contains('is-hovered')).toBe(false);
     expect(mascotRestoreBtn.classList.contains('is-hovered')).toBe(false);
   });
+
+  it('マスコットドラッグ中にblurでホバー解除されてもドラッグ終了後のpointermoveでis-hoveredが復帰する (Issue #62)', async () => {
+    const avatarColumn = document.getElementById('avatar-column');
+    const avatarContainer = document.getElementById('avatar-container');
+
+    document.body.classList.add('mode-mascot');
+    avatarContainer.dispatchEvent(new MouseEvent('mousedown', { button: 0, screenX: 100, screenY: 100, bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mousemove', { screenX: 120, screenY: 120 }));
+    await vi.advanceTimersByTimeAsync(20);
+
+    // ドラッグ開始で blur が発火してホバー解除される想定
+    window.dispatchEvent(new Event('blur'));
+    expect(avatarContainer.classList.contains('is-hovered')).toBe(false);
+
+    // ドラッグ完了後（mousemove/pointermove）で再びホバー表示が復帰する
+    avatarColumn.dispatchEvent(new Event('pointermove'));
+    avatarContainer.dispatchEvent(new Event('pointermove'));
+    expect(avatarColumn.classList.contains('is-hovered')).toBe(true);
+    expect(avatarContainer.classList.contains('is-hovered')).toBe(true);
+  });
 });
