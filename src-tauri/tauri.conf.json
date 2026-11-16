@@ -1,3 +1,4 @@
+
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Desktop Mascot for Muse",
@@ -39,7 +40,7 @@
       "icons/icon.ico"
     ],
     "publisher": "cSofts",
-    "category": "AiTool",
+    "category": "Utility",
     "shortDescription": "Windows Desktop Mascot for Muse AI",
     "longDescription": "Windows desktop mascot and chat-integration app for Muse (a personal AI agent, https://muse.ai)",
     "copyright": "Copyright © 2026 cSofts.com. All rights reserved.",
@@ -51,13 +52,14 @@
       "nsis": {
         "installMode": "currentUser",
         "installerIcon": "icons/icon.ico",
-        "uninstallerIcon": "icons/icon.ico"
+        "uninstallerIcon": "icons/icon.ico",
         "languages": [
           "English"
         ]
       }
     }
-    "plugins": {
+  },
+  "plugins": {
     "updater": {
       "active": true,
       "endpoints": [
@@ -65,6 +67,5 @@
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhGRDUzNkQzQUUwQUVCMzQKUldRMDZ3cXUwemJWajBoaE4zSHBDb2x5dnhOMmw3ZEFpOFh3TTNBSWNrcFEzZXpOREoxRUVQbDAK"
     }
-  }
   }
 }

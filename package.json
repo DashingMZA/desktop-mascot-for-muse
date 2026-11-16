@@ -36,7 +36,7 @@
     "test": "npm run test:unit && npm run test:e2e && npm run test:rust"
   },
   "dependencies": {
-    "@tauri-apps/plugin-updater": "^2.14.1",
+    "@tauri-apps/plugin-updater": "^2.14.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",
