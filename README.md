@@ -64,7 +64,7 @@ Muse（パーソナルAIエージェント `https://muse.ai`）の Windows 向�
 
 ## 📥 インストール
 
-[Releases](https://github.com/mowthow-works/desktop-mascot-for-muse/releases) からインストーラ（`Desktop Mascot for Muse_<version>_x64-setup.exe`）をダウンロードして実行してください。管理者権限は不要（Per-user インストール）で、デスクトップショートカットとアンインストーラが自動構成されます。
+[Releases](https://github.com/mowthow-works/desktop-mascot-for-muse/releases) からインストーラ（`Desktop-Mascot-for-Muse_x64-setup.exe`）またはポータブル版 ZIP（`desktop-mascot-for-muse-windows-x64.zip`）をダウンロードして実行してください。インストーラは管理者権限不要（Per-user インストール）で、デスクトップショートカットとアンインストーラが自動構成されます。
 
 ### Windows SmartScreen 警告が出た場合
 
