@@ -1332,7 +1332,7 @@ async fn open_settings_window(app: AppHandle) -> Result<bool, String> {
         "settings",
         WebviewUrl::App("settings.html".into()),
     )
-    .title("Muse Desktop Mascot - 設定")
+    .title("Desktop Mascot for Muse - 設定")
     .inner_size(640.0, 720.0)
     .min_inner_size(480.0, 540.0)
     .resizable(true)
@@ -2715,7 +2715,7 @@ pub fn run() {
             let _tray = TrayIconBuilder::new()
                 .icon(tauri::include_image!("icons/128x128.png"))
                 .menu(&menu)
-                .tooltip("Muse Desktop Mascot")
+                .tooltip("Desktop Mascot for Muse")
                 .show_menu_on_left_click(false)
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "toggle_app" => {
@@ -3277,7 +3277,7 @@ mod tests {
         let muse_sub = tauri::Url::parse("https://app.muse.ai/thread/123").unwrap();
         let google_auth = tauri::Url::parse("https://accounts.google.com/o/oauth2/v2/auth").unwrap();
         let apple_auth = tauri::Url::parse("https://appleid.apple.com/auth/authorize").unwrap();
-        let external_site = tauri::Url::parse("https://github.com/mowthow-works/muse-win-gadets").unwrap();
+        let external_site = tauri::Url::parse("https://github.com/mowthow-works/desktop-mascot-for-muse").unwrap();
         let google_search = tauri::Url::parse("https://www.google.com/search?q=muse").unwrap();
         let mailto_url = tauri::Url::parse("mailto:support@example.com").unwrap();
         let about_blank = tauri::Url::parse("about:blank").unwrap();

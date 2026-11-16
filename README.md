@@ -1,6 +1,6 @@
-# Muse Desktop Mascot
+# Desktop Mascot for Muse
 
-[![Release](https://img.shields.io/badge/version-v1.1.7-blue.svg)](https://github.com/mowthow-works/muse-win-gadets/releases)
+[![Release](https://img.shields.io/badge/version-v1.1.8-blue.svg)](https://github.com/mowthow-works/desktop-mascot-for-muse/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg)](https://www.microsoft.com/windows)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -12,7 +12,7 @@ Muse（パーソナルAIエージェント `https://muse.ai`）の Windows 向�
     <tr>
       <td align="center" width="40%">
         <b>✨ マスコット状態（タスクバー・デスクトップ常駐）</b><br />
-        <img src="docs/screenshot_mascot.png" alt="Muse Desktop Mascot Mode" width="300" />
+        <img src="docs/screenshot_mascot.png" alt="Desktop Mascot for Muse Mode" width="300" />
       </td>
       <td align="center" width="60%">
         <b>💬 チャット画面（Muse AI セッション画面）</b><br />
@@ -61,7 +61,7 @@ Muse（パーソナルAIエージェント `https://muse.ai`）の Windows 向�
 
 ## 📥 インストール
 
-[Releases](https://github.com/mowthow-works/muse-win-gadets/releases) からインストーラ（`Muse Desktop Mascot_<version>_x64-setup.exe`）をダウンロードして実行してください。管理者権限は不要（Per-user インストール）で、デスクトップショートカットとアンインストーラが自動構成されます。
+[Releases](https://github.com/mowthow-works/desktop-mascot-for-muse/releases) からインストーラ（`Desktop Mascot for Muse_<version>_x64-setup.exe`）をダウンロードして実行してください。管理者権限は不要（Per-user インストール）で、デスクトップショートカットとアンインストーラが自動構成されます。
 
 ### Windows SmartScreen 警告が出た場合
 
@@ -193,7 +193,7 @@ npm run test:rust   # Rustバックエンド単体テスト (cargo test)
 ポータブル単体実行ファイル（手動配置・ZIP 配布向け）：
 ```powershell
 cargo build --release --manifest-path "src-tauri/Cargo.toml"
-# 生成先: src-tauri/target/release/muse-desktop-mascot.exe
+# 生成先: src-tauri/target/release/desktop-mascot-for-muse.exe
 ```
 
 NSIS セットアップインストーラ（一般配布向け）：
@@ -201,7 +201,7 @@ NSIS セットアップインストーラ（一般配布向け）：
 npm run build:installer
 # または
 npx tauri build
-# 生成先: src-tauri/target/release/bundle/nsis/Muse Desktop Mascot_<version>_x64-setup.exe
+# 生成先: src-tauri/target/release/bundle/nsis/Desktop Mascot for Muse_<version>_x64-setup.exe
 ```
 
 ---

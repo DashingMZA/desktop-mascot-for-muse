@@ -1,13 +1,13 @@
 [package]
-name = "muse-desktop-mascot"
-version = "1.1.7"
+name = "desktop-mascot-for-muse"
+version = "1.1.8"
 description = "Desktop mascot for Windows to interact with Muse AI"
 license = "MIT"
 authors = ["kusak"]
 edition = "2021"
 
 [lib]
-name = "muse_desktop_mascot_lib"
+name = "desktop_mascot_for_muse_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

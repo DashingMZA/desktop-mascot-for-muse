@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Muse Desktop Mascot - Real Browser UI & Layout Regression Suite', () => {
+test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Suite', () => {
   test.beforeEach(async ({ page }) => {
     // Inject Tauri IPC mock before page scripts run
     await page.addInitScript(() => {

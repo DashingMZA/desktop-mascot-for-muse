@@ -1,6 +1,6 @@
-# Muse Desktop Mascot 機能仕様書
+# Desktop Mascot for Muse 機能仕様書
 
-本書は Muse Desktop Mascot（mowthow-works/muse-win-gadets）の現行機能仕様を定める、**実装の正（single source of truth）** である。
+本書は Desktop Mascot for Muse（mowthow-works/desktop-mascot-for-muse）の現行機能仕様を定める、**実装の正（single source of truth）** である。
 
 - README は入口と要約、カスタマイズガイド（`docs/CUSTOMIZE.md`）は利用者向けリファレンスに徹し、機能の詳細仕様は本書を正とする。同じ規則を複数文書に重複して書かない。
 - 初期設計は `DESIGN.md` に残すが、現行仕様は本書が優先する。
@@ -10,7 +10,7 @@
 
 ## 1. 概要
 
-Muse Desktop Mascot は、パーソナル AI エージェント Muse（`https://muse.ai`）の Windows 向け常駐型デスクトップマスコット＆チャット連携アプリである。Tauri 2.0 で実装する。
+Desktop Mascot for Muse は、パーソナル AI エージェント Muse（`https://muse.ai`）の Windows 向け常駐型デスクトップマスコット＆チャット連携アプリである。Tauri 2.0 で実装する。
 
 普段はデスクトップの隅に円形アバターマスコットとして常駐し、Muse の状態に応じたアニメーション、放置時の気まぐれアクション、新着メッセージの通知を表示する。ワンアクションで公式の Muse チャット画面（セッション画面）を呼び出して対話できる。
 
@@ -369,6 +369,7 @@ IDLE 中のセリフを、固定の `quotes.json` だけでなく Muse 本人が
 | v1.1.5 | オリジナルマスコットアプリアイコンへの刷新 (Issue #59)、マスコットモード時の透明領域クリック透過制御 (Issue #60) |
 | v1.1.6 | セッション画面遷移・復帰時のホバー表示(⤢)残留修正 (Issue #61)、マスコットドラッグ後のホバー表示(⤢)復帰修正 (Issue #62) |
 | v1.1.7 | マスコット状態での利用枠（Limit）定期更新・手動更新の2段階設定メニュー対応および停止ボタン誤検出の修正 (Issue #63) |
+| v1.1.8 | アプリ名および Git リポジトリ名を Desktop Mascot for Muse へ変更 (Issue #64) |
 
 ---
 

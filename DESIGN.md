@@ -1,6 +1,6 @@
 # Muse Windows Gadget 設計書（v0.2 / 設計フェーズ）
 
-- リポジトリ: https://github.com/mowthow-works/muse-win-gadets
+- リポジトリ: https://github.com/mowthow-works/desktop-mascot-for-muse
 - 参考実装: https://github.com/mowthow-works/google-ai-limit-monitor （Tauri 2.0 + Rust、別アプリとして作る）
 - ステータス: 設計完了。実装は別AIへ引き継ぎ済みで、**Phase 0 の技術検証は 2026-11-02 に全項目クリア**（下記 v0.3 の変更点を参照）
 - v0.2 の変更点: 実現したいこと（要件 R1〜R6）が確定したため、アーキテクチャを「Web をそのまま表示」から「**独自 UI ＋ 裏側 WebView セッション**」方式に改定
@@ -114,7 +114,7 @@ Phase 0 で Web アプリ側のアバター描画方式を確認し、次の順�
 ## 11. リポジトリ構成（参考アプリと同型）
 
 ```
-muse-win-gadets/
+desktop-mascot-for-muse/
 ├─ README.md
 ├─ package.json
 ├─ src/                    # ローカル UI（index.html / main.js / styles.css）

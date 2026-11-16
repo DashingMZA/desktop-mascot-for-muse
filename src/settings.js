@@ -1,4 +1,4 @@
-// settings.js - Muse Desktop Mascot 設定画面コントローラー
+// settings.js - Desktop Mascot for Muse 設定画面コントローラー
 
 const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, args) => {
   console.log(`[Mock Settings Invoke] ${cmd}`, args);

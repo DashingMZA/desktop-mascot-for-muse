@@ -54,5 +54,5 @@ fn main() {
         }
     };
 
-    muse_desktop_mascot_lib::run()
+    desktop_mascot_for_muse_lib::run()
 }

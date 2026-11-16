@@ -1,6 +1,6 @@
-# AGENTS.md - Muse Desktop Mascot 開発・運用ルール
+# AGENTS.md - Desktop Mascot for Muse 開発・運用ルール
 
-本ファイルは、AI エージェントが本リポジトリ（`muse-desktop-mascot`）で開発・ビルド・リリース作業を行う際に必ず遵守すべきプロジェクト固有ルールを定義します。
+本ファイルは、AI エージェントが本リポジトリ（`desktop-mascot-for-muse`）で開発・ビルド・リリース作業を行う際に必ず遵守すべきプロジェクト固有ルールを定義します。
 
 ---
 
@@ -9,9 +9,9 @@
 ビルド、パッケージング、ドキュメント更新、および GitHub Release 作業を行う際は、**ワークスペース内に古いファイルや一時ファイルのゴミが絶対に残らないよう** 以下を徹底すること：
 
 1. **配布用 ZIP アーカイブの整理（ルートディレクトリ）**
-   - 新しいバージョン（例: `muse-desktop-mascot-v0.9.0-windows-x64.zip`）を作成・配置する際は、直前に必ず古いバージョンの ZIP ファイル（`muse-desktop-mascot-v*.zip`）を削除すること。
+   - 新しいバージョン（例: `desktop-mascot-for-muse-v1.1.8-windows-x64.zip`）を作成・配置する際は、直前に必ず古いバージョンの ZIP ファイル（`*-v*.zip`）を削除すること。
 2. **`dist/` フォルダの最新化またはクリーンアップ**
-   - `dist/` フォルダが存在する場合、リリースビルド完了時に必ず `dist/muse-desktop-mascot.exe`、`dist/README.md`、`dist/avatars/setting.json`、`dist/avatars/plugin/quotes.json` を最新ビルドの成果物で上書き更新すること（古いバージョンの `.exe` を放置しない）。
+   - `dist/` フォルダが存在する場合、リリースビルド完了時に必ず `dist/desktop-mascot-for-muse.exe`、`dist/README.md`、`dist/avatars/setting.json`、`dist/avatars/plugin/quotes.json` を最新ビルドの成果物で上書き更新すること（古いバージョンの `.exe` を放置しない）。
 3. **ドキュメント・画像差し替え時の不要ファイル削除（`docs/` 等）**
    - `README.md` 等のスクリーンショットやアセットを新しいファイル名で追加・差し替えた場合は、参照されなくなった古い画像ファイル（例: 旧UIのスクリーンショット等）を速やかに `git rm` / 削除すること。
 4. **一時ファイル（JSON ペイロード等）の即時削除**
@@ -40,9 +40,9 @@
 ## 4. ビルド・動作確認ルール（Debug vs Release）
 
 - **開発・各 Issue の動作確認時（`dev/*` ブランチ等）**:
-  - ビルド時間の短縮のため、**Debug ビルド（`cargo build`）** で実施し、生成された `src-tauri/target/debug/muse-desktop-mascot.exe` を `dist/muse-desktop-mascot.exe` へ配置して動作確認を行うこと（配布用 ZIP やインストーラの作成はスキップ）。
+  - ビルド時間の短縮のため、**Debug ビルド（`cargo build`）** で実施し、生成された `src-tauri/target/debug/desktop-mascot-for-muse.exe` を `dist/desktop-mascot-for-muse.exe` へ配置して動作確認を行うこと（配布用 ZIP やインストーラの作成はスキップ）。
 - **Release 時（`main` ブランチへマージする直前）**:
-  - バージョンの全機能が揃い、ユーザーから「Releaseします！」と指示された `main` マージ直前のタイミングでのみ、**Release ビルドおよびインストーラ作成（`npm run build:installer` / `npx tauri build`）** を行い、最適化された `.exe` を `dist/` へ上書き配置し、配布用 ZIP アーカイブ（`muse-desktop-mascot-v*.zip`）および NSIS セットアップインストーラを作成・Release へ添付すること。通常開発時はインストーラ作成を行わないこと。
+  - バージョンの全機能が揃い、ユーザーから「Releaseします！」と指示された `main` マージ直前のタイミングでのみ、**Release ビルドおよびインストーラ作成（`npm run build:installer` / `npx tauri build`）** を行い、最適化された `.exe` を `dist/` へ上書き配置し、配布用 ZIP アーカイブ（`desktop-mascot-for-muse-v*.zip`）および NSIS セットアップインストーラを作成・Release へ添付すること。通常開発時はインストーラ作成を行わないこと。
   - **Release 前ドキュメント同期チェックリスト**（ビルド・タグ打ちの前に必ず確認すること）：
     1. `git log <前回タグ>..HEAD --oneline` で対象バージョンの全変更（Issue）を洗い出す。
     2. `README.md` のバージョンバッジ（`version-vX.Y.Z`）および記載内容を最新化し、`dist/README.md` へ同期する。

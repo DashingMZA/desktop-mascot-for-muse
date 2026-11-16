@@ -1,6 +1,6 @@
 # カスタマイズガイド
 
-Muse Desktop Mascot の詳細なカスタマイズ方法をまとめたリファレンスです。
+Desktop Mascot for Muse の詳細なカスタマイズ方法をまとめたリファレンスです。
 基本的な使い方は [README](../README.md)、機能の内部詳細や仕様の正（Single Source of Truth）は **[機能仕様書](SPEC.md)** を参照してください。
 
 > [!TIP]

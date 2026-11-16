@@ -9,7 +9,7 @@
 Muse（パーソナルAIエージェント）の Windows 常駐デスクトップガジェット。独自UIを持ち、裏側で muse.ai のログイン済みセッションを保持してチャットと連携する。
 
 ## リポジトリ
-- 実装先（現在は空）: https://github.com/mowthow-works/muse-win-gadets
+- 実装先（現在は空）: https://github.com/mowthow-works/desktop-mascot-for-muse
 - 参考実装（必ず先に読むこと）: https://github.com/mowthow-works/google-ai-limit-monitor
   - Tauri 2.0 + Rust、Vanilla HTML/CSS/JS。枠なし・透明・最前面の小窓、トレイ常駐の作りはこれを踏襲する
 
