@@ -1285,11 +1285,13 @@ function isSessionAllowedHost(hostname) {
     h === 'appleid.apple.com' ||
     h === 'login.microsoftonline.com' ||
     h === 'login.live.com' ||
-    // Facebook login: Muse's auth flow can route through
-    // facebook.com/aymh/redirect-cycle/. Keep in sync with
-    // is_session_allowed_host in src-tauri/src/lib.rs.
+    // Meta login (Accounts Center): Muse's auth flow can route through
+    // facebook.com/aymh/redirect-cycle/ and instagram.com/aymh/redirect-cycle/.
+    // Keep in sync with is_session_allowed_host in src-tauri/src/lib.rs.
     h === 'facebook.com' ||
-    h.endsWith('.facebook.com')
+    h.endsWith('.facebook.com') ||
+    h === 'instagram.com' ||
+    h.endsWith('.instagram.com')
   );
 }
 

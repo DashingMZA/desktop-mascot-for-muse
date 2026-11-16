@@ -552,12 +552,15 @@ fn is_session_allowed_host(host: &str) -> bool {
         || h == "appleid.apple.com"
         || h == "login.microsoftonline.com"
         || h == "login.live.com"
-        // Facebook login: Muse's auth flow can route through
-        // facebook.com/aymh/redirect-cycle/. Without this the redirect is
-        // bounced out to the external browser and the session window stays
-        // on about:blank (see session_recovery.log, 2026-11-16).
+        // Meta login (Accounts Center): Muse's auth flow can route through
+        // facebook.com/aymh/redirect-cycle/ and instagram.com/aymh/redirect-cycle/.
+        // Without this the redirect is bounced out to the external browser and
+        // the session window stays on about:blank (see session_recovery.log,
+        // 2026-11-16: facebook.com first, instagram.com after the rebuild).
         || h == "facebook.com"
         || h.ends_with(".facebook.com")
+        || h == "instagram.com"
+        || h.ends_with(".instagram.com")
 }
 
 fn should_open_session_url_externally(url: &tauri::Url) -> bool {
@@ -3283,13 +3286,16 @@ mod tests {
         let muse_sub = tauri::Url::parse("https://app.muse.ai/thread/123").unwrap();
         let google_auth = tauri::Url::parse("https://accounts.google.com/o/oauth2/v2/auth").unwrap();
         let apple_auth = tauri::Url::parse("https://appleid.apple.com/auth/authorize").unwrap();
-        // Facebook login: Muse's auth flow can route through
-        // facebook.com/aymh/redirect-cycle/ (2026-11-16: without this the
-        // redirect is bounced out to the external browser and the session
-        // window stays on about:blank).
+        // Meta login (Accounts Center): Muse's auth flow can route through
+        // facebook.com/aymh/redirect-cycle/ and instagram.com/aymh/redirect-cycle/
+        // (2026-11-16: without this the redirect is bounced out to the external
+        // browser and the session window stays on about:blank).
         let facebook_redirect =
             tauri::Url::parse("https://www.facebook.com/aymh/redirect-cycle/?t=6").unwrap();
         let facebook_login = tauri::Url::parse("https://www.facebook.com/login").unwrap();
+        let instagram_redirect =
+            tauri::Url::parse("https://www.instagram.com/aymh/redirect-cycle/?t=6").unwrap();
+        let instagram_login = tauri::Url::parse("https://www.instagram.com/accounts/login/").unwrap();
         let external_site = tauri::Url::parse("https://github.com/mowthow-works/desktop-mascot-for-muse").unwrap();
         let google_search = tauri::Url::parse("https://www.google.com/search?q=muse").unwrap();
         let mailto_url = tauri::Url::parse("mailto:support@example.com").unwrap();
@@ -3301,6 +3307,8 @@ mod tests {
         assert!(!should_open_session_url_externally(&apple_auth));
         assert!(!should_open_session_url_externally(&facebook_redirect));
         assert!(!should_open_session_url_externally(&facebook_login));
+        assert!(!should_open_session_url_externally(&instagram_redirect));
+        assert!(!should_open_session_url_externally(&instagram_login));
         assert!(should_open_session_url_externally(&external_site));
         assert!(should_open_session_url_externally(&google_search));
         assert!(should_open_session_url_externally(&mailto_url));

@@ -408,6 +408,7 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
         <a id="int-link" href="https://muse.ai/thread/abc">Internal link</a>
         <a id="oauth-link" href="https://accounts.google.com/o/oauth2/auth">Google sign-in</a>
         <a id="fb-link" href="https://www.facebook.com/aymh/redirect-cycle/?t=6">Facebook login</a>
+        <a id="ig-link" href="https://www.instagram.com/aymh/redirect-cycle/?t=6">Instagram login</a>
       </main>
     `;
 
@@ -428,6 +429,13 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     const fbEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
     document.getElementById('fb-link').dispatchEvent(fbEvent);
     expect(fbEvent.defaultPrevented).toBe(false);
+    expect(document.title).toBe('Muse AI - Session');
+
+    // Instagram login links are not hooked either (auth flow routes through
+    // instagram.com/aymh/redirect-cycle/ and must stay in the session WebView)
+    const igEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    document.getElementById('ig-link').dispatchEvent(igEvent);
+    expect(igEvent.defaultPrevented).toBe(false);
     expect(document.title).toBe('Muse AI - Session');
 
     // External links (clicking the child <span>) are hooked and set __MUSE_OPEN_URL__
