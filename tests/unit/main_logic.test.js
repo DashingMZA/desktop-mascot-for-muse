@@ -715,4 +715,38 @@ describe('main.js UI Logic & Regression Suite', () => {
     expect(avatarColumn.classList.contains('is-hovered')).toBe(true);
     expect(avatarContainer.classList.contains('is-hovered')).toBe(true);
   });
+
+  it('おまかせショートカットのチップ押下で即送信されず入力欄に文面がセットされ、Enterで送信される (Issue #68)', async () => {
+    const quickInputBtn = document.getElementById('btn-mascot-quick-input');
+    const mascotInputBar = document.getElementById('mascot-input-bar');
+    const mascotInputField = document.getElementById('mascot-input-field');
+    const shortcutNote = document.getElementById('mascot-shortcut-note');
+
+    quickInputBtn.click();
+    expect(mascotInputBar.classList.contains('hidden')).toBe(false);
+
+    const chips = document.querySelectorAll('.mascot-shortcut-chip');
+    expect(chips.length).toBe(4);
+    expect(chips[0].textContent).toBe('物忘れが多いから改善して');
+    expect(chips[0].title).toBe('Museの覚えたことが古くなったり、思い違いが増えてきたと感じたら');
+    expect(chips[1].title).toBe('会話が長くなって重く感じたら。要約して新しいチャットへ引き継ぎます');
+    expect(chips[2].title).toBe('まだ知らない便利な使い方を教えてほしいときに');
+    expect(chips[3].title).toBe('一日の終わりに、今日のやりとりを振り返りたいときに');
+
+    // 1つ目のチップをクリックしても即送信されず、プレビュー状態になる
+    chips[0].click();
+    expect(chips[0].classList.contains('active')).toBe(true);
+    expect(mascotInputField.value).toContain('MEMORY.md');
+    expect(shortcutNote.classList.contains('is-selected')).toBe(true);
+    expect(invokeMock).not.toHaveBeenCalledWith('send_chat_message', expect.anything());
+
+    // Enter で現在アクティブなチャットへ送信される
+    mascotInputField.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: false, bubbles: true }));
+    await vi.advanceTimersByTimeAsync(20);
+    expect(invokeMock).toHaveBeenCalledWith('send_chat_message', {
+      text: expect.stringContaining('MEMORY.md'),
+    });
+    expect(mascotInputBar.classList.contains('hidden')).toBe(true);
+    expect(chips[0].classList.contains('active')).toBe(false);
+  });
 });

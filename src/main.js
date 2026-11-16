@@ -60,12 +60,14 @@ const mascotBubbleCursor = document.getElementById('mascot-bubble-cursor');
 const btnBubbleClose = document.getElementById('btn-bubble-close');
 const mascotBubbleOptions = document.getElementById('mascot-bubble-options');
 
-// マスコットミニ入力バー要素 (Issue #27)
+// マスコットミニ入力バー要素 (Issue #27) ＋ おまかせショートカット (Issue #68)
 const mascotInputBar = document.getElementById('mascot-input-bar');
 const mascotInputField = document.getElementById('mascot-input-field');
 const btnMascotInputSend = document.getElementById('btn-mascot-input-send');
 const btnMascotInputClose = document.getElementById('btn-mascot-input-close');
 const btnMascotQuickInput = document.getElementById('btn-mascot-quick-input');
+const mascotShortcutChips = document.getElementById('mascot-shortcut-chips');
+const mascotShortcutNote = document.getElementById('mascot-shortcut-note');
 
 const limitPercentText = document.getElementById('limit-percent-text');
 const limitProgressBar = document.getElementById('limit-progress-bar');
@@ -558,13 +560,100 @@ function hideMascotBubble() {
 }
 
 // ==========================================
-// マスコット クイック1行ミニ入力バー (Issue #27)
+// マスコット クイック1行ミニ入力バー (Issue #27) ＋ おまかせショートカット (Issue #68)
 // ==========================================
+const MASCOT_QUICK_SHORTCUTS = [
+  {
+    id: 'organize-memory',
+    label: '物忘れが多いから改善して',
+    tooltip: 'Museの覚えたことが古くなったり、思い違いが増えてきたと感じたら',
+    prompt: '私のメモリ（MEMORY.md）を棚卸しして。重複や古くなった情報があれば整理して、圧縮できそうな項目があれば提案して。',
+  },
+  {
+    id: 'reset-chat',
+    label: '会話を仕切り直して',
+    tooltip: '会話が長くなって重く感じたら。要約して新しいチャットへ引き継ぎます',
+    prompt: 'この会話が長くなってきたので、ここまでの内容を要約して引き継ぎメモを作って。新しいチャットでも続けられる形にして。',
+  },
+  {
+    id: 'how-to-use',
+    label: '便利な使い方を教えて',
+    tooltip: 'まだ知らない便利な使い方を教えてほしいときに',
+    prompt: 'Muse の便利な使い方を、初心者向けに3つだけ教えて。私の使い方に合いそうなものから。',
+  },
+  {
+    id: 'daily-summary',
+    label: '今日のことをまとめて',
+    tooltip: '一日の終わりに、今日のやりとりを振り返りたいときに',
+    prompt: '今日、私がやったこと・話したことを振り返って、短くまとめて。',
+  },
+];
+
+const DEFAULT_SHORTCUT_NOTE = '押すと入力欄に入ります（送信で1ターン消費）';
+let activeShortcutPrompt = '';
+
+function resetMascotShortcutSelection() {
+  activeShortcutPrompt = '';
+  if (mascotShortcutChips) {
+    mascotShortcutChips.querySelectorAll('.mascot-shortcut-chip.active').forEach((btn) => {
+      btn.classList.remove('active');
+    });
+  }
+  if (mascotShortcutNote) {
+    mascotShortcutNote.textContent = DEFAULT_SHORTCUT_NOTE;
+    mascotShortcutNote.classList.remove('is-selected');
+  }
+}
+
+function applyMascotShortcut(item, chipEl) {
+  if (!mascotInputField) return;
+  resetMascotShortcutSelection();
+  activeShortcutPrompt = item.prompt;
+  if (chipEl) {
+    chipEl.classList.add('active');
+  }
+  mascotInputField.value = item.prompt;
+  if (mascotShortcutNote) {
+    mascotShortcutNote.textContent = '確認して Enter で送信できます（1ターン消費）';
+    mascotShortcutNote.classList.add('is-selected');
+  }
+  playTouchReactionSound();
+  scheduleSyncMascotHitRects();
+  mascotInputField.focus();
+  try {
+    const len = mascotInputField.value.length;
+    mascotInputField.setSelectionRange(len, len);
+  } catch (_) {}
+}
+
+function renderMascotShortcuts() {
+  if (!mascotShortcutChips) return;
+  mascotShortcutChips.innerHTML = '';
+  MASCOT_QUICK_SHORTCUTS.forEach((item) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mascot-shortcut-chip';
+    btn.dataset.shortcutId = item.id;
+    btn.textContent = item.label;
+    btn.title = item.tooltip || item.prompt;
+    btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyMascotShortcut(item, btn);
+    });
+    mascotShortcutChips.appendChild(btn);
+  });
+}
+
 function openMascotInput() {
   if (!mascotInputBar || !mascotInputField) return;
   getAudioContext();
   hideMascotBubble();
   updateMascotBubbleDirection();
+  if (mascotShortcutChips && mascotShortcutChips.children.length === 0) {
+    renderMascotShortcuts();
+  }
+  resetMascotShortcutSelection();
   mascotInputBar.classList.remove('hidden');
   mascotInputField.value = '';
   scheduleSyncMascotHitRects();
@@ -579,6 +668,7 @@ function closeMascotInput() {
     mascotInputField.blur();
     mascotInputField.value = '';
   }
+  resetMascotShortcutSelection();
   if (!mascotInputBar) return;
   mascotInputBar.classList.add('hidden');
   scheduleSyncMascotHitRects();
@@ -2474,6 +2564,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     // 日本語IME入力および通常文字入力で確実にカタカタ打鍵音を再生
     mascotInputField.addEventListener('input', () => {
       playTypingSound();
+      if (activeShortcutPrompt && mascotInputField.value !== activeShortcutPrompt) {
+        resetMascotShortcutSelection();
+      }
     });
     mascotInputField.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -2679,6 +2772,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       await loadUsageLimit(true);
     }
   }, 300000);
+
+  // おまかせショートカット初期化 (Issue #68)
+  renderMascotShortcuts();
 
   // マスコットモード時のインタラクティブ矩形監視 (Issue #60)
   const hitTargets = ['avatar-column', 'mascot-bubble', 'mascot-input-bar']

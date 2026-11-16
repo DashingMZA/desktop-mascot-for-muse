@@ -53,13 +53,22 @@
         </div>
       </div>
 
-      <!-- マスコットモード専用: クイック1行ミニ入力バー (Issue #27) -->
+      <!-- マスコットモード専用: クイック1行ミニ入力バー (Issue #27) ＋ おまかせショートカット (Issue #68) -->
       <div class="mascot-input-bar hidden" id="mascot-input-bar">
         <div class="mascot-input-tail"></div>
-        <span class="mascot-input-icon">💬</span>
-        <input type="text" class="mascot-input-field" id="mascot-input-field" placeholder="Museに質問... (Enterで送信 / Escで閉じる)" autocomplete="off" />
-        <button class="mascot-input-btn-send" id="btn-mascot-input-send" title="送信 (Enter)">➤</button>
-        <button class="mascot-input-btn-close" id="btn-mascot-input-close" title="閉じる (Esc)">×</button>
+        <div class="mascot-input-row">
+          <span class="mascot-input-icon">💬</span>
+          <input type="text" class="mascot-input-field" id="mascot-input-field" placeholder="Museに質問... (Enterで送信 / Escで閉じる)" autocomplete="off" />
+          <button class="mascot-input-btn-send" id="btn-mascot-input-send" title="送信 (Enter)">➤</button>
+          <button class="mascot-input-btn-close" id="btn-mascot-input-close" title="閉じる (Esc)">×</button>
+        </div>
+        <div class="mascot-shortcut-panel" id="mascot-shortcut-panel">
+          <div class="mascot-shortcut-header">
+            <span class="mascot-shortcut-title">✨ おまかせショートカット</span>
+            <span class="mascot-shortcut-note" id="mascot-shortcut-note">押すと入力欄に入ります（送信で1ターン消費）</span>
+          </div>
+          <div class="mascot-shortcut-chips" id="mascot-shortcut-chips"></div>
+        </div>
       </div>
 
       <!-- マスコットモード専用: ルパン風吹き出し -->

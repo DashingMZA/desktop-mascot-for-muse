@@ -285,4 +285,37 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
       scrollMetrics.scrollHeight - 5
     );
   });
+
+  test('Issue #68: クイック入力バー展開時におまかせショートカットが表示され、クリックで入力欄にプレビューセット・送信できること', async ({ page }) => {
+    await page.goto('/index.html');
+
+    // 右クリックでクイック入力バーを展開
+    await page.locator('#avatar-container').click({ button: 'right' });
+    const inputBar = page.locator('#mascot-input-bar');
+    await expect(inputBar).toBeVisible();
+
+    const chips = page.locator('.mascot-shortcut-chip');
+    await expect(chips).toHaveCount(4);
+
+    // 「会話を仕切り直して」をクリックすると即送信されず入力欄へセットされる
+    await page.locator('.mascot-shortcut-chip', { hasText: '会話を仕切り直して' }).click();
+    const inputField = page.locator('#mascot-input-field');
+    await expect(inputField).toHaveValue(/引き継ぎメモを作って/);
+    await expect(page.locator('#mascot-shortcut-note')).toHaveClass(/is-selected/);
+
+    const sentBeforeConfirm = await page.evaluate(() => {
+      return window.__TAURI_INVOKED__.some((c) => c.cmd === 'send_chat_message');
+    });
+    expect(sentBeforeConfirm).toBe(false);
+
+    // 送信ボタンで確定送信されること
+    await page.locator('#btn-mascot-input-send').click();
+    const sentAfterConfirm = await page.evaluate(() => {
+      return window.__TAURI_INVOKED__.find(
+        (c) => c.cmd === 'send_chat_message' && c.args?.text?.includes('引き継ぎメモを作って')
+      );
+    });
+    expect(sentAfterConfirm).toBeTruthy();
+    await expect(inputBar).toBeHidden();
+  });
 });
