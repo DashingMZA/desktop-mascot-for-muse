@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,142 +8,142 @@
 </head>
 <body class="mode-small">
   <div class="gadget-container">
-    <!-- ヘッダー（ウィンドウドラッグ領域） -->
+    <!-- Header (window drag area) -->
     <header class="gadget-header" id="drag-header">
       <div class="brand-group">
-        <div class="status-dot warning" id="status-dot" title="接続状態"></div>
+        <div class="status-dot warning" id="status-dot" title="Connection status"></div>
         <span class="app-title">Muse</span>
-        <span class="plan-badge" id="plan-badge">無料プラン</span>
+        <span class="plan-badge" id="plan-badge">Free Plan</span>
       </div>
       <div class="header-controls">
-        <button class="icon-btn" id="btn-open-browser" title="ブラウザで Muse を開く (R6)">🌐</button>
-        <button class="icon-btn" id="btn-toggle-session" title="セッション画面 (公式UI / ログイン)">🖥️</button>
-        <button class="icon-btn" id="btn-refresh-all" title="すべて即時同期">↻</button>
-        <button class="icon-btn" id="btn-toggle-size" title="サイズ切替 (小 ⇄ 大, R7)">⤢</button>
-        <button class="win-btn" id="btn-minimize" title="最小化">−</button>
-        <button class="win-btn close" id="btn-close" title="閉じる">×</button>
+        <button class="icon-btn" id="btn-open-browser" title="Open Muse in the browser (R6)">🌐</button>
+        <button class="icon-btn" id="btn-toggle-session" title="Session screen (official UI / sign-in)">🖥️</button>
+        <button class="icon-btn" id="btn-refresh-all" title="Sync everything now">↻</button>
+        <button class="icon-btn" id="btn-toggle-size" title="Toggle size (small ⇄ large, R7)">⤢</button>
+        <button class="win-btn" id="btn-minimize" title="Minimize">−</button>
+        <button class="win-btn close" id="btn-close" title="Close">×</button>
       </div>
     </header>
 
-    <!-- ヒーローカード: アバター (R1) ＆ 利用枠メーター (R5) -->
+    <!-- Hero card: avatar (R1) & usage limit meter (R5) -->
     <section class="hero-card bubble-on-left" id="hero-card">
-      <!-- 左側: アバター表示＋名称 -->
+      <!-- Left: avatar display + name -->
       <div class="avatar-column" id="avatar-column">
         <div class="avatar-holder" id="avatar-holder">
-          <div class="avatar-wrapper" id="avatar-container" title="クリックでリアクション / ダブルクリックで画面を開く">
+          <div class="avatar-wrapper" id="avatar-container" title="Click for a reaction / double-click to open the screen">
             <video id="avatar-video-a" class="avatar-video active" autoplay loop muted playsinline></video>
             <video id="avatar-video-b" class="avatar-video" autoplay loop muted playsinline></video>
             <div class="avatar-fallback hidden" id="avatar-fallback">
               <div class="avatar-ring"></div>
               <span class="avatar-placeholder-text">Muse</span>
-              <button class="avatar-fetch-btn" id="btn-fetch-avatar" title="動画取得">取得</button>
+              <button class="avatar-fetch-btn" id="btn-fetch-avatar" title="Fetch video">Fetch</button>
             </div>
-            <div class="mascot-restore-btn" id="mascot-restore-btn" title="通常画面に復元">⤢</div>
+            <div class="mascot-restore-btn" id="mascot-restore-btn" title="Restore to the normal screen">⤢</div>
           </div>
-          <div class="unread-badge hidden" id="unread-badge" style="display: none;" title="未読メッセージがあります（クリックで開く）"></div>
-          <button class="mascot-quick-input-btn" id="btn-mascot-quick-input" title="質問を入力 (💬)">💬</button>
+          <div class="unread-badge hidden" id="unread-badge" style="display: none;" title="You have unread messages (click to open)"></div>
+          <button class="mascot-quick-input-btn" id="btn-mascot-quick-input" title="Type a question (💬)">💬</button>
         </div>
-        <div class="avatar-name" id="avatar-name" title="クリックで利用枠を最新化 / ドラッグで移動">
-          <span class="avatar-name-text" id="avatar-name-text">ラッキー</span>
+        <div class="avatar-name" id="avatar-name" title="Click to refresh the usage limit / drag to move">
+          <span class="avatar-name-text" id="avatar-name-text">Lucky</span>
           <span class="avatar-limit-badge" id="avatar-limit-badge">--%</span>
         </div>
-        <!-- マスコットモード専用: アバターステータスピル (Issue #35: 動作中のみ表示) -->
+        <!-- Mascot-mode only: avatar status pill (Issue #35: shown only while working) -->
         <div class="avatar-status-pill hidden" id="avatar-status-pill">
-          <span class="avatar-status-text" id="avatar-status-text">🛠️ は動作中です</span>
+          <span class="avatar-status-text" id="avatar-status-text">🛠️ Working</span>
         </div>
       </div>
 
-      <!-- マスコットモード専用: クイック1行ミニ入力バー (Issue #27) ＋ おまかせショートカット (Issue #68) -->
+      <!-- Mascot-mode only: quick one-line mini input bar (Issue #27) + one-click shortcuts (Issue #68) -->
       <div class="mascot-input-bar hidden" id="mascot-input-bar">
         <div class="mascot-input-tail"></div>
         <div class="mascot-input-row">
           <span class="mascot-input-icon">💬</span>
-          <input type="text" class="mascot-input-field" id="mascot-input-field" placeholder="Museに質問... (Enterで送信 / Escで閉じる)" autocomplete="off" />
-          <button class="mascot-input-btn-send" id="btn-mascot-input-send" title="送信 (Enter)">➤</button>
-          <button class="mascot-input-btn-close" id="btn-mascot-input-close" title="閉じる (Esc)">×</button>
+          <input type="text" class="mascot-input-field" id="mascot-input-field" placeholder="Ask Muse... (Enter to send / Esc to close)" autocomplete="off" />
+          <button class="mascot-input-btn-send" id="btn-mascot-input-send" title="Send (Enter)">➤</button>
+          <button class="mascot-input-btn-close" id="btn-mascot-input-close" title="Close (Esc)">×</button>
         </div>
         <div class="mascot-shortcut-panel" id="mascot-shortcut-panel">
           <div class="mascot-shortcut-header">
-            <span class="mascot-shortcut-title">✨ おまかせショートカット</span>
-            <span class="mascot-shortcut-note" id="mascot-shortcut-note">押すと入力欄に入ります（送信で1ターン消費）</span>
+            <span class="mascot-shortcut-title">✨ One-click shortcuts</span>
+            <span class="mascot-shortcut-note" id="mascot-shortcut-note">Tap to fill the input field (sending uses 1 turn)</span>
           </div>
           <div class="mascot-shortcut-chips" id="mascot-shortcut-chips"></div>
         </div>
       </div>
 
-      <!-- マスコットモード専用: ルパン風吹き出し -->
-      <div class="mascot-bubble hidden" id="mascot-bubble" title="クリックで通常画面を開く">
+      <!-- Mascot-mode only: Lupin-style speech bubble -->
+      <div class="mascot-bubble hidden" id="mascot-bubble" title="Click to open the normal screen">
         <div class="mascot-bubble-tail"></div>
         <div class="mascot-bubble-header">
           <span class="mascot-bubble-title">Muse</span>
-          <button class="mascot-bubble-close" id="btn-bubble-close" title="閉じる">×</button>
+          <button class="mascot-bubble-close" id="btn-bubble-close" title="Close">×</button>
         </div>
         <div class="mascot-bubble-body"><span class="mascot-bubble-text" id="mascot-bubble-text"></span><span class="mascot-bubble-cursor" id="mascot-bubble-cursor">▍</span><div class="mascot-bubble-options hidden" id="mascot-bubble-options"></div></div>
       </div>
 
-      <!-- 右側: 利用枠メーター -->
+      <!-- Right: usage limit meter -->
       <div class="limit-box">
         <div class="limit-header">
-          <span class="limit-title">利用枠 (Weekly)</span>
+          <span class="limit-title">Usage limit (Weekly)</span>
           <span class="limit-percent" id="limit-percent-text">--%</span>
         </div>
         <div class="progress-bar-container">
           <div class="progress-bar" id="limit-progress-bar" style="width: 0%;"></div>
         </div>
         <div class="limit-footer">
-          <span class="limit-reset-text" id="limit-reset-text">読み込み中...</span>
-          <button class="btn-micro" id="btn-refresh-limit" title="利用枠を再取得">更新</button>
+          <span class="limit-reset-text" id="limit-reset-text">Loading...</span>
+          <button class="btn-micro" id="btn-refresh-limit" title="Refresh usage limit">Refresh</button>
         </div>
       </div>
     </section>
 
-    <!-- チャットスレッドエリア (R2) -->
+    <!-- Chat thread area (R2) -->
     <section class="chat-section">
       <div class="chat-header">
-        <span class="chat-header-title">メインチャット</span>
+        <span class="chat-header-title">Main chat</span>
         <div class="chat-header-actions">
           <span class="chat-sync-indicator" id="chat-sync-indicator"></span>
-          <select id="msg-limit-select" class="select-micro" title="表示件数">
-            <option value="3">3件</option>
-            <option value="5" selected>5件</option>
-            <option value="10">10件</option>
-            <option value="15">15件</option>
+          <select id="msg-limit-select" class="select-micro" title="Number of messages shown">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
           </select>
         </div>
       </div>
 
-      <!-- メッセージリスト -->
+      <!-- Message list -->
       <div class="chat-messages" id="chat-messages">
         <div class="chat-placeholder">
-          <p class="placeholder-main">チャットを読み込んでいます...</p>
-          <p class="placeholder-sub">※ まだ表示されない場合はセッション画面でログインしてください</p>
-          <button class="btn-login-open" id="btn-open-session-empty">🖥️ セッション画面を開く</button>
+          <p class="placeholder-main">Loading chat...</p>
+          <p class="placeholder-sub">* If nothing shows yet, please sign in on the session screen</p>
+          <button class="btn-login-open" id="btn-open-session-empty">🖥️ Open the session screen</button>
         </div>
       </div>
     </section>
 
-    <!-- メッセージ入力・送信エリア (R3) -->
+    <!-- Message input & send area (R3) -->
     <footer class="chat-footer">
       <div class="input-container">
         <textarea
           id="chat-input"
           class="chat-textarea"
-          placeholder="Muse にメッセージを入力... (Enterで送信)"
+          placeholder="Type a message to Muse... (Enter to send)"
           rows="1"
         ></textarea>
-        <button id="btn-send-message" class="btn-send" title="送信 (Enter)">
+        <button id="btn-send-message" class="btn-send" title="Send (Enter)">
           <span class="send-icon">➤</span>
         </button>
       </div>
       <div class="footer-tips">
-        <span class="hotkey-tip">ホットキー: <kbd>Ctrl+Shift+M</kbd></span>
-        <div class="health-badges" id="health-badges" title="DOMセレクタ生存状態 (§17)">
-          <span class="health-pill" id="health-r1" title="R1: アバター動画セレクタ">R1</span>
-          <span class="health-pill" id="health-r2" title="R2: チャット履歴セレクタ">R2</span>
-          <span class="health-pill" id="health-r3" title="R3: メッセージ送信セレクタ">R3</span>
-          <span class="health-pill" id="health-r5" title="R5: 利用枠セレクタ">R5</span>
+        <span class="hotkey-tip">Hotkey: <kbd>Ctrl+Shift+M</kbd></span>
+        <div class="health-badges" id="health-badges" title="DOM selector health (§17)">
+          <span class="health-pill" id="health-r1" title="R1: Avatar video selector">R1</span>
+          <span class="health-pill" id="health-r2" title="R2: Chat history selector">R2</span>
+          <span class="health-pill" id="health-r3" title="R3: Message send selector">R3</span>
+          <span class="health-pill" id="health-r5" title="R5: Usage limit selector">R5</span>
         </div>
-        <span class="sync-status" id="footer-sync-time">未同期</span>
+        <span class="sync-status" id="footer-sync-time">Not synced</span>
       </div>
     </footer>
   </div>

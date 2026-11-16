@@ -34,14 +34,14 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     }
   });
 
-  it('extractAvatarName: リンク済みの直前行からアバター名を正確に抽出する', () => {
+  it('extractAvatarName: extracts the avatar name accurately from the line just before "Linked"', () => {
     document.body.innerHTML = `
       <aside class="avatar-dock">
         <div>
           <video src="blob:https://muse.ai/1234"></video>
           <div>
-            <span>ラッキー</span>
-            <span>リンク済み</span>
+            <span>Lucky</span>
+            <span>Linked</span>
           </div>
         </div>
       </aside>
@@ -49,71 +49,71 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     const el = document.querySelector('aside > div');
     // jsdom does not implement innerText layout line breaks automatically unless mocked or structured
     Object.defineProperty(el, 'innerText', {
-      value: 'ラッキー\nリンク済み',
+      value: 'Lucky\nLinked',
       configurable: true,
     });
 
     const name = window.__MUSE_BRIDGE__.extractAvatarName();
-    expect(name).toBe('ラッキー');
+    expect(name).toBe('Lucky');
   });
 
-  it('getAvatarState (Issue #35, #42): チャット本文内のキーワードを誤検出せず、アバター周辺のステータスのみを検出する', async () => {
+  it('getAvatarState (Issue #35, #42): does not misdetect keywords in the chat body; detects only the status around the avatar', async () => {
     document.body.innerHTML = `
       <div class="avatar-header">
         <video data-hatch-media-owner="avatar-layer" src=""></video>
-        <span class="status-label">リンク済み</span>
+        <span class="status-label">Linked</span>
       </div>
       <main>
         <div class="group/msg">
-          <div class="prose">現在バッチ処理が動作中です。しばらく待機中になります。</div>
+          <div class="prose">A batch process is currently running. Please wait a while.</div>
         </div>
       </main>
     `;
 
     const stateIdle = await window.__MUSE_BRIDGE__.getAvatarState();
     expect(stateIdle.state).toBe('idle');
-    expect(stateIdle.statusText).toBe('リンク済み');
+    expect(stateIdle.statusText).toBe('Linked');
 
-    // アバター下のステータスが「考え中...」に変化した場合
-    document.querySelector('.status-label').textContent = '考え中...';
+    // When the status under the avatar changes to "Thinking..."
+    document.querySelector('.status-label').textContent = 'Thinking...';
     const stateWorking = await window.__MUSE_BRIDGE__.getAvatarState();
     expect(stateWorking.state).toBe('working');
-    expect(stateWorking.statusText).toBe('考え中...');
+    expect(stateWorking.statusText).toBe('Thinking...');
 
-    // 「コードを作成中」に変化した場合
-    document.querySelector('.status-label').textContent = 'コードを作成中';
+    // When it changes to "Creating code"
+    document.querySelector('.status-label').textContent = 'Creating code';
     const stateMaking = await window.__MUSE_BRIDGE__.getAvatarState();
     expect(stateMaking.state).toBe('making_something');
-    expect(stateMaking.statusText).toBe('コードを作成中');
+    expect(stateMaking.statusText).toBe('Creating code');
   });
 
-  it('getMessages (Issue #32): 選択肢ボタンを抽出し、システムボタン（コピー・評価等）を除外し、本文末尾の重複を除去する', async () => {
+  it('getMessages (Issue #32): extracts option buttons, excludes system buttons (Copy, Like, etc.), and removes duplication at the end of the body', async () => {
     document.body.innerHTML = `
       <main>
         <div class="group/msg" id="msg-1">
-          <span class="sr-only">自分:</span>
-          <div class="prose">どの案がいいかな？</div>
+          <span class="sr-only">You:</span>
+          <div class="prose">Which option sounds good?</div>
         </div>
         <div class="group/msg" id="msg-2">
-          <span class="sr-only">アシスタントメッセージ:</span>
-          <div class="prose">2つのプランを用意しました！どちらにしますか？A案で進めるB案で進める</div>
+          <span class="sr-only">Assistant message:</span>
+          <div class="prose">I've prepared two plans! Which one shall we go with? Proceed with plan AProceed with plan B</div>
           <div class="actions">
-            <button aria-label="コピー">コピー</button>
-            <button aria-label="いいね">Good</button>
-            <button class="suggestion-chip">A案で進める</button>
-            <button class="suggestion-chip">B案で進める</button>
+            <button aria-label="Copy">Copy</button>
+            <button aria-label="Like">Good</button>
+            <button class="suggestion-chip">Proceed with plan A</button>
+            <button class="suggestion-chip">Proceed with plan B</button>
           </div>
         </div>
-        <textarea placeholder="メッセージを入力"></textarea>
+        <textarea placeholder="Type a message"></textarea>
       </main>
     `;
 
     // Configure innerText for jsdom
     const msg1Prose = document.querySelector('#msg-1 .prose');
-    Object.defineProperty(msg1Prose, 'innerText', { value: 'どの案がいいかな？', configurable: true });
+    Object.defineProperty(msg1Prose, 'innerText', { value: 'Which option sounds good?', configurable: true });
     const msg2Prose = document.querySelector('#msg-2 .prose');
     Object.defineProperty(msg2Prose, 'innerText', {
-      value: '2つのプランを用意しました！どちらにしますか？\nA案で進める\nB案で進める',
+      value: "I've prepared two plans! Which one shall we go with?\nProceed with plan A\nProceed with plan B",
       configurable: true,
     });
 
@@ -121,62 +121,62 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(messages).toHaveLength(2);
     expect(messages[0]).toEqual({
       role: 'user',
-      text: 'どの案がいいかな？',
+      text: 'Which option sounds good?',
     });
     expect(messages[1]).toEqual({
       role: 'assistant',
-      text: '2つのプランを用意しました！どちらにしますか？',
-      options: ['A案で進める', 'B案で進める'],
+      text: "I've prepared two plans! Which one shall we go with?",
+      options: ['Proceed with plan A', 'Proceed with plan B'],
     });
   });
 
-  it('fetchUsageLimit (Issue #33, #43): 使用済み%またはプログレスバーから残り%を正確に算出する', async () => {
+  it('fetchUsageLimit (Issue #33, #43): calculates the remaining % accurately from the used % or the progress bar', async () => {
     document.body.innerHTML = `
       <div role="dialog">
-        <span class="text-body text-text-primary">Proプラン</span>
+        <span class="text-body text-text-primary">Pro Plan</span>
         <div role="progressbar" aria-valuenow="35"></div>
-        <p>35% 使用済み</p>
-        <p>1週間の上限は11月14日にリセットされます</p>
+        <p>35% used</p>
+        <p>Weekly limit resets on Nov 14</p>
       </div>
     `;
     Object.defineProperty(document.body, 'innerText', {
-      value: 'Proプラン\n35% 使用済み\n1週間の上限は11月14日にリセットされます',
+      value: 'Pro Plan\n35% used\nWeekly limit resets on Nov 14',
       configurable: true,
     });
 
     const limit = await window.__MUSE_BRIDGE__.fetchUsageLimit(true);
-    expect(limit.plan_name).toBe('Proプラン');
+    expect(limit.plan_name).toBe('Pro Plan');
     expect(limit.used_percent).toBe(35);
     expect(limit.remaining_percent).toBe(65);
-    expect(limit.reset_text).toBe('1週間の上限は11月14日にリセットされます');
+    expect(limit.reset_text).toBe('Weekly limit resets on Nov 14');
   });
 
-  it('fetchUsageLimit (Issue #34): AI回答生成中（停止ボタン存在時）は自動画面遷移を行わずフォールバックまたはキャッシュを返す', async () => {
+  it('fetchUsageLimit (Issue #34): while the AI is generating an answer (stop button present), does not auto-navigate and returns a fallback or the cache', async () => {
     window.__MUSE_CACHED_LIMIT__ = {
-      plan_name: '無料プラン',
+      plan_name: 'Free Plan',
       used_percent: 20,
       remaining_percent: 80,
-      reset_text: 'キャッシュ済みリセット日',
+      reset_text: 'Cached reset date',
     };
 
     let settingsClicked = false;
     document.body.innerHTML = `
-      <button aria-label="設定" id="btn-settings">設定</button>
-      <button aria-label="回答を停止">停止</button>
+      <button aria-label="Settings" id="btn-settings">Settings</button>
+      <button aria-label="Stop answering">Stop</button>
     `;
     Object.defineProperty(document.body, 'innerText', { value: '', configurable: true });
     document.getElementById('btn-settings').addEventListener('click', () => {
       settingsClicked = true;
     });
 
-    // passiveOnly = false で呼んでも、停止ボタンがあるためクリック遷移しないこと
+    // Even when called with passiveOnly = false, it must not click-navigate because the stop button is present
     const res = await window.__MUSE_BRIDGE__.fetchUsageLimit(false);
     expect(settingsClicked).toBe(false);
     expect(res.remaining_percent).toBe(80);
   });
 
-  it('checkChatReady (Issue #46): URL正規化比較と入力欄の有効状態を判定する', async () => {
-    document.body.innerHTML = `<textarea placeholder="メッセージを入力"></textarea>`;
+  it('checkChatReady (Issue #46): judges URL-normalized comparison and the input field enabled state', async () => {
+    document.body.innerHTML = `<textarea placeholder="Type a message"></textarea>`;
     const currentHref = window.location.href;
 
     const readySame = await window.__MUSE_BRIDGE__.checkChatReady(currentHref + '/?__pwa=1#hash');
@@ -188,15 +188,15 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(readyDiff.urlMatched).toBe(false);
   });
 
-  it('fetchUsageLimit (Issue #49): 設定クリック後に非同期でモーダル・一般タブ・利用枠DOMが遅延描画される場合でもポーリング待機で確実に取得しモーダルを閉じる', async () => {
+  it('fetchUsageLimit (Issue #49): reliably fetches the usage limit with polling waits and closes the modal even when the modal, General tab, and usage-limit DOM render late asynchronously after clicking Settings', async () => {
     let settingsClicked = false;
     let generalTabClicked = false;
     let modalClosed = false;
 
     document.body.innerHTML = `
       <main>
-        <button title="設定" id="btn-settings">⚙️</button>
-        <textarea placeholder="メッセージを入力"></textarea>
+        <button title="Settings" id="btn-settings">⚙️</button>
+        <textarea placeholder="Type a message"></textarea>
       </main>
       <div id="modal-root"></div>
     `;
@@ -205,28 +205,28 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     settingsBtn.addEventListener('click', () => {
       if (settingsClicked) return;
       settingsClicked = true;
-      // 60ms 後にモーダルと「一般」タブが非同期出現
+      // The modal and "General" tab appear asynchronously after 60ms
       setTimeout(() => {
         const modalRoot = document.getElementById('modal-root');
         modalRoot.innerHTML = `
           <div role="dialog" id="settings-dialog">
-            <button role="tab" id="tab-general">一般</button>
-            <button aria-label="閉じる" id="btn-close-modal">×</button>
-            <div id="tab-panel">読み込み中...</div>
+            <button role="tab" id="tab-general">General</button>
+            <button aria-label="Close" id="btn-close-modal">×</button>
+            <div id="tab-panel">Loading...</div>
           </div>
         `;
         const tabGeneral = document.getElementById('tab-general');
         tabGeneral.addEventListener('click', () => {
           if (generalTabClicked) return;
           generalTabClicked = true;
-          // タブクリックからさらに 120ms 後に API レスポンスによる利用枠が非同期描画
+          // The usage limit from the API response renders asynchronously 120ms after the tab click
           setTimeout(() => {
             const panel = document.getElementById('tab-panel');
             if (panel) {
               panel.innerHTML = `
-                <span class="text-body text-text-primary">無料プラン</span>
-                <div><span>42%</span> <span>使用済み</span></div>
-                <p>1週間の上限は11月20日にリセットされます</p>
+                <span class="text-body text-text-primary">Free Plan</span>
+                <div><span>42%</span> <span>used</span></div>
+                <p>Weekly limit resets on Nov 20</p>
               `;
             }
           }, 120);
@@ -250,22 +250,22 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(settingsClicked).toBe(true);
     expect(generalTabClicked).toBe(true);
     expect(modalClosed).toBe(true);
-    expect(res.plan_name).toBe('無料プラン');
+    expect(res.plan_name).toBe('Free Plan');
     expect(res.used_percent).toBe(42);
     expect(res.remaining_percent).toBe(58);
-    expect(res.reset_text).toBe('1週間の上限は11月20日にリセットされます');
+    expect(res.reset_text).toBe('Weekly limit resets on Nov 20');
     expect(window.__MUSE_CACHED_LIMIT__).toEqual(res);
   });
 
-  it('scanDomForLimit (Issue #49): プログレスバーのstyle幅や分割ノードから利用枠を正確に抽出する', () => {
+  it('scanDomForLimit (Issue #49): accurately extracts the usage limit from the progress bar style width or split nodes', () => {
     document.body.innerHTML = `
       <div role="dialog">
         <span class="plan-badge">Free Plan</span>
         <div class="progress-track">
           <div class="progress-fill" style="width: 28%;"></div>
         </div>
-        <div>残り 72%</div>
-        <div>リセット: 11月21日</div>
+        <div>Remaining 72%</div>
+        <div>Reset: Nov 21</div>
       </div>
     `;
 
@@ -274,17 +274,17 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(res.plan_name).toBe('Free Plan');
     expect(res.remaining_percent).toBe(72);
     expect(res.used_percent).toBe(28);
-    expect(res.reset_text).toBe('リセット: 11月21日');
+    expect(res.reset_text).toBe('Reset: Nov 21');
   });
 
-  it('fetchUsageLimit (Issue #49 ガードレール): 既に設定ダイアログが開いている状態では値を読み取るのみで絶対に勝手に閉じない', async () => {
+  it('fetchUsageLimit (Issue #49 guardrail): when the settings dialog is already open, only reads the values and never closes it on its own', async () => {
     let closeClicked = false;
     let escapeDispatched = false;
 
     document.body.innerHTML = `
       <div role="dialog" id="user-opened-dialog">
-        <button aria-label="閉じる" id="btn-close-dialog">×</button>
-        <div id="dialog-content">設定メニュー表示中...</div>
+        <button aria-label="Close" id="btn-close-dialog">×</button>
+        <div id="dialog-content">Settings menu open...</div>
       </div>
     `;
 
@@ -296,11 +296,11 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     };
     document.addEventListener('keydown', onKeyDown);
 
-    // 50ms 後にユーザーが一般タブを開いて利用枠が描画されたケース
+    // Case where the user opens the General tab after 50ms and the usage limit renders
     setTimeout(() => {
       const content = document.getElementById('dialog-content');
       if (content) {
-        content.innerHTML = `<p>25% 使用済み</p>`;
+        content.innerHTML = `<p>25% used</p>`;
       }
     }, 50);
 
@@ -317,15 +317,15 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(escapeDispatched).toBe(false);
   });
 
-  it('fetchUsageLimit (Issue #49 ガードレール): バックグラウンドポーリング中にセッション画面が表示された場合、即座に中断してモーダルを勝手に閉じない', async () => {
+  it('fetchUsageLimit (Issue #49 guardrail): when the session screen appears during background polling, aborts immediately and does not close the modal on its own', async () => {
     let settingsClicked = false;
     let closeClicked = false;
     let escapeDispatched = false;
 
     document.body.innerHTML = `
       <main>
-        <button aria-label="設定" id="btn-settings">⚙️</button>
-        <textarea placeholder="メッセージを入力"></textarea>
+        <button aria-label="Settings" id="btn-settings">⚙️</button>
+        <textarea placeholder="Type a message"></textarea>
       </main>
       <div id="modal-root"></div>
     `;
@@ -334,14 +334,14 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
       settingsClicked = true;
       document.getElementById('modal-root').innerHTML = `
         <div role="dialog">
-          <button aria-label="閉じる" id="btn-close-modal">×</button>
-          <div id="tab-panel">読み込み中...</div>
+          <button aria-label="Close" id="btn-close-modal">×</button>
+          <div id="tab-panel">Loading...</div>
         </div>
       `;
       document.getElementById('btn-close-modal').addEventListener('click', () => {
         closeClicked = true;
       });
-      // ポーリング途中の 40ms 後にユーザーがセッション画面を開いた（__MUSE_SESSION_VISIBLE__ = true）
+      // The user opens the session screen 40ms into polling (__MUSE_SESSION_VISIBLE__ = true)
       setTimeout(() => {
         window.__MUSE_SESSION_VISIBLE__ = true;
       }, 40);
@@ -365,90 +365,90 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(escapeDispatched).toBe(false);
   });
 
-  it('inspectReloadSafety (Issue #52): 生成中（停止ボタン）および未送信下書きの有無を正確に判定する', () => {
+  it('inspectReloadSafety (Issue #52): accurately judges whether generation is in progress (stop button) and whether an unsent draft exists', () => {
     document.body.innerHTML = `
       <main>
-        <textarea placeholder="メッセージを入力"></textarea>
+        <textarea placeholder="Type a message"></textarea>
       </main>
     `;
     const ta = document.querySelector('textarea');
 
-    // 1. 何も入力されておらず停止ボタンも無い場合
+    // 1. Nothing entered and no stop button
     let safety = window.__MUSE_BRIDGE__.inspectReloadSafety();
     expect(safety.isGenerating).toBe(false);
     expect(safety.hasDraft).toBe(false);
     expect(safety.draftLength).toBe(0);
 
-    // 2. 空白のみの場合は下書きなし扱い
+    // 2. Whitespace only counts as no draft
     ta.value = '   \n  ';
     safety = window.__MUSE_BRIDGE__.inspectReloadSafety();
     expect(safety.hasDraft).toBe(false);
 
-    // 3. 未送信の下書きがある場合
-    ta.value = 'まだ送っていない質問';
+    // 3. An unsent draft exists
+    ta.value = 'Hello Muse';
     safety = window.__MUSE_BRIDGE__.inspectReloadSafety();
     expect(safety.hasDraft).toBe(true);
     expect(safety.draftLength).toBe(10);
 
-    // 4. 下書きを消して停止ボタンが現れた場合（回答生成中）
+    // 4. The draft is cleared and the stop button appears (answer generating)
     ta.value = '';
     const stopBtn = document.createElement('button');
-    stopBtn.setAttribute('aria-label', '回答の生成を停止');
+    stopBtn.setAttribute('aria-label', 'Stop generating answer');
     document.querySelector('main').appendChild(stopBtn);
     safety = window.__MUSE_BRIDGE__.inspectReloadSafety();
     expect(safety.isGenerating).toBe(true);
     expect(safety.hasDraft).toBe(false);
   });
 
-  it('外部リンククリックおよび window.open を検知して __MUSE_OPEN_URL__ タイトル通知を発行する (Issue #54)', () => {
+  it('Detects external link clicks and window.open and issues a __MUSE_OPEN_URL__ title notification (Issue #54)', () => {
     document.title = 'Muse AI - Session';
     document.body.innerHTML = `
       <main>
-        <a id="ext-link" href="https://example.com/docs" target="_blank"><span>外部リンク</span></a>
-        <a id="int-link" href="https://muse.ai/thread/abc">内部リンク</a>
-        <a id="oauth-link" href="https://accounts.google.com/o/oauth2/auth">Googleログイン</a>
+        <a id="ext-link" href="https://example.com/docs" target="_blank"><span>External link</span></a>
+        <a id="int-link" href="https://muse.ai/thread/abc">Internal link</a>
+        <a id="oauth-link" href="https://accounts.google.com/o/oauth2/auth">Google sign-in</a>
       </main>
     `;
 
-    // 内部リンクはフックしない
+    // Internal links are not hooked
     const intEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
     document.getElementById('int-link').dispatchEvent(intEvent);
     expect(intEvent.defaultPrevented).toBe(false);
     expect(document.title).toBe('Muse AI - Session');
 
-    // OAuthリンクもフックしない
+    // OAuth links are not hooked either
     const oauthEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
     document.getElementById('oauth-link').dispatchEvent(oauthEvent);
     expect(oauthEvent.defaultPrevented).toBe(false);
     expect(document.title).toBe('Muse AI - Session');
 
-    // 外部リンク（子要素 <span> クリック）はフックして __MUSE_OPEN_URL__ を設定する
+    // External links (clicking the child <span>) are hooked and set __MUSE_OPEN_URL__
     const extSpan = document.querySelector('#ext-link span');
     const extEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
     extSpan.dispatchEvent(extEvent);
     expect(extEvent.defaultPrevented).toBe(true);
     expect(document.title).toBe('__MUSE_OPEN_URL__:https://example.com/docs');
 
-    // window.open でも外部URLなら __MUSE_OPEN_URL__ を設定して null を返す
+    // window.open also sets __MUSE_OPEN_URL__ for an external URL and returns null
     document.title = 'Muse AI - Session';
     const opened = window.open('https://github.com/mowthow-works', '_blank');
     expect(opened).toBeNull();
     expect(document.title).toBe('__MUSE_OPEN_URL__:https://github.com/mowthow-works');
   });
 
-  it('getAvatarState (Issue #57): アバター親要素フォールバックでアバター名（ラッキー等）を statusText に誤抽出しない', async () => {
+  it('getAvatarState (Issue #57): parent-element fallback does not mis-extract the avatar name (Lucky, etc.) as statusText', async () => {
     document.body.innerHTML = `
       <aside class="avatar-dock">
         <div id="avatar-box">
           <video src="blob:https://muse.ai/avatar-1"></video>
           <div>52%</div>
-          <div>ラッキー</div>
+          <div>Lucky</div>
         </div>
       </aside>
     `;
     const box = document.getElementById('avatar-box');
     Object.defineProperty(box, 'innerText', {
-      value: '52%\nラッキー',
+      value: '52%\nLucky',
       configurable: true,
     });
     const video = document.querySelector('video');
@@ -459,25 +459,25 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(res.statusText).toBe('');
   });
 
-  it('getAvatarState (Issue #58): 親要素フォールバックで main チャット欄を含む上位要素のチャット本文を誤抽出しない', async () => {
+  it('getAvatarState (Issue #58): parent-element fallback does not mis-extract chat body text from an ancestor containing the main chat area', async () => {
     document.body.innerHTML = `
       <div id="layout-root">
         <div id="avatar-wrap">
           <div id="avatar-box">
             <video src="blob:https://muse.ai/avatar-2"></video>
-            <div>ラッキー</div>
+            <div>Lucky</div>
           </div>
         </div>
         <main>
           <div class="group/msg">
-            <div class="prose">- リフォームとのダブリ：なしと確認</div>
+            <div class="prose">- No overlap with the renovation: confirmed</div>
           </div>
         </main>
       </div>
     `;
     const layoutRoot = document.getElementById('layout-root');
     Object.defineProperty(layoutRoot, 'innerText', {
-      value: 'ラッキー\n- リフォームとのダブリ：なしと確認',
+      value: 'Lucky\n- No overlap with the renovation: confirmed',
       configurable: true,
     });
     const video = document.querySelector('video');
@@ -488,22 +488,22 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(res.statusText).toBe('');
   });
 
-  it('fetchUsageLimit / inspectReloadSafety (Issue #63): Desktop 等の部分一致や無効な停止ボタンを生成中と誤検出しない', async () => {
+  it('fetchUsageLimit / inspectReloadSafety (Issue #63): does not misdetect generation from partial matches like Desktop or disabled stop buttons', async () => {
     let settingsClicked = false;
     document.body.innerHTML = `
       <button aria-label="Desktop mode">Desktop</button>
       <button aria-label="Stop generating" disabled>Stop</button>
       <button aria-label="Stop response" style="display: none">Stop</button>
-      <button aria-label="設定" id="btn-settings">設定</button>
+      <button aria-label="Settings" id="btn-settings">Settings</button>
     `;
     Object.defineProperty(document.body, 'innerText', { value: '', configurable: true });
     document.getElementById('btn-settings').addEventListener('click', () => {
       settingsClicked = true;
       const dlg = document.createElement('div');
       dlg.setAttribute('role', 'dialog');
-      dlg.innerHTML = '<div role="progressbar" aria-valuenow="25"></div><span>25% 使用済み</span>';
+      dlg.innerHTML = '<div role="progressbar" aria-valuenow="25"></div><span>25% used</span>';
       document.body.appendChild(dlg);
-      Object.defineProperty(document.body, 'innerText', { value: '25% 使用済み', configurable: true });
+      Object.defineProperty(document.body, 'innerText', { value: '25% used', configurable: true });
     });
 
     const safety = window.__MUSE_BRIDGE__.inspectReloadSafety();
@@ -521,8 +521,8 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(res.remaining_percent).toBe(75);
   });
 
-  it('fetchUsageLimit (Issue #63): 2段階メニュー（設定ボタン → ポップオーバー内「設定」 → 設定モーダル）を辿って利用枠を取得する', async () => {
-    document.body.innerHTML = `<button aria-label="設定" id="btn-settings">設定</button>`;
+  it('fetchUsageLimit (Issue #63): follows the two-step menu (Settings button → "Settings" in the popover → settings modal) to fetch the usage limit', async () => {
+    document.body.innerHTML = `<button aria-label="Settings" id="btn-settings">Settings</button>`;
     Object.defineProperty(document.body, 'innerText', { value: '', configurable: true });
 
     let subSettingsClicked = false;
@@ -531,10 +531,10 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
       popover.setAttribute('role', 'dialog');
       popover.id = 'popover-menu';
       popover.innerHTML = `
-        <button>キーボードショートカット</button>
-        <button>アプリをダウンロード</button>
-        <button>問題を報告</button>
-        <button id="btn-sub-settings">設定</button>
+        <button>Keyboard shortcuts</button>
+        <button>Download the app</button>
+        <button>Report an issue</button>
+        <button id="btn-sub-settings">Settings</button>
       `;
       document.body.appendChild(popover);
 
@@ -544,15 +544,15 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
         const modal = document.createElement('div');
         modal.setAttribute('role', 'dialog');
         modal.innerHTML = `
-          <button role="tab" id="tab-general">一般</button>
-          <button aria-label="閉じる" id="btn-close">×</button>
+          <button role="tab" id="tab-general">General</button>
+          <button aria-label="Close" id="btn-close">×</button>
         `;
         document.body.appendChild(modal);
         document.getElementById('tab-general').addEventListener('click', () => {
           const content = document.createElement('div');
-          content.innerHTML = '<div role="progressbar" aria-valuenow="21"></div><span>21% 使用済み</span>';
+          content.innerHTML = '<div role="progressbar" aria-valuenow="21"></div><span>21% used</span>';
           modal.appendChild(content);
-          Object.defineProperty(document.body, 'innerText', { value: '21% 使用済み', configurable: true });
+          Object.defineProperty(document.body, 'innerText', { value: '21% used', configurable: true });
         });
         document.getElementById('btn-close').addEventListener('click', () => modal.remove());
       });
@@ -570,8 +570,8 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(res.remaining_percent).toBe(79);
   });
 
-  it('fetchUsageLimit (Issue #67): role="dialog"無しのポップオーバーや「設定Ctrl+,」表記の2段階メニューにも対応する', async () => {
-    document.body.innerHTML = `<button aria-label="設定" id="btn-settings">設定</button>`;
+  it('fetchUsageLimit (Issue #67): also handles popovers without role="dialog" and two-step menus showing "SettingsCtrl+,"', async () => {
+    document.body.innerHTML = `<button aria-label="Settings" id="btn-settings">Settings</button>`;
     Object.defineProperty(document.body, 'innerText', { value: '', configurable: true });
 
     let subSettingsClicked = false;
@@ -579,10 +579,10 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
       const popover = document.createElement('div');
       popover.className = 'popover-content';
       popover.innerHTML = `
-        <button>キーボードショートカット<span>Ctrl+/</span></button>
-        <button>アプリをダウンロード</button>
-        <button>問題を報告</button>
-        <button id="btn-sub-settings">設定<span>Ctrl+,</span></button>
+        <button>Keyboard shortcuts<span>Ctrl+/</span></button>
+        <button>Download the app</button>
+        <button>Report an issue</button>
+        <button id="btn-sub-settings">Settings<span>Ctrl+,</span></button>
       `;
       document.body.appendChild(popover);
 
@@ -592,15 +592,15 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
         const modal = document.createElement('div');
         modal.setAttribute('role', 'dialog');
         modal.innerHTML = `
-          <button role="tab" id="tab-general">一般</button>
-          <button aria-label="閉じる" id="btn-close">×</button>
+          <button role="tab" id="tab-general">General</button>
+          <button aria-label="Close" id="btn-close">×</button>
         `;
         document.body.appendChild(modal);
         document.getElementById('tab-general').addEventListener('click', () => {
           const content = document.createElement('div');
-          content.innerHTML = '<div role="progressbar" aria-valuenow="29"></div><span>29% 使用済み</span>';
+          content.innerHTML = '<div role="progressbar" aria-valuenow="29"></div><span>29% used</span>';
           modal.appendChild(content);
-          Object.defineProperty(document.body, 'innerText', { value: '29% 使用済み', configurable: true });
+          Object.defineProperty(document.body, 'innerText', { value: '29% used', configurable: true });
         });
         document.getElementById('btn-close').addEventListener('click', () => modal.remove());
       });

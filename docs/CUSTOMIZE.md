@@ -1,180 +1,180 @@
-# カスタマイズガイド
+# Customization Guide
 
-Desktop Mascot for Muse の詳細なカスタマイズ方法をまとめたリファレンスです。
-基本的な使い方は [README](../README.md)、機能の内部詳細や仕様の正（Single Source of Truth）は **[機能仕様書](SPEC.md)** を参照してください。
+A reference covering detailed customization methods for Desktop Mascot for Muse.
+For basic usage, see the [README](../README.md); for internal details and the authoritative specification (Single Source of Truth), see the **[Feature Specification](SPEC.md)**.
 
 > [!TIP]
-> **GUI 設定画面での簡単カスタマイズ**
-> システムトレイの右クリックメニュー **「設定...」** から、動作タイマー（放置時間・吹き出し秒数等）の調整、放置動画ごとの有効/無効トグル、セリフ（Quotes）の追加・編集が GUI 上で行えます。「フォルダを開く」ボタンからアバター配置先へワンクリックでアクセスできます。
-> `setting.json` と `quotes.json` は **アプリ起動中でもファイルを保存するだけで 3 秒以内に自動反映（ホットリロード）** されます。
+> **Easy customization in the GUI Settings screen**
+> From **"Settings..."** in the system tray right-click menu, you can adjust behavior timers (idle time, speech-bubble duration, etc.), toggle each idle video on/off, and add or edit lines (Quotes) in the GUI. The "Open folder" button takes you to the avatar placement folder in one click.
+> `setting.json` and `quotes.json` are **automatically applied (hot-reloaded) within 3 seconds of saving the file, even while the app is running**.
 
 ---
 
-## 1. アバター動画の準備と配置
+## 1. Preparing and Placing Avatar Videos
 
-配置先フォルダは、設定画面（「フォルダ・データ管理」タブ）の「フォルダを開く」からワンクリックで開くことができます。アプリアップデート時の動画・設定消失を防ぐため、通常は OS の永続データ領域（`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`）が使用されます（実行ファイルと同階層に `portable` ファイルを置いた場合のみローカルの `avatars/` を使用）。
+You can open the placement folder in one click via "Open folder" in the Settings screen ("Folder & Data Management" tab). To prevent videos and settings from being lost when the app updates, the OS persistent data area (`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`) is normally used (the local `avatars/` folder is used only if a `portable` file is placed next to the executable).
 
-### ステップ 1: 基本ステータス動画（5種類）
+### Step 1: Basic status videos (5 types)
 
-Muse 本体の状態同期やクリックリアクションで使用する基本動画を `avatars/` 直下に配置します（未配置でも、ログイン済みの Muse セッション画面から `idle` 動画を自動抽出して表示するフォールバックが働きます）。
+Place the basic videos used for syncing with Muse's state and for click reactions directly under `avatars/` (even if you place none, a fallback automatically extracts the `idle` video from the logged-in Muse session screen and shows it).
 
-1. Muse のチャット欄で以下のように依頼し、動画のダウンロードリンクを出力してもらいます：
-   > 「あなたのアバター動画（idle, waking, working, making_something, milestone_level_up）のダウンロードリンクを一覧で出力して」
-2. ダウンロードした `.mp4` を以下のファイル名で保存します：
+1. Ask Muse in the chat box as follows and have it output download links for the videos:
+   > "Please list download links for your avatar videos (idle, waking, working, making_something, milestone_level_up)"
+2. Save the downloaded `.mp4` files under these filenames:
 
-| ファイル名 | 用途 |
+| Filename | Purpose |
 | :--- | :--- |
-| `idle.mp4` | 通常待機時（IDLE）の基本ループ動画 |
-| `waking.mp4` | 起動・復帰時の動画 |
-| `working.mp4` | Muse が思考中・回答生成中の動画 |
-| `making_something.mp4` | Muse が画像・ファイル等を生成・作業中の動画 |
-| `milestone_level_up.mp4` | マスコットをシングルクリックしたときの喜びリアクション動画 |
+| `idle.mp4` | Basic loop video for normal idle time (IDLE) |
+| `waking.mp4` | Video for startup / returning |
+| `working.mp4` | Video for when Muse is thinking / generating a reply |
+| `making_something.mp4` | Video for when Muse is generating / working on images, files, etc. |
+| `milestone_level_up.mp4` | Joy-reaction video for when the mascot is single-clicked |
 
-状態と動画の対応づけは、チャット画面のアバターステータスと再生中動画をリアルタイム監視し、500ms のクロスフェードで切り替えることで行われます。
+States are matched to videos by monitoring the chat screen's avatar status and the currently playing video in real time and switching with a 500ms crossfade.
 
-### ステップ 2: 放置中（IDLE）のランダム動画（`plugin` フォルダ）
+### Step 2: Random videos while idle (IDLE) (`plugin` folder)
 
-IDLE 中に気まぐれで再生されるアクション動画を追加できます。
+You can add action videos that play whimsically while idle.
 
-1. Muse のチャット欄で以下のように依頼して、バリエーション動画のリンクを出力してもらいます：
-   > 「あなたのアバター動画のバリエーション（食事、メイク、睡眠、スマホ操作など）のダウンロードリンクを一覧で出力して」
-2. ダウンロードした `.mp4` を `avatars/plugin/` フォルダに保存します。
-   - `quotes.json` にあらかじめ以下のファイル名に対応したセリフが設定されています：
-     - `eating.mp4`（食事）
-     - `makeup.mp4`（お化粧）
-     - `sleeping.mp4`（居眠り）
-     - `smartphone.mp4`（スマホ操作）
-     - `waking.mp4`（伸び・リフレッシュ）
-     - `working.mp4`（キーボードカタカタ）
-   - 上記以外の任意の名前の `.mp4` でも自動スキャンされ、ランダム再生の対象になります。
+1. Ask Muse in the chat box as follows and have it output links for variation videos:
+   > "Please list download links for variations of your avatar videos (eating, makeup, sleeping, phone use, and so on)"
+2. Save the downloaded `.mp4` files in the `avatars/plugin/` folder.
+   - `quotes.json` already has lines configured for these filenames:
+     - `eating.mp4` (eating)
+     - `makeup.mp4` (makeup)
+     - `sleeping.mp4` (napping)
+     - `smartphone.mp4` (phone use)
+     - `waking.mp4` (stretching / refreshing)
+     - `working.mp4` (keyboard typing)
+   - `.mp4` files with any other names are also auto-scanned and become candidates for random playback.
 
 ---
 
-## 2. `setting.json` リファレンス
+## 2. `setting.json` Reference
 
-配置先：`avatars/setting.json`
+Location: `avatars/setting.json`
 
-| キー | 内容 |
+| Key | Description |
 | :--- | :--- |
-| `idle_threshold_sec` | 操作がなくなってから IDLE（放置状態）に入るまでの秒数 |
-| `action_interval_sec` | 1つのプラグイン動画が終わって `idle` に戻ってから、次のプラグイン動画が再生されるまでの間隔（秒） |
-| `default_action_duration_sec` | プラグイン動画の標準再生維持時間（秒） |
-| `touch_reaction_duration_sec` | シングルクリック時の喜びポーズ維持時間（秒） |
-| `bubble_display_duration_sec` | 吹き出しの表示維持時間（秒） |
-| `avoid_repeat_video` | 連続して同じ動画が選ばれないようにするかどうか（`true` / `false`） |
-| `sound_enabled` | 効果音（新着通知音・タイピング打鍵音・タッチ反応音）の有効/無効（`true` / `false`） |
-| `sound_volume` | 効果音の音量パーセント（`0`〜`100`、デフォルト: `30`） |
+| `idle_threshold_sec` | Seconds without interaction before entering IDLE (idle state) |
+| `action_interval_sec` | Interval (seconds) from when one plugin video ends and playback returns to `idle` until the next plugin video plays |
+| `default_action_duration_sec` | Standard playback hold time (seconds) for a plugin video |
+| `touch_reaction_duration_sec` | Hold time (seconds) for the joy pose on a single click |
+| `bubble_display_duration_sec` | Hold time (seconds) for a speech bubble |
+| `avoid_repeat_video` | Whether to avoid picking the same video consecutively (`true` / `false`) |
+| `sound_enabled` | Sound effects (new-message notification, typing keystroke, touch reaction) on/off (`true` / `false`) |
+| `sound_volume` | Sound-effect volume percent (`0`–`100`, default: `30`) |
 
 ---
 
-## 3. `quotes.json` リファレンス
+## 3. `quotes.json` Reference
 
-配置先：`avatars/plugin/quotes.json`
+Location: `avatars/plugin/quotes.json`
 
 ### `time_specific_quotes`
 
-現在の時間帯に応じた挨拶やつぶやきです。GUI 設定画面の「放置アクション & セリフ」タブからも追加・編集できます。
+Greetings and remarks matched to the current time of day. You can also add and edit them from the "Idle Actions & Lines" tab of the GUI Settings screen.
 
-| キー | 時間帯 |
+| Key | Time of day |
 | :--- | :--- |
-| `morning` | 朝（05:00 - 10:59） |
-| `afternoon` | 昼（11:00 - 16:59） |
-| `evening` | 夕方（17:00 - 21:59） |
-| `night` | 夜・深夜（22:00 - 04:59） |
+| `morning` | Morning (05:00 - 10:59) |
+| `afternoon` | Midday (11:00 - 16:59) |
+| `evening` | Evening (17:00 - 21:59) |
+| `night` | Night / late night (22:00 - 04:59) |
 
 ### `videos`
 
-動画ファイル名ごとに表示条件と専用セリフを設定できます。
+You can set display conditions and dedicated lines per video filename.
 
-| キー | 内容 |
+| Key | Description |
 | :--- | :--- |
-| `enabled` | 有効/無効フラグ（`true` / `false`。デバッグ時に特定の動画だけ確認したい場合に便利） |
-| `min_idle_sec` | IDLE に入ってからの経過時間（秒）の下限（`0` で IDLE 突入直後から対象） |
-| `max_idle_sec` | IDLE に入ってからの経過時間（秒）の上限（`null` で無制限） |
-| `time_ranges` | 表示する時間帯の配列（例: `["00:00-23:59"]`、ランチ時間帯 `["12:00-13:30"]`、夜間日跨ぎ `["22:00-07:00"]` など） |
-| `duration_sec` | その動画固有の再生維持時間（秒） |
-| `weight` | ランダム抽選の重み（出やすさ。デフォルト `1`） |
-| `quote_probability` | 再生時にセリフ吹き出しを表示する確率（`0.0`〜`1.0`） |
-| `quotes` | 再生時にランダムで表示する専用セリフの配列 |
+| `enabled` | On/off flag (`true` / `false`. Handy when you want to check just one video while debugging) |
+| `min_idle_sec` | Lower bound on elapsed time (seconds) since entering IDLE (`0` means it is a candidate right after entering IDLE) |
+| `max_idle_sec` | Upper bound on elapsed time (seconds) since entering IDLE (`null` means unlimited) |
+| `time_ranges` | Array of time ranges to show in (e.g. `["00:00-23:59"]`, lunchtime `["12:00-13:30"]`, overnight `["22:00-07:00"]`, etc.) |
+| `duration_sec` | Playback hold time (seconds) specific to that video |
+| `weight` | Weight in the random lottery (how likely it is to appear. Default `1`) |
+| `quote_probability` | Probability of showing a line speech bubble when played (`0.0`–`1.0`) |
+| `quotes` | Array of dedicated lines shown randomly when played |
 
-### セリフの選ばれ方（IDLE アクション時）
+### How lines are picked (during an idle action)
 
-1. **ライブプールにセリフがある場合**：原則としてライブプールから表示します（表示したセリフは消費されます）。ただし再生中の動画に専用セリフ（`videos[x].quotes`）がある場合は、ライブプールと動画専用セリフを **50% / 50%** で抽選します。
-2. **ライブプールが空の場合**（機能 OFF・使い切り・取得失敗時など）：固定セリフから抽選します。
-   - 動画専用セリフがある場合：**70%** 動画専用セリフ / **30%** 時間帯セリフ
-   - 動画専用セリフがない場合：**70%** 時間帯セリフ / **30%** 通常待機セリフ（`default_idle_quotes`）
+1. **When the live pool has lines**: As a rule, lines are shown from the live pool (a shown line is consumed). However, if the currently playing video has dedicated lines (`videos[x].quotes`), the live pool and the video's dedicated lines are drawn at **50% / 50%**.
+2. **When the live pool is empty** (feature OFF, used up, fetch failed, etc.): Lines are drawn from the fixed lines.
+   - If the video has dedicated lines: **70%** video-dedicated lines / **30%** time-of-day lines
+   - If the video has no dedicated lines: **70%** time-of-day lines / **30%** normal idle lines (`default_idle_quotes`)
 
-なお、マスコットをシングルクリックしたときのリアクションは放置アクションではないため、ライブプールは消費せず、`quotes.json` の `touch_reactions`（「はーい！呼んだ？」など）から表示されます。
+Note: the reaction to single-clicking the mascot is not an idle action, so it does not consume the live pool; it shows a line from `touch_reactions` in `quotes.json` (such as "Yes! Did you call me?").
 
 ---
 
-## 4. ライブつぶやきの詳細
+## 4. Live Remarks in Detail
 
-IDLE 中のセリフを Muse 本人に生成させる機能です。仕組みと設定の詳細をまとめます。
+This feature has Muse itself generate the lines shown while idle. Here are the details of how it works and how to configure it.
 
-### 仕組み
+### How it works
 
-1. 発火条件をすべて満たすと、アプリが取得先チャットへ「つぶやき作成依頼」（ウェイク）を送信します。依頼文には返信形式（1 行ずつのコードブロック）が含まれているため、どの Muse でもその場で応答できます。
-2. 返信のコードブロックからセリフを抽出し、ローカルのライブプール（`live_quotes.json`）に保存します。1 回の取得で複数行まとめて受け取ります。
-3. IDLE アクションではライブプールを優先表示し、表示したセリフは消費（削除）されます。
+1. When all trigger conditions are met, the app sends a "remark creation request" (a wake) to the source chat. The request includes the reply format (a code block, one line at a time), so any Muse can respond on the spot.
+2. Lines are extracted from the code block in the reply and saved to the local live pool (`live_quotes.json`). Several lines are received together in one fetch.
+3. In idle actions, the live pool is shown first, and a shown line is consumed (deleted).
 
-### 発火条件（すべて満たしたときのみ）
+### Trigger conditions (only when all are met)
 
-- 設定で「ライブつぶやき生成」が ON
-- Muse が IDLE で、最後の操作から `idle_threshold_sec`（既定 180 秒）以上経過（実行中の会話を割り込まないため）
-- セッション画面が閉じており、マスコット表示中
-- 前回のウェイクから最小間隔（既定 60 分）以上経過
-- 今日のウェイク回数が上限（既定 6 回）未満
-- 静かな時間帯（既定 22:00〜07:00）ではない
-- ライブプールの残りが 1 件以下
+- "Generate live remarks" is ON in Settings
+- Muse is idle, and at least `idle_threshold_sec` (default 180 seconds) has passed since the last interaction (so it does not interrupt an ongoing conversation)
+- The session screen is closed and the mascot is showing
+- At least the minimum interval (default 60 minutes) has passed since the last wake
+- Today's wake count is below the cap (default 6 times)
+- It is not quiet hours (default 22:00–07:00)
+- The live pool has 1 or fewer lines left
 
-### 設定項目
+### Settings
 
-| 項目 | 内容 |
+| Item | Description |
 | :--- | :--- |
-| 有効 / 無効 | 既定は無効（オプトイン） |
-| 取得先 | メインチャット / 専用チャット（URL 登録が必要） |
-| 1 回の取得行数 | 既定 4 行 |
-| ウェイク最小間隔 | 既定 60 分 |
-| 1 日の上限回数 | 既定 6 回 |
-| 静かな時間帯 | 開始 / 終了時刻 |
+| On / Off | Off by default (opt-in) |
+| Source | Main chat / dedicated chat (URL registration required) |
+| Lines per fetch | Default 4 lines |
+| Minimum wake interval | Default 60 minutes |
+| Daily cap | Default 6 times |
+| Quiet hours | Start / end time |
 
-### プールの管理
+### Pool management
 
-- セリフには取得日時が付き、**24 時間** を過ぎた行は自動破棄されます（「おはよう」が夜に出る等の事故防止）
-- 現在の時間帯区分に合うセリフが優先され、直近 10 回以内に表示したセリフは避けられます
-- 抽出失敗・オフライン・未ログイン・利用枠切れの場合は静かに固定セリフへフォールバックし、エラー表示はしません
+- Lines carry a fetch timestamp, and lines older than **24 hours** are automatically discarded (to prevent mishaps such as "Good morning" appearing at night)
+- Lines matching the current time-of-day segment are prioritized, and lines shown within the last 10 times are avoided
+- On extraction failure, offline, not logged in, or usage limit exhausted, it quietly falls back to the fixed lines with no error shown
 
 > [!IMPORTANT]
-> ウェイク 1 回は Muse の会話 1 ターン分の利用枠を消費します。取得間隔と 1 日の上限は、利用枠とのバランスを見て調整してください。
+> One wake consumes one turn of Muse conversation usage limit. Adjust the fetch interval and daily cap with the usage limit in mind.
 
 ---
 
-## 5. システムトレイ（右クリックメニュー）の項目一覧
+## 5. System Tray (Right-Click Menu) Items
 
-- **セッション画面 ⇄ マスコット (`Ctrl+Shift+M`)**：チャット画面とマスコットをトグル切替
-- **セッション画面を開く (公式UI)**：Muse AI チャットウィンドウを表示
-- **セッションを再読み込み**：セッション画面をリロードして入力欄の準備完了後に利用枠を再同期（長時間スリープ後の復旧用）
-- **設定...**：動作タイマー、放置動画プラグイン、セリフ（Quotes）の編集、フォルダ管理を行う GUI 設定画面を開く
-- **マスコットの開発者ツールを開く**：マスコット画面専用の DevTools を起動
-- **セッションの開発者ツールを開く**：公式チャット画面専用の DevTools を起動
-- **マスコットモード (アバター単体)**：マスコットのみを表示
-- **マスコット表示サイズ**：大 (125%) / 標準 (100%) / 小 (80%) の3段階切替（GUI 設定画面からも変更可能）
-- **Windows起動時に自動起動**：PC 起動時にマスコットが自動常駐する設定のトグル
-- **効果音（SE）を鳴らす**：新着通知音・タイピング打鍵音・タッチ反応音の有効/無効トグル
-- **ブラウザで Muse を開く**：既定のブラウザで `https://muse.ai` を開く
-- **終了**：プロセスを完全に終了
+- **Session screen ⇄ mascot (`Ctrl+Shift+M`)**: Toggle between the chat screen and the mascot
+- **Open session screen (official UI)**: Show the Muse AI chat window
+- **Reload session**: Reload the session screen and re-sync the usage limit once the input field is ready (for recovery after a long sleep)
+- **Settings...**: Open the GUI Settings screen for behavior timers, idle-video plugins, editing lines (Quotes), and folder management
+- **Open mascot developer tools**: Launch DevTools dedicated to the mascot screen
+- **Open session developer tools**: Launch DevTools dedicated to the official chat screen
+- **Mascot mode (avatar only)**: Show only the mascot
+- **Mascot display size**: Switch between 3 levels — Large (125%) / Standard (100%) / Small (80%) (also changeable from the GUI Settings screen)
+- **Auto-start at Windows startup**: Toggle whether the mascot auto-resides when the PC starts
+- **Play sound effects (SE)**: Toggle new-message notification, typing keystroke, and touch-reaction sounds on/off
+- **Open Muse in browser**: Open `https://muse.ai` in the default browser
+- **Quit**: Fully exit the process
 
-### 開発者ツール（DevTools）の活用例
+### Examples of using the developer tools (DevTools)
 
-トレイメニューの「マスコットの開発者ツールを開く」から DevTools を開き、`Console` タブで以下の JavaScript を実行すると、スクリーンショット撮影や動作確認用に枠色や未読バッジを自由に変更できます。
+Open DevTools from "Open mascot developer tools" in the tray menu and run the following JavaScript in the `Console` tab to freely change the frame color or unread badge for screenshots or behavior checks.
 
-- **緑枠（安全・85%）**：`document.getElementById('avatar-container').className = 'avatar-wrapper limit-safe'; const b = document.getElementById('avatar-limit-badge'); b.className = 'avatar-limit-badge limit-safe'; b.textContent = '85%';`
-- **赤枠（危険・15% ＋ 未読バッジ）**：`document.getElementById('avatar-container').className = 'avatar-wrapper limit-danger'; const b = document.getElementById('avatar-limit-badge'); b.className = 'avatar-limit-badge limit-danger'; b.textContent = '15%'; const u = document.getElementById('unread-badge'); u.textContent = '1'; u.classList.remove('hidden'); u.style.display = 'flex';`
-- **吹き出し表示**：`playLupinTyping('テストメッセージです！');`
+- **Green frame (safe, 85%)**: `document.getElementById('avatar-container').className = 'avatar-wrapper limit-safe'; const b = document.getElementById('avatar-limit-badge'); b.className = 'avatar-limit-badge limit-safe'; b.textContent = '85%';`
+- **Red frame (danger, 15% + unread badge)**: `document.getElementById('avatar-container').className = 'avatar-wrapper limit-danger'; const b = document.getElementById('avatar-limit-badge'); b.className = 'avatar-limit-badge limit-danger'; b.textContent = '15%'; const u = document.getElementById('unread-badge'); u.textContent = '1'; u.classList.remove('hidden'); u.style.display = 'flex';`
+- **Show a speech bubble**: `playLupinTyping('This is a test message!');`
 
 ---
 
-## 6. MSIX パッケージングについて
+## 6. About MSIX Packaging
 
-Microsoft Store への提出や SmartScreen 警告対策を見据えた MSIX 化を行う場合は、Windows 10/11 SDK の `MakeAppx.exe` および自己署名または EV コード署名証明書（`SignTool.exe`）を用いて、ビルド済みバイナリを MSIX コンテナへパッケージング可能です。
+To package for Microsoft Store submission or as a SmartScreen-warning countermeasure, you can package a built binary into an MSIX container using `MakeAppx.exe` from the Windows 10/11 SDK and a self-signed or EV code-signing certificate (`SignTool.exe`).

@@ -1,379 +1,379 @@
-# Desktop Mascot for Muse 機能仕様書
+# Desktop Mascot for Muse Feature Specification
 
-本書は Desktop Mascot for Muse（mowthow-works/desktop-mascot-for-muse）の現行機能仕様を定める、**実装の正（single source of truth）** である。
+This document defines the current feature specification of Desktop Mascot for Muse (mowthow-works/desktop-mascot-for-muse) and is the **implementation source of truth (single source of truth)**.
 
-- README は入口と要約、カスタマイズガイド（`docs/CUSTOMIZE.md`）は利用者向けリファレンスに徹し、機能の詳細仕様は本書を正とする。同じ規則を複数文書に重複して書かない。
-- 初期設計は `DESIGN.md` に残すが、現行仕様は本書が優先する。
-- 本書の対象読者は、人間の開発者と、実装を担当する AI の双方である。
+- The README is the entry point and summary, and the customization guide (`docs/CUSTOMIZE.md`) is strictly a user reference; this document is authoritative for detailed feature specifications. Do not duplicate the same rule across multiple documents.
+- The initial design remains in `DESIGN.md`, but this document takes precedence for current specifications.
+- The intended readers of this document are both human developers and the AI responsible for implementation.
 
 ---
 
-## 1. 概要
+## 1. Overview
 
-Desktop Mascot for Muse は、パーソナル AI エージェント Muse（`https://muse.ai`）の Windows 向け常駐型デスクトップマスコット＆チャット連携アプリである。Tauri 2.0 で実装する。
+Desktop Mascot for Muse is a resident Windows desktop mascot and chat-integration app for the personal AI agent Muse (`https://muse.ai`). It is implemented in Tauri 2.0.
 
-普段はデスクトップの隅に円形アバターマスコットとして常駐し、Muse の状態に応じたアニメーション、放置時の気まぐれアクション、新着メッセージの通知を表示する。ワンアクションで公式の Muse チャット画面（セッション画面）を呼び出して対話できる。
+It normally resides in a corner of the desktop as a circular avatar mascot, showing animations matched to Muse's state, whimsical idle actions, and new-message notifications. With one action, you can call up the official Muse chat screen (session screen) and talk with it.
 
-本アプリは任意の Muse ユーザーが同じように使える汎用設計を前提とする。特定ユーザー専用の仕組みには依存しない。
+This app assumes a general-purpose design that any Muse user can use in the same way. It does not depend on mechanisms specific to a particular user.
 
-## 2. 用語定義
+## 2. Terminology
 
-| 用語 | 意味 |
+| Term | Meaning |
 | :--- | :--- |
-| マスコット状態 | アバターとネームプレートのみがデスクトップに浮かぶ常駐形態 |
-| セッション画面 | 公式 Muse チャット UI（`https://muse.ai/?__pwa=1`）を表示するウィンドウ |
-| 設定画面 | 動作タイマー・プラグイン動画・セリフ等を編集する GUI ウィンドウ |
-| IDLE | ユーザーの操作がなく、マスコット側の監視でも Muse が待機中である状態。IDLE 継続で放置アクションが発火する |
-| 放置アクション | IDLE 中にプラグイン動画と吹き出しセリフを表示する演出 |
-| プラグイン動画 | 放置アクション用にユーザーが追加した `.mp4`（`avatars/plugin/` フォルダ） |
-| 基本動画 | 状態連動に使う 5 種類の動画（idle / waking / working / making_something / milestone_level_up） |
-| ライブつぶやき | Muse 本人がその場で生成した一言を IDLE セリフとして表示する任意機能 |
-| ウェイク | ライブつぶやき取得のため、アプリが Muse のチャットへ送信する作成依頼メッセージ |
-| ライブプール | ウェイクで取得したセリフの蓄積（`live_quotes.json`）。表示すると消費される |
-| Title Bridge | セッション画面から Rust 側へ同期データを渡す、`document.title` を使ったカスタムブリッジ |
-| ネームプレート | マスコット下部にアバター名と利用枠残量 % を表示するプレート |
-| 時間帯区分 | morning（05:00–10:59）/ afternoon（11:00–16:59）/ evening（17:00–21:59）/ night（22:00–04:59） |
-| 利用枠 | Muse の 5 時間ウィンドウ利用枠（残量 % で扱う） |
+| Mascot state | The resident form in which only the avatar and nameplate float on the desktop |
+| Session screen | The window showing the official Muse chat UI (`https://muse.ai/?__pwa=1`) |
+| Settings screen | The GUI window for editing behavior timers, plugin videos, lines, etc. |
+| IDLE | The state in which there is no user interaction and Muse is also idle according to the mascot's monitoring. Continuing IDLE triggers idle actions |
+| Idle action | A presentation that shows a plugin video and a speech-bubble line while idle |
+| Plugin video | A `.mp4` added by the user for idle actions (`avatars/plugin/` folder) |
+| Basic video | The 5 kinds of videos used for state linking (idle / waking / working / making_something / milestone_level_up) |
+| Live remarks | An optional feature that shows, as an idle line, a one-liner generated on the spot by Muse itself |
+| Wake | A creation-request message the app sends to Muse's chat to fetch live remarks |
+| Live pool | The accumulation of lines fetched by wakes (`live_quotes.json`). A line is consumed when shown |
+| Title Bridge | A custom bridge using `document.title` to pass sync data from the session screen to the Rust side |
+| Nameplate | The plate below the mascot showing the avatar name and the remaining usage-limit % |
+| Time-of-day segment | morning (05:00–10:59) / afternoon (11:00–16:59) / evening (17:00–21:59) / night (22:00–04:59) |
+| Usage limit | Muse's 5-hour window usage limit (handled as remaining %) |
 
-## 3. 全体構成
+## 3. Overall Structure
 
-### 3.1 ウィンドウ構成
+### 3.1 Window structure
 
-| ウィンドウ | 内容 | 備考 |
+| Window | Contents | Notes |
 | :--- | :--- | :--- |
-| main（マスコット） | `src/index.html`。アバター、吹き出し、クイック入力バー | Tauri IPC 権限を持つのはこのウィンドウのみ |
-| session（セッション画面） | WebView2 で `https://muse.ai/?__pwa=1` を表示 | IPC 権限なし |
-| settings（設定画面） | `src/settings.html`。GUI 設定 | トレイ等から開く |
+| main (mascot) | `src/index.html`. Avatar, speech bubble, quick input bar | Only this window has Tauri IPC permissions |
+| session (session screen) | Shows `https://muse.ai/?__pwa=1` in WebView2 | No IPC permissions |
+| settings (Settings screen) | `src/settings.html`. GUI Settings | Opened from the tray, etc. |
 
-### 3.2 同期の仕組み（Title Bridge）
+### 3.2 Sync mechanism (Title Bridge)
 
-- セッション画面側のスクリプト（`src-tauri/src/session_bridge.js`）が、Muse のステータス、アバター名、新着メッセージ、利用枠などの同期データを `document.title` に書き込み、Rust 側がそれをポーリング・読み取る。
-- リモートオリジン（`https://muse.ai`）に Tauri IPC を一切露出させないためのゼロ・ケイパビリティ設計に基づく。
-- **通信プロトコル仕様**：
-  - **即時レスポンス（<= 2,800文字）**：
+- The script on the session-screen side (`src-tauri/src/session_bridge.js`) writes sync data such as Muse's status, avatar name, new messages, and usage limit to `document.title`, and the Rust side polls and reads it.
+- This is based on a zero-capability design that exposes no Tauri IPC at all to the remote origin (`https://muse.ai`).
+- **Communication protocol specification**:
+  - **Immediate response (<= 2,800 characters)**:
     - `document.title = "__MUSE_RES__:<nonce>:<url_encoded_json>"`
-    - エンコード後データが 2,800 文字以下の場合は 1 発でタイトルを更新し、Rust 側が検知・デコードする。
-  - **チャンク分割ハンドシェイク（> 2,800文字）**：
-    - 2,800 文字を超える場合、セッション側はデータを一時メモリ（`window.__MUSE_STORE__[nonce]`）に退避し、`document.title = "__MUSE_CHUNK_READY__:<nonce>:<total_chunks>"` を設定する。
-    - Rust 側は `total_chunks` を認識した後、各インデックスについてセッション側の `window.MuseBridge.serveChunk(nonce, idx)` を呼び出す。
-    - セッション側は `document.title = "__MUSE_CHUNK__:<nonce>:<idx>:<chunk_slice>"` に更新し、Rust 側が全チャンクを Pull・結合する。
-    - 取得完了後、Rust 側から `window.MuseBridge.cleanup(nonce)` を実行し、メモリ解放とともにタイトルを通常タイトル（`Muse AI - Session`）に復帰させる。
-  - **サポートするアクション**：
-    - `check_health`: セッション画面の生存確認
-    - `get_avatar`: ログイン中アバター動画の Base64 抽出
-    - `get_avatar_state`: アバターの現在ステータス（待機・思考中・ツール実行中・完了歓喜等）とアバター名の取得
-    - `get_messages`: チャット履歴（最新メッセージ群）の取得
-    - `inspect_latest`: 最新メッセージの詳細構造・本文取得
-    - `send_message`: クイック入力やウェイク用メッセージのチャット送信
-    - `fetch_limit`: Muse の 5 時間利用枠（残量 %・リセット時刻等）の取得
-    - `inspect_reload_safety`: 自動リロード実行前の安全性判定（回答生成中・未送信下書きの有無確認）
+    - When the encoded data is 2,800 characters or fewer, the title is updated in one shot and the Rust side detects and decodes it.
+  - **Chunk-split handshake (> 2,800 characters)**:
+    - When it exceeds 2,800 characters, the session side moves the data to temporary memory (`window.__MUSE_STORE__[nonce]`) and sets `document.title = "__MUSE_CHUNK_READY__:<nonce>:<total_chunks>"`.
+    - After recognizing `total_chunks`, the Rust side calls the session side's `window.MuseBridge.serveChunk(nonce, idx)` for each index.
+    - The session side updates `document.title = "__MUSE_CHUNK__:<nonce>:<idx>:<chunk_slice>"`, and the Rust side pulls and joins all chunks.
+    - After retrieval completes, the Rust side runs `window.MuseBridge.cleanup(nonce)`, freeing memory and restoring the title to the normal title (`Muse AI - Session`).
+  - **Supported actions**:
+    - `check_health`: Liveness check for the session screen
+    - `get_avatar`: Base64 extraction of the logged-in avatar video
+    - `get_avatar_state`: Get the avatar's current status (idle, thinking, tool running, done/celebrating, etc.) and avatar name
+    - `get_messages`: Get chat history (latest messages)
+    - `inspect_latest`: Get the detailed structure and body of the latest message
+    - `send_message`: Send a message to the chat for quick input or a wake
+    - `fetch_limit`: Get Muse's 5-hour usage limit (remaining %, reset time, etc.)
+    - `inspect_reload_safety`: Safety check before running an automatic reload (whether a reply is being generated, whether there is an unsent draft)
 
-### 3.3 ファイル配置
+### 3.3 File placement
 
-| 対象 | 開発時 | 配布版（通常） | 配布版（ポータブル） |
+| Target | During development | Distributed version (normal) | Distributed version (portable) |
 | :--- | :--- | :--- | :--- |
-| アバター動画・設定・セリフ | `src-tauri/assets/avatars/` | `%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`（永続領域） | `.exe` と同じフォルダの `avatars/` |
-| セッション Cookie | — | アプリ専用ローカルフォルダ `webview2_session` | 同左 |
-| ライブプール | `avatars/plugin/live_quotes.json` | `%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\plugin\live_quotes.json` | `avatars/plugin/live_quotes.json` |
+| Avatar videos, settings, lines | `src-tauri/assets/avatars/` | `%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\` (persistent area) | `avatars/` in the same folder as the `.exe` |
+| Session cookie | — | App-specific local folder `webview2_session` | Same as left |
+| Live pool | `avatars/plugin/live_quotes.json` | `%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\plugin\live_quotes.json` | `avatars/plugin/live_quotes.json` |
 
-- インストーラ（NSIS）によるアップデート時（旧バージョンアンインストール処理）にユーザー設定や動画ファイルが全消失するのを防ぐため、通常モードの書き込み・読み込み最優先先は OS の永続ユーザーデータ領域（`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`）となります。
-- 実行ファイルと同階層に `portable`（ファイルまたはフォルダ）が存在する場合のみ、ポータブルモードとしてローカルの `avatars/` フォルダを最優先で使用します。
-- 配布パッケージに初期同梱されるのは `setting.json` と `quotes.json` のみで、アバター動画（`.mp4`）は含めません（著作権と汎用性への配慮）。ユーザーデータ領域に設定ファイルが存在しない場合、初回起動時に初期テンプレートが自動シード配置されます。
-- `setting.json` と `quotes.json` はアプリ起動中でも保存から 3 秒以内に自動反映されます（ホットリロード）。
+- To prevent user settings and video files from disappearing entirely when updating via the installer (NSIS) (during the old-version uninstallation), the top-priority read/write location in normal mode is the OS persistent user-data area (`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`).
+- Only when a `portable` file or folder exists next to the executable is the local `avatars/` folder used with top priority, as portable mode.
+- Only `setting.json` and `quotes.json` are initially bundled in the distribution package; avatar videos (`.mp4`) are not included (for copyright and general-purpose reasons). If no config files exist in the user-data area, the initial templates are automatically seeded on first launch.
+- `setting.json` and `quotes.json` are automatically applied within 3 seconds of saving, even while the app is running (hot reload).
 
-## 4. 起動とライフサイクル
+## 4. Startup and Lifecycle
 
-- **単一起動**：Windows 名前付きミューテックスにより多重起動を防止する。
-- **自動起動**：Windows 起動時の自動常駐をトグル設定できる（既定は設定に従う）。
-- **終了**：トレイメニューの「終了」でプロセスを完全に終了する。
-- **位置・サイズの復元**：
-  - マスコットの表示位置は自動保存され、次回起動時に復元される。
-  - セッション画面の位置とサイズは前回終了時の状態を復元する。
-  - マスコットの表示サイズは大（125%）/ 標準（100%）/ 小（80%）の 3 段階で、中心位置を維持したまま切り替わる。
+- **Single instance**: Multiple launches are prevented with a Windows named mutex.
+- **Auto-start**: Auto-residency at Windows startup can be toggled (by default, it follows the setting).
+- **Quit**: "Quit" in the tray menu fully exits the process.
+- **Restoring position and size**:
+  - The mascot's display position is saved automatically and restored at the next launch.
+  - The session screen's position and size are restored to the state at the last exit.
+  - The mascot's display size switches in 3 levels — Large (125%) / Standard (100%) / Small (80%) — while keeping the center position.
 
-## 5. マスコット表示
+## 5. Mascot Display
 
-### 5.1 状態連動アニメーション
+### 5.1 State-linked animation
 
-- チャット画面のアバターステータスと再生中動画をリアルタイム監視し、Muse の状態に応じて基本動画を **500ms のクロスフェード** で切り替える。
+- Monitor the chat screen's avatar status and the currently playing video in real time, and switch the basic video with a **500ms crossfade** according to Muse's state.
 
-| Muse の状態 | 表示動画 |
+| Muse's state | Video shown |
 | :--- | :--- |
-| 通常待機 | `idle.mp4` |
-| 起動・復帰 | `waking.mp4` |
-| 思考・回答生成中 | `working.mp4` |
-| ツール・制作実行中 | `making_something.mp4` |
-| 完了・歓喜 | `milestone_level_up.mp4` |
+| Normal idle | `idle.mp4` |
+| Startup / returning | `waking.mp4` |
+| Thinking / generating a reply | `working.mp4` |
+| Tool / creation running | `making_something.mp4` |
+| Done / celebrating | `milestone_level_up.mp4` |
 
-- 基本動画が未配置の場合、ログイン済みセッション画面から `idle` 動画を自動抽出して表示するフォールバックが働く。
+- If no basic videos are placed, a fallback automatically extracts the `idle` video from the logged-in session screen and shows it.
 
-### 5.2 利用枠の可視化
+### 5.2 Usage-limit visualization
 
-- 残り利用枠に応じて、マスコット外周枠の色と光彩が連動する。
+- The color and glow of the mascot's outer frame follow the remaining usage limit.
 
-| 残量 | 状態 | 枠色 |
+| Remaining | State | Frame color |
 | :--- | :--- | :--- |
-| 80% 以上 | 安全 | エメラルドグリーン `#10b981` |
-| 50〜79% | 注意 | アンバーオレンジ `#f59e0b` |
-| 50% 未満 | 危険 | ローズレッド `#ef4444` |
+| 80% or more | Safe | Emerald green `#10b981` |
+| 50–79% | Caution | Amber orange `#f59e0b` |
+| Under 50% | Danger | Rose red `#ef4444` |
 
-- ネームプレート内に `[ アバター名 85% ]` の形式で残量を常時表示する。
-- **セッション自動リカバリ (Issue #52)**：長時間スリープ復帰検知時または利用枠取得の連続失敗時（1 エピソードにつき 1 回限り）に、セッション非表示・生成中でない・ウェイク処理中でない・未送信下書きがない全条件を満たす場合のみセッション WebView を自動リロードし、入力欄準備完了待機およびリロード前後 URL 一致確認のうえ利用枠を再取得する。検知理由と成否はローカルログ（`session_recovery.log`）に記録する。
+- The nameplate always shows the remaining amount in the form `[ Avatar name 85% ]`.
+- **Session auto-recovery (Issue #52)**: When a return from a long sleep is detected, or when usage-limit fetches fail repeatedly (only once per episode), the session WebView is auto-reloaded only if all conditions are met — session hidden, not generating, not processing a wake, and no unsent draft — then, after waiting for the input field to be ready and confirming the URL matches before and after reload, the usage limit is fetched again. The detection reason and success/failure are recorded in the local log (`session_recovery.log`).
 
-### 5.3 未読バッジ
+### 5.3 Unread badge
 
-- セッション画面が裏や非表示の間に新着メッセージを受信すると、アバターの右肩に赤丸バッジ（🔴 1〜9+）を表示する。
-- セッション画面を開くと（マスコット／吹き出し／バッジのクリック、`Ctrl + Shift + M` 等）自動的に既読クリアされる。
+- When a new message arrives while the session screen is behind or hidden, a red circle badge (🔴 1–9+) is shown on the avatar's right shoulder.
+- Opening the session screen (by clicking the mascot / speech bubble / badge, `Ctrl + Shift + M`, etc.) automatically clears it as read.
 
-### 5.4 移動とフォーカス連動
+### 5.4 Movement and focus linking
 
-- マスコットはドラッグで自由に移動でき、位置は自動保存される。画面右端配置時は吹き出しが自動的に左側へ反転展開する。
-- **透明領域のクリック透過制御 (Issue #60)**：マスコット状態では表示中の UI 要素（アバター・吹き出し・入力バー等）の矩形のみマウス操作を受け付け、それ以外の透明領域は背後のウィンドウへクリック透過する。
-- **フォーカス完全同期**：セッション画面が表にいるときはマスコットは自動で非表示になり、セッション画面が背面に回るとマスコットが最前面に現れる。セッション画面が表に復帰するとマスコットは自動で退く。
+- The mascot can be freely moved by dragging, and its position is saved automatically. When placed at the right edge of the screen, the speech bubble automatically flips to expand to the left.
+- **Click-through control for transparent areas (Issue #60)**: In mascot state, only the rectangles of the UI elements currently shown (avatar, speech bubble, input bar, etc.) accept mouse input; other transparent areas let clicks pass through to the window behind.
+- **Full focus sync**: When the session screen is in front, the mascot automatically hides; when the session screen goes behind, the mascot appears in front. When the session screen returns to the front, the mascot automatically steps back.
 
-## 6. セッション画面連携
+## 6. Session Screen Integration
 
-### 6.1 開閉トグル
+### 6.1 Open/close toggle
 
-以下のいずれでも「マスコット状態 ⇄ セッション画面」を切り替える。
+Any of the following switches between "mascot state ⇄ session screen".
 
-- マスコットのダブルクリック
-- システムトレイアイコンの左クリック
-- グローバルホットキー `Ctrl + Shift + M`
-- 吹き出し／未読バッジのクリック（開く方向のみ）
+- Double-clicking the mascot
+- Left-clicking the system tray icon
+- Global hotkey `Ctrl + Shift + M`
+- Clicking a speech bubble / unread badge (open direction only)
 
-セッション画面の最小化（`−`）・閉じる（`×`）・`Win + M` でもマスコット状態へ戻る。
+Minimizing (`−`) or closing (`×`) the session screen, or `Win + M`, also returns to the mascot state.
 
-### 6.2 ログインと認証
+### 6.2 Login and authentication
 
-- ログインは公式セッション画面上で行い（Google OAuth またはメール等）、セッション Cookie はアプリ専用ローカルフォルダ（`webview2_session`）にのみ永続化される。
-- パスワード等の認証情報はアプリ側で一切保存しない（§15 参照）。
+- Sign in on the official session screen (Google OAuth, email, etc.), and the session cookie is persisted only in the app-specific local folder (`webview2_session`).
+- Passwords and other credentials are never stored in the app (see §15).
 
-### 6.3 同期データ
+### 6.3 Sync data
 
-Title Bridge 経由でセッション画面から受け取る主なデータは、アバターのステータス、アバター名、新着メッセージ（本文）、利用枠の残量である。これらはマスコット表示（§5）、新着通知（§7）、クイック入力の応答表示（§8）に使われる。
+The main data received from the session screen via the Title Bridge is the avatar's status, avatar name, new messages (body), and remaining usage limit. These are used for the mascot display (§5), new-message notifications (§7), and the quick-input reply display (§8).
 
-## 7. 新着通知と吹き出し
+## 7. New-Message Notifications and Speech Bubbles
 
-- セッション画面が非表示の間も新着メッセージをバックグラウンドで検知し、マスコット横に **ルパン風パタパタタイピング吹き出し**（1 文字ずつテンポよく表示）で通知する。
-- 新着時は効果音（通知音）が鳴る（§13）。未読件数は未読バッジ（§5.3）に反映される。
-- 吹き出しの表示維持時間は `bubble_display_duration_sec` に従う。
+- New messages are detected in the background even while the session screen is hidden, and notified beside the mascot with a **Lupin-style pattering typing speech bubble** (shown one character at a time, at a good tempo).
+- A sound effect (notification sound) plays on arrival (§13). The unread count is reflected in the unread badge (§5.3).
+- The speech bubble's display hold time follows `bubble_display_duration_sec`.
 
-## 8. クイック1行入力
+## 8. Quick One-Line Input
 
-- アバターにマウスホバーすると現れる「💬」ボタン、またはアバター本体・吹き出しの右クリックで、アバター横にミニ入力バーが展開する。
-- `Enter` キー（または `➤` ボタン）で送信し、セッション画面を開かずにその場で質問できる。`Esc` キー（または `×` ボタン）で入力バーを格納する。
-- 入力中は日本語 IME 入力中も含めて打鍵効果音が連動する（§13）。
-- 送信後は吹き出しに「考え中…」が表示され、続いて Muse の返答がリアルタイムにストリーミング追記表示される。
-- 長文・ファイル添付・音声入力はセッション画面で行う（クイック入力の対象外）。
-- **おまかせショートカット (Issue #68)**：入力バー展開時に初心者向けの定型プロンプト 4 種（「物忘れが多いから改善して」「会話を仕切り直して」「便利な使い方を教えて」「今日のことをまとめて」）をチップとして一覧表示する。各チップにはホバー時に使いどころを案内するツールチップを表示し、チップ押下時は即送信せず入力欄へ文面をセットしてプレビュー状態（利用枠を 1 ターン消費する旨を案内）とし、ユーザーが確認・編集してから現在アクティブなチャットへ送信できる。
+- Hovering over the avatar shows a "💬" button, or right-click the avatar itself or a speech bubble, to expand a mini input bar beside the avatar.
+- Send with the `Enter` key (or the `➤` button) and ask a question right there without opening the session screen. Put the input bar away with the `Esc` key (or the `×` button).
+- Keystroke sound effects play while typing, including while typing with a Japanese IME (§13).
+- After sending, "Thinking…" appears in the speech bubble, followed by Muse's reply appended in real time as it streams.
+- Long text, file attachments, and voice input are done in the session screen (outside the scope of quick input).
+- **One-click shortcuts (Issue #68)**: When the input bar expands, 4 beginner-friendly preset prompts ("I forget things a lot, help me improve that", "Let's start the conversation over", "Tell me handy ways to use this", "Summarize what happened today") are listed as chips. Each chip shows a tooltip on hover explaining when to use it, and pressing a chip does not send immediately — it sets the text into the input field as a preview (noting that it will consume one turn of usage limit), so the user can check and edit it before sending to the currently active chat.
 
-## 9. IDLE アクション
+## 9. IDLE Actions
 
-### 9.1 発火条件
+### 9.1 Trigger conditions
 
-- 操作のない状態が `idle_threshold_sec`（既定 180 秒）続くと IDLE に入る。
-- IDLE 中は `action_interval_sec`（既定 180 秒）ごとに放置アクションが発火し、プラグイン動画を 1 本再生して `idle` に戻る。再生維持時間は `default_action_duration_sec` または動画固有の `duration_sec`。
+- When a state with no interaction continues for `idle_threshold_sec` (default 180 seconds), the app enters IDLE.
+- While idle, an idle action fires every `action_interval_sec` (default 180 seconds), playing one plugin video and returning to `idle`. The playback hold time is `default_action_duration_sec` or the video-specific `duration_sec`.
 
-### 9.2 動画の抽選
+### 9.2 Video lottery
 
-対象は `avatars/plugin/` フォルダ内の `.mp4`（自動スキャン）。以下の条件で抽選される。
+The candidates are the `.mp4` files in the `avatars/plugin/` folder (auto-scanned). They are drawn under these conditions.
 
-- 動画ごとの `enabled`（無効なものは除外）
-- `min_idle_sec` / `max_idle_sec`（IDLE 経過時間の範囲）
-- `time_ranges`（表示可能な時間帯）
-- `weight`（抽選の重み）
-- `avoid_repeat_video` が有効な場合、直前に再生した動画は連続で選ばない
-- 吹き出しセリフの表示は動画ごとの `quote_probability` に従う
+- Each video's `enabled` (disabled ones are excluded)
+- `min_idle_sec` / `max_idle_sec` (the range of elapsed IDLE time)
+- `time_ranges` (time ranges in which it can be shown)
+- `weight` (lottery weight)
+- When `avoid_repeat_video` is enabled, the video played just before is not picked consecutively
+- Whether a speech-bubble line is shown follows each video's `quote_probability`
 
-### 9.3 タッチリアクション
+### 9.3 Touch reaction
 
-- マスコットをシングルクリックすると、喜びポーズ（`milestone_level_up`）を `touch_reaction_duration_sec`（既定 8 秒）維持し、`quotes.json` の `touch_reactions` から一言を表示する。
-- タッチリアクションは放置アクションではなく、ライブプール（§11）は消費しない。
+- Single-clicking the mascot holds the joy pose (`milestone_level_up`) for `touch_reaction_duration_sec` (default 8 seconds) and shows one line from `touch_reactions` in `quotes.json`.
+- A touch reaction is not an idle action, so it does not consume the live pool (§11).
 
-## 10. セリフ選択仕様
+## 10. Line Selection Specification
 
-IDLE アクション時のセリフ選択は本章を唯一の正とする。
+This chapter is the sole authority for line selection during idle actions.
 
-### 10.1 選択の優先順位
+### 10.1 Selection priority
 
-1. **ライブプールに有効なセリフがある場合**：
-   - 原則としてライブプールから表示する。
-   - ただし再生中の動画に専用セリフ（`videos[x].quotes`）が設定されている場合は、ライブプールと動画専用セリフを **50% / 50%** で抽選する。
-2. **ライブプールが空の場合**（機能 OFF・使い切り・取得失敗時など）：固定セリフから抽選する。
-   - 動画専用セリフがある場合：**70%** 動画専用セリフ / **30%** 時間帯セリフ（`time_specific_quotes`）
-   - 動画専用セリフがない場合：**70%** 時間帯セリフ / **30%** 通常待機セリフ（`default_idle_quotes`）
+1. **When the live pool has valid lines**:
+   - As a rule, show a line from the live pool.
+   - However, if the currently playing video has dedicated lines (`videos[x].quotes`), draw between the live pool and the video's dedicated lines at **50% / 50%**.
+2. **When the live pool is empty** (feature OFF, used up, fetch failed, etc.): Draw from the fixed lines.
+   - If the video has dedicated lines: **70%** video-dedicated lines / **30%** time-of-day lines (`time_specific_quotes`)
+   - If the video has no dedicated lines: **70%** time-of-day lines / **30%** normal idle lines (`default_idle_quotes`)
 
-### 10.2 ライブプール内での優先順位
+### 10.2 Priority within the live pool
 
-1. 現在の時間帯区分と一致し、直近 10 回以内に表示していないセリフ
-2. 現在の時間帯区分と一致するセリフ
-3. 時間帯を問わず、直近 10 回以内に表示していないセリフ
-4. プールの先頭のセリフ
+1. A line matching the current time-of-day segment that has not been shown within the last 10 times
+2. A line matching the current time-of-day segment
+3. A line, regardless of time of day, that has not been shown within the last 10 times
+4. The first line in the pool
 
-表示したライブセリフはプールから削除される（消費）。
+A shown live line is deleted from the pool (consumed).
 
-## 11. ライブつぶやき
+## 11. Live Remarks
 
-### 11.1 概要
+### 11.1 Overview
 
-IDLE 中のセリフを、固定の `quotes.json` だけでなく Muse 本人がその場で生成した一言にする任意機能。既定は **無効（オプトイン）**。
+An optional feature that makes idle lines not just the fixed lines in `quotes.json`, but a one-liner generated on the spot by Muse itself. It is **disabled by default (opt-in)**.
 
-ウェイク 1 回は Muse の会話 1 ターン分の利用枠（Limit）を消費する。この消費があることを設定画面に明記する。
+One wake consumes one turn of Muse conversation usage limit (Limit). State this consumption in the Settings screen.
 
-### 11.2 ウェイクのプロトコル
+### 11.2 Wake protocol
 
-- プロトコルはウェイク文自体に埋め込む（自己完結）。事前の取り決めや専用ファイルに依存せず、どのユーザーの Muse でも成立させる。
-- ウェイク文は、普段の口調で短い一言を複数行（既定 4 行）考え、`mascot-quotes` のフェンス名を持つコードブロックに 1 行ずつ入れて返すよう依頼する。条件として 1 行 40 文字以内、現在の時間帯区分に合った内容を含める。
-- 応答のコードブロックからセリフを抽出し、ライブプールへ保存する。抽出できない応答は破棄する。
+- The protocol is embedded in the wake text itself (self-contained). It does not depend on prior arrangements or a dedicated file, so it works with any user's Muse.
+- The wake text asks Muse to come up with several short one-liners (default 4 lines) in its usual tone and return them one per line in a code block with the fence name `mascot-quotes`. The conditions are: no more than 40 characters per line, and content matching the current time-of-day segment.
+- Lines are extracted from the code block in the response and saved to the live pool. A response from which lines cannot be extracted is discarded.
 
-### 11.3 発火条件
+### 11.3 Trigger conditions
 
-以下のすべてを満たしたときのみウェイクする。
+Wake only when all of the following are met.
 
-1. 設定でライブつぶやき生成が ON
-2. 専用チャット方式の場合、チャット URL が設定済み
-3. Muse が IDLE で、最後の操作から `idle_threshold_sec` 以上経過（実行中の会話を割り込まない）
-4. セッション画面が閉じており、マスコット表示中
-5. 前回のウェイクから最小間隔（既定 60 分）以上経過
-6. 今日のウェイク回数が上限（既定 6 回）未満
-7. 静かな時間帯（既定 22:00〜07:00）ではない
-8. ライブプールの残りが 1 件以下
+1. Live-remark generation is ON in Settings
+2. For the dedicated-chat method, the chat URL is set
+3. Muse is idle, and at least `idle_threshold_sec` has passed since the last interaction (so it does not interrupt an ongoing conversation)
+4. The session screen is closed and the mascot is showing
+5. At least the minimum interval (default 60 minutes) has passed since the last wake
+6. Today's wake count is below the cap (default 6 times)
+7. It is not quiet hours (default 22:00–07:00)
+8. The live pool has 1 or fewer lines left
 
-### 11.4 取得先
+### 11.4 Sources
 
-- **メインチャット方式**：現在開いている普段のチャットにウェイクを送信する。追加の準備は不要で文脈の濃い一言になりやすいが、ウェイクと返答が普段のスレッドに残る。
-- **専用チャット方式**：ユーザーが作成した専用チャットの URL を設定に登録し、そのチャットへ送信する。普段のスレッドを汚さない。URL 未登録のままこの方式を選んだ場合は送信せず、機能を無効扱いとする（誤爆防止）。
-  - ※専用チャット方式では、URL遷移および入力欄の描画完了を待機してから安全にウェイクを送信し、セリフ抽出完了（または待機タイムアウト）に伴い、普段のチャット操作・表示が専用チャットに固定されないよう、ウェイク実行前に開いていたチャットURLへ自動的に画面遷移を戻す（Issue #46）。
+- **Main-chat method**: Send the wake to the everyday chat currently open. No extra preparation is needed, and the one-liners tend to be context-rich, but the wake and reply remain in the everyday thread.
+- **Dedicated-chat method**: Register the URL of a dedicated chat created by the user in Settings and send it there. It keeps the everyday thread clean. If this method is selected with no URL registered, do not send and treat the feature as disabled (to prevent accidental sends).
+  - Note: In the dedicated-chat method, wait for the URL navigation and for the input field to finish rendering before safely sending the wake, and when line extraction completes (or the wait times out), automatically navigate back to the chat URL that was open before the wake ran, so that everyday chat operation/display does not get stuck on the dedicated chat (Issue #46).
 
-### 11.5 プールの管理
+### 11.5 Pool management
 
-- セリフは取得日時とともに `live_quotes.json` に保存される。
-- 取得から **24 時間** を過ぎたセリフは自動破棄する（鮮度の事故防止）。
-- 同一文は重複登録しない。
+- Lines are saved in `live_quotes.json` together with their fetch timestamp.
+- Lines older than **24 hours** since fetching are automatically discarded (to prevent stale-content mishaps).
+- The same sentence is not registered twice.
 
-### 11.6 フォールバック
+### 11.6 Fallback
 
-抽出失敗、Muse の応答なし、オフライン、未ログイン、利用枠切れのいずれでも、静かに固定セリフの通常動作へ戻る。ユーザーへのエラー通知はしない。
+On extraction failure, no response from Muse, offline, not logged in, or usage limit exhausted, quietly return to the normal fixed-line behavior. Do not notify the user of an error.
 
-## 12. 設定
+## 12. Settings
 
-### 12.1 GUI 設定画面
+### 12.1 GUI Settings screen
 
-トレイメニューの「設定...」から開く。動作タイマーの調整、放置動画ごとの有効/無効、セリフの追加・編集、配置フォルダを開く操作、ライブつぶやきの設定（§11）が行える。マスコット表示サイズ、自動起動、効果音の切替はトレイメニューからも行える。
+Open it from "Settings..." in the tray menu. You can adjust behavior timers, toggle each idle video on/off, add/edit lines, open the placement folder, and configure live remarks (§11). Mascot display size, auto-start, and sound-effect toggling can also be done from the tray menu.
 
 ### 12.2 `setting.json`
 
-配置先：`avatars/setting.json`。ホットリロード対象（§3.3）。
+Location: `avatars/setting.json`. Hot-reload target (§3.3).
 
-| キー | 内容 |
+| Key | Description |
 | :--- | :--- |
-| `idle_threshold_sec` | IDLE に入るまでの無操作秒数 |
-| `action_interval_sec` | 放置アクションの間隔（秒） |
-| `default_action_duration_sec` | プラグイン動画の標準再生維持時間（秒） |
-| `touch_reaction_duration_sec` | タッチリアクションの維持時間（秒） |
-| `bubble_display_duration_sec` | 吹き出しの表示維持時間（秒） |
-| `avoid_repeat_video` | 同じ動画の連続再生を避ける（`true` / `false`） |
-| `sound_enabled` | 効果音の有効/無効 |
-| `sound_volume` | 効果音の音量（`0`〜`100`、既定 `30`） |
+| `idle_threshold_sec` | Seconds without interaction before entering IDLE |
+| `action_interval_sec` | Interval between idle actions (seconds) |
+| `default_action_duration_sec` | Standard playback hold time (seconds) for a plugin video |
+| `touch_reaction_duration_sec` | Hold time (seconds) for a touch reaction |
+| `bubble_display_duration_sec` | Hold time (seconds) for a speech bubble |
+| `avoid_repeat_video` | Avoid playing the same video consecutively (`true` / `false`) |
+| `sound_enabled` | Sound effects on/off |
+| `sound_volume` | Sound-effect volume (`0`–`100`, default `30`) |
 
 ### 12.3 `quotes.json`
 
-配置先：`avatars/plugin/quotes.json`。ホットリロード対象。
+Location: `avatars/plugin/quotes.json`. Hot-reload target.
 
-| キー | 内容 |
+| Key | Description |
 | :--- | :--- |
-| `time_specific_quotes` | 時間帯区分ごとのセリフ配列（morning / afternoon / evening / night） |
-| `default_idle_quotes` | 通常待機セリフの配列 |
-| `touch_reactions` | タッチリアクション用セリフの配列 |
-| `videos` | 動画ファイル名ごとの設定（下表） |
+| `time_specific_quotes` | Array of lines per time-of-day segment (morning / afternoon / evening / night) |
+| `default_idle_quotes` | Array of normal idle lines |
+| `touch_reactions` | Array of lines for touch reactions |
+| `videos` | Settings per video filename (table below) |
 
-`videos[x]` の項目：`enabled`、`min_idle_sec`、`max_idle_sec`、`time_ranges`、`duration_sec`、`weight`、`quote_probability`、`quotes`（専用セリフ配列）。意味は §9.2 の通り。
+Items in `videos[x]`: `enabled`, `min_idle_sec`, `max_idle_sec`, `time_ranges`, `duration_sec`, `weight`, `quote_probability`, `quotes` (array of dedicated lines). Their meanings are as in §9.2.
 
-### 12.4 ライブつぶやきの設定項目
+### 12.4 Live-remark settings
 
-| 項目 | 既定 |
+| Item | Default |
 | :--- | :--- |
-| 有効 / 無効 | 無効 |
-| 取得先（メインチャット / 専用チャット＋URL） | メインチャット |
-| 1 回の取得行数 | 4 行 |
-| ウェイク最小間隔 | 60 分 |
-| 1 日の上限回数 | 6 回 |
-| 静かな時間帯 | 22:00〜07:00 |
+| On / Off | Off |
+| Source (main chat / dedicated chat + URL) | Main chat |
+| Lines per fetch | 4 lines |
+| Minimum wake interval | 60 minutes |
+| Daily cap | 6 times |
+| Quiet hours | 22:00–07:00 |
 
-## 13. 効果音
+## 13. Sound Effects
 
-| 種類 | 鳴るタイミング |
+| Type | When it plays |
 | :--- | :--- |
-| 通知音（ピコン） | 新着メッセージ受信時 |
-| 打鍵音（カタカタ） | 吹き出しのタイピング表示時、クイック入力の打鍵時 |
-| タッチ反応音 | タッチリアクション時 |
+| Notification sound (ding) | When a new message arrives |
+| Keystroke sound (clatter) | When a speech bubble is typing, when typing in quick input |
+| Touch-reaction sound | During a touch reaction |
 
-有効/無効は `sound_enabled`、音量は `sound_volume` で制御する（§12.2）。
+On/off is controlled by `sound_enabled`, volume by `sound_volume` (§12.2).
 
-## 14. トレイとホットキー
+## 14. Tray and Hotkey
 
-### 14.1 トレイメニュー（右クリック）
+### 14.1 Tray menu (right-click)
 
-- セッション画面 ⇄ マスコット（`Ctrl+Shift+M`）
-- セッション画面を開く（公式 UI）
-- セッションを再読み込み
-- 設定...
-- マスコットの開発者ツールを開く
-- セッションの開発者ツールを開く
-- マスコットモード（アバター単体）
-- マスコット表示サイズ（大 / 標準 / 小）
-- Windows 起動時に自動起動
-- 効果音（SE）を鳴らす
-- ブラウザで Muse を開く
-- （旧）中・小画面切替（レガシー、§17）
-- 終了
+- Session screen ⇄ mascot (`Ctrl+Shift+M`)
+- Open session screen (official UI)
+- Reload session
+- Settings...
+- Open mascot developer tools
+- Open session developer tools
+- Mascot mode (avatar only)
+- Mascot display size (Large / Standard / Small)
+- Auto-start at Windows startup
+- Play sound effects (SE)
+- Open Muse in browser
+- (Old) medium/small screen switching (legacy, §17)
+- Quit
 
-左クリックはセッション画面 ⇄ マスコットのトグル。
+Left-click toggles between the session screen ⇄ mascot.
 
-### 14.2 ホットキー
+### 14.2 Hotkey
 
-| キー | 動作 |
+| Key | Action |
 | :--- | :--- |
-| `Ctrl + Shift + M` | セッション画面 ⇄ マスコット状態の表示トグル |
+| `Ctrl + Shift + M` | Toggle between the session screen ⇄ mascot state |
 
-## 15. セキュリティ
+## 15. Security
 
-1. **ゼロ・ケイパビリティ設計**：`src-tauri/capabilities/default.json` の適用対象は `windows: ["main"]` のみに限定する。セッション画面（リモートオリジン）には Tauri IPC 権限を一切付与しない。
-2. **Title Bridge**：同期データは `document.title` 経由でのみ渡し、リモート側 JS に IPC を露出しない。内部プロトコルの詳細は §3.2 を参照。
-3. **認証情報の保護**：パスワードや Google OAuth の情報をアプリ側で保存しない。セッション Cookie はアプリ専用ローカルフォルダにのみ永続化する。
+1. **Zero-capability design**: The scope of `src-tauri/capabilities/default.json` is limited to `windows: ["main"]` only. Grant no Tauri IPC permissions at all to the session screen (remote origin).
+2. **Title Bridge**: Pass sync data only via `document.title`, without exposing IPC to remote-side JS. See §3.2 for the internal protocol details.
+3. **Credential protection**: Do not store passwords or Google OAuth information in the app. Persist the session cookie only in the app-specific local folder.
 
-## 16. 配布
+## 16. Distribution
 
-- **NSIS インストーラ**：Per-user インストール（UAC 昇格不要）。デスクトップショートカット、スタートメニュー、アンインストーラを自動構成し、初期設定ファイル（`setting.json` / `quotes.json`）を同梱展開する。GitHub Release 添付時のファイル名は固定名 `Desktop-Mascot-for-Muse_x64-setup.exe` を使用する。
-- **ポータブル版**：単体 `.exe` でも動作する。GitHub Release 添付の ZIP アーカイブ名は固定名 `desktop-mascot-for-muse-windows-x64.zip` を使用する。
-- **MSIX**：Microsoft Store 提出や SmartScreen 対策を見据えた将来対応として位置づける（現行の配布形態ではない）。
+- **NSIS installer**: Per-user installation (no UAC elevation needed). Automatically sets up the desktop shortcut, Start menu, and uninstaller, and bundles and extracts the initial config files (`setting.json` / `quotes.json`). When attaching to a GitHub Release, use the fixed filename `Desktop-Mascot-for-Muse_x64-setup.exe`.
+- **Portable version**: Works as a standalone `.exe`. Use the fixed name `desktop-mascot-for-muse-windows-x64.zip` for the ZIP archive attached to a GitHub Release.
+- **MSIX**: Positioned as a future option with Microsoft Store submission and SmartScreen countermeasures in mind (not a current distribution form).
 
-## 17. 既知の制約・レガシー
+## 17. Known Limitations and Legacy
 
-- **（旧）中・小画面切替**：v0.7 系の「小モード ⇄ 大モード」切替は廃止済みで、トレイメニュー内にレガシー機能としてのみ残る。
-- **コード温存中の旧 UI**：初期開発時のガジェット独自スレッド表示 UI と、独自入力欄からの DOM 注入送信はコード上に残るが現行では使用しない。
-- **動画のフォールバック**：基本動画が未配置の場合、`idle` のみセッション画面から自動抽出される。他の状態動画は未配置だと切り替わらない。
+- **(Old) medium/small screen switching**: The "small mode ⇄ large mode" switching from the v0.7 series has been removed and remains only as a legacy feature in the tray menu.
+- **Old UI kept in code**: The gadget's own thread-display UI from early development and DOM-injection sending from its own input field remain in the code but are not used currently.
+- **Video fallback**: If no basic videos are placed, only `idle` is auto-extracted from the session screen. Other state videos do not switch if they are not placed.
 
-## 18. バージョンと機能の対応
+## 18. Version and Feature Mapping
 
-| バージョン | 主な機能 |
+| Version | Main features |
 | :--- | :--- |
-| v0.8.0 | 「マスコット状態 ⇄ セッション画面」の 2 形態連携へ刷新 |
-| v0.9.0 | 状態同期と 500ms クロスフェード、IDLE プラグイン再生、単一起動、カスタムアイコン |
-| v1.0.0 | 名称を Muse Desktop Mascot に統一、NSIS インストーラ、GUI 設定画面、自動起動、未読バッジ、利用枠の枠色・% 表示 |
-| v1.1.0 | クイック1行入力、表示サイズ 3 段階、セッション画面の位置・サイズ復元、効果音、時間帯セリフ |
-| v1.1.1 | ライブつぶやき機能 |
-| v1.1.2 | 専用チャット方式ウェイク完了後に直前のチャットへ自動復帰する不具合修正 (Issue #46) |
-| v1.1.3 | 3層自動テスト基盤導入 (Issue #48)、利用枠（週間Limit）自動取得安定化・設定ダイアログ保護 (Issue #49)、長文吹き出しスクロール自動追従 (Issue #50) |
-| v1.1.4 | スリープ復帰・長時間起動時の利用枠取得 409 エラーに対するセッション手動リロードおよび安全ガード付き自動リカバリ (Issue #52)、Windows 自動起動設定の永続化 (Issue #53)、画像 D&D・外部リンクの既定ブラウザ起動 (Issue #54)、設定ファイルのデバウンス原子的書き込み (Issue #55)、つぶやき吹き出しの視覚的区別 (Issue #56)、ステータスピル抽出改善 (Issue #57, #58) |
-| v1.1.5 | オリジナルマスコットアプリアイコンへの刷新 (Issue #59)、マスコットモード時の透明領域クリック透過制御 (Issue #60) |
-| v1.1.6 | セッション画面遷移・復帰時のホバー表示(⤢)残留修正 (Issue #61)、マスコットドラッグ後のホバー表示(⤢)復帰修正 (Issue #62) |
-| v1.1.7 | マスコット状態での利用枠（Limit）定期更新・手動更新の2段階設定メニュー対応および停止ボタン誤検出の修正 (Issue #63) |
-| v1.1.8 | アプリ名および Git リポジトリ名を Desktop Mascot for Muse へ変更 (Issue #64) |
-| v1.1.9 | 2段階設定メニューのショートカット表記付き項目（設定Ctrl+,）および汎用ポップオーバー要素への対応 (Issue #67) |
-| v1.1.10 | クイック1行入力への初心者向け「おまかせショートカット」統合 (Issue #68) |
+| v0.8.0 | Revamped into the 2-form integration of "mascot state ⇄ session screen" |
+| v0.9.0 | State sync and 500ms crossfade, IDLE plugin playback, single instance, custom icon |
+| v1.0.0 | Unified the name to Muse Desktop Mascot, NSIS installer, GUI Settings screen, auto-start, unread badge, usage-limit frame color and % display |
+| v1.1.0 | Quick one-line input, 3 display-size levels, session screen position/size restore, sound effects, time-of-day lines |
+| v1.1.1 | Live remarks feature |
+| v1.1.2 | Bug fix: auto-return to the previous chat after a wake completes in dedicated-chat mode (Issue #46) |
+| v1.1.3 | 3-layer automated test infrastructure introduced (Issue #48), usage-limit (weekly Limit) auto-fetch stabilization and Settings dialog protection (Issue #49), long speech-bubble scroll auto-follow (Issue #50) |
+| v1.1.4 | Manual session reload and guarded auto-recovery for usage-limit 409 errors on wake from sleep / long uptime (Issue #52), persistence of Windows auto-start settings (Issue #53), image drag-and-drop and external links opening in the default browser (Issue #54), debounced atomic writes of config files (Issue #55), visual distinction for remark speech bubbles (Issue #56), status-pill extraction improvements (Issue #57, #58) |
+| v1.1.5 | Refresh to the original mascot app icon (Issue #59), click-through control for transparent areas in mascot mode (Issue #60) |
+| v1.1.6 | Fix for hover display (⤢) remaining after session screen navigation/return (Issue #61), fix for hover display (⤢) not returning after dragging the mascot (Issue #62) |
+| v1.1.7 | Two-level Settings menu support for periodic and manual usage-limit (Limit) updates in mascot state, and fix for stop-button misdetection (Issue #63) |
+| v1.1.8 | App name and Git repository name changed to Desktop Mascot for Muse (Issue #64) |
+| v1.1.9 | Support for shortcut-labeled items in the two-level Settings menu (Settings Ctrl+,) and generic popover elements (Issue #67) |
+| v1.1.10 | Integration of beginner-friendly "one-click shortcuts" into quick one-line input (Issue #68) |
 
 ---
 
-*本書は機能仕様書の正（Single Source of Truth）である。実装との差異が生じた場合は、実装を正として本書を更新するか、仕様変更として合意のうえ両方を同期すること。*
+*This document is the authoritative Feature Specification (Single Source of Truth). If a discrepancy with the implementation arises, either update this document with the implementation as authoritative, or sync both after agreeing on it as a specification change.*

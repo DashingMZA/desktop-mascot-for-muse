@@ -1,18 +1,18 @@
-// main.js - Muse Desktop Gadget 本番フロントエンドコントローラー
+// main.js - Muse Desktop Gadget production frontend controller
 
 const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, args) => {
   console.log(`[Mock Invoke] ${cmd}`, args);
   if (cmd === 'get_gadget_config') return { size_mode: 'small', message_limit: 5, hotkey: 'Ctrl+Shift+M' };
   if (cmd === 'get_chat_messages') return [
-    { role: 'assistant', text: 'こんにちは！Muse です。何かお手伝いできることはありますか？' },
-    { role: 'user', text: '今日のタスクを教えて。' },
-    { role: 'assistant', text: '承知しました！本日のスケジュールを確認しますね。' }
+    { role: 'assistant', text: "Hello! I'm Muse. Is there anything I can help you with?" },
+    { role: 'user', text: "Tell me today's tasks." },
+    { role: 'assistant', text: "Of course! Let me check today's schedule." }
   ];
-  if (cmd === 'get_usage_limit') return { plan_name: '無料プラン', used_percent: 17, remaining_percent: 83, reset_text: '1週間の上限は11月6日にリセットされます', updated_at: '2026-11-02 21:00' };
+  if (cmd === 'get_usage_limit') return { plan_name: 'Free Plan', used_percent: 17, remaining_percent: 83, reset_text: 'The weekly limit resets on November 6', updated_at: '2026-11-02 21:00' };
   return {};
 };
 
-// UI 要素の取得
+// Get UI elements
 const statusDot = document.getElementById('status-dot');
 const planBadge = document.getElementById('plan-badge');
 
@@ -28,7 +28,7 @@ const avatarContainer = document.getElementById('avatar-container');
 const avatarVideoA = document.getElementById('avatar-video-a');
 const avatarVideoB = document.getElementById('avatar-video-b');
 
-// <video> 要素のエラー検知と自律復旧リスナー (Issue #31)
+// <video> element error detection and self-recovery listener (Issue #31)
 [avatarVideoA, avatarVideoB].forEach((videoEl, idx) => {
   if (videoEl) {
     videoEl.addEventListener('error', (e) => {
@@ -52,7 +52,7 @@ const mascotRestoreBtn = document.getElementById('mascot-restore-btn');
 
 let unreadCount = 0;
 
-// マスコット吹き出し要素
+// Mascot speech bubble elements
 const mascotBubble = document.getElementById('mascot-bubble');
 const mascotBubbleTitle = mascotBubble ? mascotBubble.querySelector('.mascot-bubble-title') : null;
 const mascotBubbleText = document.getElementById('mascot-bubble-text');
@@ -60,7 +60,7 @@ const mascotBubbleCursor = document.getElementById('mascot-bubble-cursor');
 const btnBubbleClose = document.getElementById('btn-bubble-close');
 const mascotBubbleOptions = document.getElementById('mascot-bubble-options');
 
-// マスコットミニ入力バー要素 (Issue #27) ＋ おまかせショートカット (Issue #68)
+// Mascot mini input bar elements (Issue #27) + one-click shortcuts (Issue #68)
 const mascotInputBar = document.getElementById('mascot-input-bar');
 const mascotInputField = document.getElementById('mascot-input-field');
 const btnMascotInputSend = document.getElementById('btn-mascot-input-send');
@@ -97,14 +97,14 @@ let typingTimer = null;
 let autoHideTimer = null;
 
 // ==========================================
-// ルパン風パタパタタイピング吹き出し制御
+// Lupin-style pat-pat typing speech bubble control
 // ==========================================
 function cleanMascotMessageText(text) {
   if (!text) return '';
   return text
-    .replace(/^[\s\uFEFF\xA0\u3000]+/g, '')  // 先頭の空白・改行・全角スペース・NBSP等を完全に除去
-    .replace(/[\s\uFEFF\xA0\u3000]+$/g, '')  // 末尾の空白を除去
-    .replace(/^[ \t\u3000]+/gm, '');          // 各行頭の不自然なインデントを除去
+    .replace(/^[\s\uFEFF\xA0\u3000]+/g, '')  // Completely remove leading whitespace, newlines, full-width spaces, NBSP, etc.
+    .replace(/[\s\uFEFF\xA0\u3000]+$/g, '')  // Remove trailing whitespace
+    .replace(/^[ \t\u3000]+/gm, '');          // Remove unnatural indentation at the start of each line
 }
 
 function applyMascotBubbleDirectionClass(onLeft) {
@@ -176,7 +176,7 @@ async function updateMascotBubbleDirection() {
 }
 
 // ==========================================
-// Web Audio API サウンドエンジン (Issue #24)
+// Web Audio API sound engine (Issue #24)
 // ==========================================
 let audioCtx = null;
 let typingAudioBuffers = [];
@@ -195,14 +195,14 @@ function getAudioContext() {
   return audioCtx;
 }
 
-// メカニカルキースイッチの打鍵音バッファを事前生成（4バリエーション）
+// Pre-generate mechanical key-switch keystroke sound buffers (4 variations)
 function initTypingBuffers() {
   if (!audioCtx || typingAudioBuffers.length > 0) return;
   const sampleRate = audioCtx.sampleRate;
-  const duration = 0.035; // 35ms の打鍵音
+  const duration = 0.035; // 35ms keystroke sound
   const length = Math.floor(sampleRate * duration);
 
-  // 4種類の打鍵バリエーション（ピッチや共鳴を少しずつ変えてリアルな人間味を出す）
+  // 4 keystroke variations (slightly varying pitch and resonance for a realistic human feel)
   const configs = [
     { startFreq: 1400, endFreq: 480, lowFreq: 320, noiseMix: 0.08 },
     { startFreq: 1250, endFreq: 420, lowFreq: 280, noiseMix: 0.06 },
@@ -217,14 +217,14 @@ function initTypingBuffers() {
 
     for (let j = 0; j < length; j++) {
       const t = j / sampleRate;
-      // ピッチ急降下（硬質なキースイッチ接触音「カチッ」）
+      // Sharp pitch drop (hard key-switch contact sound, "click")
       const freq1 = cfg.startFreq * Math.exp(-t * 180) + cfg.endFreq;
       const attack = Math.sin(2 * Math.PI * freq1 * t) * Math.exp(-t * 150);
 
-      // 底打ちの低音共鳴音「コッ」
+      // Low bottoming-out resonance sound ("thock")
       const bottom = Math.sin(2 * Math.PI * cfg.lowFreq * t) * Math.exp(-t * 100);
 
-      // わずかなクリックノイズ（指先とキートップの接触）
+      // Slight click noise (fingertip touching the keycap)
       const noise = (Math.random() * 2 - 1) * Math.exp(-t * 260) * cfg.noiseMix;
 
       data[j] = (attack * 0.8 + bottom * 0.45 + noise) * (1 - t / duration);
@@ -233,7 +233,7 @@ function initTypingBuffers() {
   }
 }
 
-// カタカタタイピング音の再生（心地よい打鍵リズムにスロットリング）
+// Play the tap-tap typing sound (throttled to a pleasant keystroke rhythm)
 let lastTypingSoundTime = 0;
 function playTypingSound() {
   if (pluginSettings.sound_enabled === false) return;
@@ -241,7 +241,7 @@ function playTypingSound() {
   if (!ctx || typingAudioBuffers.length === 0) return;
 
   const now = ctx.currentTime;
-  // 60ms 以内の連続再生はスロットル（秒間約16打鍵の心地よい「カタカタカタ…」リズムを維持）
+  // Throttle playback within 60ms (keeps a pleasant "tap-tap-tap…" rhythm of about 16 keystrokes per second)
   if (now - lastTypingSoundTime < 0.060) return;
   lastTypingSoundTime = now;
 
@@ -262,7 +262,7 @@ function playTypingSound() {
   } catch (_) {}
 }
 
-// 新着通知音「ピコン♪」（2音アルペジオチャイム）
+// New-message notification sound "ping♪" (2-note arpeggio chime)
 function playNotificationSound() {
   if (pluginSettings.sound_enabled === false) return;
   const ctx = getAudioContext();
@@ -273,7 +273,7 @@ function playNotificationSound() {
 
   try {
     const now = ctx.currentTime;
-    // 1音目: C6 (1046.5Hz)
+    // Note 1: C6 (1046.5Hz)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = 'sine';
@@ -286,7 +286,7 @@ function playNotificationSound() {
     osc1.start(now);
     osc1.stop(now + 0.12);
 
-    // 2音目: G6 (1567.98Hz)
+    // Note 2: G6 (1567.98Hz)
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = 'sine';
@@ -302,7 +302,7 @@ function playNotificationSound() {
   } catch (_) {}
 }
 
-// マスコットクリック時の「ポコッ♪」音
+// "Pop♪" sound when the mascot is clicked
 function playTouchReactionSound() {
   if (pluginSettings.sound_enabled === false) return;
   const ctx = getAudioContext();
@@ -334,7 +334,7 @@ let currentTypingTargetText = '';
 let currentTypingIdx = 0;
 let currentTypingOptions = [];
 
-// 選択肢ボタンの描画 (Issue #32)
+// Render the option buttons (Issue #32)
 function renderMascotOptions(options) {
   if (!mascotBubbleOptions) return;
   mascotBubbleOptions.innerHTML = '';
@@ -356,14 +356,14 @@ function renderMascotOptions(options) {
     mascotBubbleOptions.appendChild(btn);
   });
 
-  // セッション画面誘導ボタン (フォールバック)
+  // Session screen guide button (fallback)
   const footer = document.createElement('div');
   footer.className = 'mascot-option-footer';
   const sessionBtn = document.createElement('button');
   sessionBtn.type = 'button';
   sessionBtn.className = 'mascot-option-session-btn';
-  sessionBtn.textContent = '🖥️ セッションで開く';
-  sessionBtn.title = '公式チャット画面を開いて直接操作します';
+  sessionBtn.textContent = '🖥️ Open in session';
+  sessionBtn.title = 'Open the official chat screen and operate it directly';
   sessionBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     hideMascotBubble();
@@ -380,7 +380,7 @@ function renderMascotOptions(options) {
   scrollMascotBubbleToBottom();
 }
 
-// 吹き出しスクロールコンテナ（.mascot-bubble-body）の最下部自動追従 (Issue #50)
+// Auto-follow to the bottom of the speech bubble scroll container (.mascot-bubble-body) (Issue #50)
 function scrollMascotBubbleToBottom() {
   if (!mascotBubbleText) return;
   const scrollContainer = mascotBubbleText.parentElement;
@@ -390,11 +390,11 @@ function scrollMascotBubbleToBottom() {
   mascotBubbleText.scrollTop = mascotBubbleText.scrollHeight;
 }
 
-// 選択肢クリック時のワンクリック返信 (Issue #32)
+// One-click reply when an option is clicked (Issue #32)
 async function handleSelectOption(optionText) {
   if (!optionText) return;
-  // 回答前メッセージが未確定（2秒の確定待ち）のままだと、確定処理や定期同期が
-  // そのメッセージを吹き出しに再生し直して選択肢が再表示されるため、クリック時点で確定済みにする
+  // If the pre-answer message is still unconfirmed (waiting 2 seconds to confirm), the confirm step or periodic sync
+  // would replay that message in the bubble and re-show the options, so confirm it at the moment of the click
   if (assistantCommitTimer) {
     clearTimeout(assistantCommitTimer);
     assistantCommitTimer = null;
@@ -409,7 +409,7 @@ async function handleSelectOption(optionText) {
   setAvatarState('working');
 
   try {
-    playLupinTyping(`「${optionText}」を送信中…`);
+    playLupinTyping(`Sending "${optionText}"…`);
     if (liveQuotesPrevChatUrl) {
       isWakingForLiveQuotes = false;
       await restoreSessionUrlAfterWake();
@@ -417,7 +417,7 @@ async function handleSelectOption(optionText) {
     await invoke('send_chat_message', { text: optionText });
   } catch (err) {
     console.error('Failed to send option:', err);
-    playLupinTyping(`送信エラー: ${err?.message || err}`);
+    playLupinTyping(`Send error: ${err?.message || err}`);
   }
 }
 
@@ -430,25 +430,25 @@ function startTypingLoop(text) {
       mascotBubbleText.textContent += char;
       currentTypingIdx++;
       scrollMascotBubbleToBottom();
-      // 空白・改行以外でカタカタタイピング音を再生
+      // Play the tap-tap typing sound for anything other than spaces and newlines
       if (char !== ' ' && char !== '\n' && char !== '\r' && char !== '\t' && char !== '　') {
         playTypingSound();
       }
     } else {
       clearInterval(typingTimer);
       typingTimer = null;
-      // タイピング完了後、カーソルを少し待って非表示に
+      // After typing finishes, wait a moment, then hide the cursor
       setTimeout(() => {
         if (!typingTimer) mascotBubbleCursor.classList.add('hidden');
       }, 700);
 
-      // タイピング完了時に選択肢ボタンを表示 (Issue #32)
+      // Show the option buttons when typing finishes (Issue #32)
       if (currentTypingOptions && currentTypingOptions.length > 0) {
         renderMascotOptions(currentTypingOptions);
       }
 
-      // setting.json の bubble_display_duration_sec 秒後に自動的にフェードアウト
-      // ※選択肢がある場合は回答できるよう長めに保持 (最低180秒)
+      // Fade out automatically after setting.json's bubble_display_duration_sec seconds
+      // * If there are options, keep it shown longer so they can be answered (at least 180 seconds)
       const baseSec = Math.max(1, Number(pluginSettings.bubble_display_duration_sec) || 30);
       const bubbleDurationMs = (currentTypingOptions && currentTypingOptions.length > 0)
         ? Math.max(180, baseSec) * 1000
@@ -466,7 +466,7 @@ function applyMascotBubbleAppearance(kind) {
     mascotBubble.classList.toggle('is-quote', isQuote);
   }
   if (mascotBubbleTitle) {
-    mascotBubbleTitle.textContent = isQuote ? '💭 ひとりごと' : 'Muse';
+    mascotBubbleTitle.textContent = isQuote ? '💭 Musing' : 'Muse';
   }
 }
 
@@ -480,10 +480,10 @@ function playLupinTyping(text, options = [], meta = {}) {
   applyMascotBubbleAppearance(kind);
   updateMascotBubbleDirection();
 
-  // シームレス追記判定 (ストリーミング途中で更新された場合のチラつき・読み直し防止):
-  // もし吹き出しが現在表示中（またはタイピング中）で、
-  // 新しいテキストが現在のタイピング対象または表示中テキストの「続き（前方一致）」である場合は、
-  // 吹き出しを消去・リセットせず、目標テキストを更新して後ろにそのままタイピングを継続する！
+  // Seamless-append check (prevents flicker and re-reading when updated mid-stream):
+  // If the bubble is currently shown (or typing), and
+  // the new text is a continuation (prefix match) of the current typing target or the text being shown,
+  // don't clear or reset the bubble — just update the target text and keep typing on from there!
   const currentShown = mascotBubbleText.textContent || '';
   const isCurrentlyActive = !mascotBubble.classList.contains('hidden');
 
@@ -494,7 +494,7 @@ function playLupinTyping(text, options = [], meta = {}) {
     currentTypingTargetText = cleanedText;
     currentTypingOptions = Array.isArray(options) ? options : [];
 
-    // 前のタイピングが既に完了してフェードアウト待ちに入っていた場合はタイピングタイマーを再開
+    // If the previous typing already finished and is waiting to fade out, restart the typing timer
     if (!typingTimer && currentTypingIdx < cleanedText.length) {
       if (autoHideTimer) {
         clearTimeout(autoHideTimer);
@@ -507,7 +507,7 @@ function playLupinTyping(text, options = [], meta = {}) {
     return;
   }
 
-  // まったく新しい別メッセージの場合は初期化して開始
+  // If it's a completely new, different message, initialize and start over
   if (typingTimer) {
     clearInterval(typingTimer);
     typingTimer = null;
@@ -560,36 +560,36 @@ function hideMascotBubble() {
 }
 
 // ==========================================
-// マスコット クイック1行ミニ入力バー (Issue #27) ＋ おまかせショートカット (Issue #68)
+// Mascot quick one-line mini input bar (Issue #27) + one-click shortcuts (Issue #68)
 // ==========================================
 const MASCOT_QUICK_SHORTCUTS = [
   {
     id: 'organize-memory',
-    label: '物忘れが多いから改善して',
-    tooltip: 'Museの覚えたことが古くなったり、思い違いが増えてきたと感じたら',
-    prompt: '私のメモリ（MEMORY.md）を棚卸しして。重複や古くなった情報があれば整理して、圧縮できそうな項目があれば提案して。',
+    label: 'I keep forgetting things — help me improve that',
+    tooltip: 'When what Muse remembers feels outdated or mistaken',
+    prompt: 'Please review my memory (MEMORY.md). If there are duplicates or outdated entries, tidy them up and suggest anything that could be compressed.',
   },
   {
     id: 'reset-chat',
-    label: '会話を仕切り直して',
-    tooltip: '会話が長くなって重く感じたら。要約して新しいチャットへ引き継ぎます',
-    prompt: 'この会話が長くなってきたので、ここまでの内容を要約して引き継ぎメモを作って。新しいチャットでも続けられる形にして。',
+    label: "Let's start the conversation fresh",
+    tooltip: "When the conversation gets long and heavy — I'll summarize it and hand it over to a new chat",
+    prompt: "This conversation has gotten long, so please summarize what we've covered so far into a handover note I can continue from in a new chat.",
   },
   {
     id: 'how-to-use',
-    label: '便利な使い方を教えて',
-    tooltip: 'まだ知らない便利な使い方を教えてほしいときに',
-    prompt: 'Muse の便利な使い方を、初心者向けに3つだけ教えて。私の使い方に合いそうなものから。',
+    label: 'Teach me some handy ways to use this',
+    tooltip: "When you want to learn handy tricks you don't know yet",
+    prompt: 'Teach me just 3 handy ways to use Muse, for a beginner — starting with the ones that would suit how I use it.',
   },
   {
     id: 'daily-summary',
-    label: '今日のことをまとめて',
-    tooltip: '一日の終わりに、今日のやりとりを振り返りたいときに',
-    prompt: '今日、私がやったこと・話したことを振り返って、短くまとめて。',
+    label: 'Sum up today for me',
+    tooltip: "When you want to look back on today's conversations at the end of the day",
+    prompt: 'Look back on what I did and talked about today, and sum it up briefly.',
   },
 ];
 
-const DEFAULT_SHORTCUT_NOTE = '押すと入力欄に入ります（送信で1ターン消費）';
+const DEFAULT_SHORTCUT_NOTE = 'Tap to fill the input field (sending uses 1 turn)';
 let activeShortcutPrompt = '';
 
 function resetMascotShortcutSelection() {
@@ -614,7 +614,7 @@ function applyMascotShortcut(item, chipEl) {
   }
   mascotInputField.value = item.prompt;
   if (mascotShortcutNote) {
-    mascotShortcutNote.textContent = '確認して Enter で送信できます（1ターン消費）';
+    mascotShortcutNote.textContent = 'Check it, then press Enter to send (uses 1 turn)';
     mascotShortcutNote.classList.add('is-selected');
   }
   playTouchReactionSound();
@@ -697,7 +697,7 @@ async function sendMascotQuickMessage() {
   recordInteraction();
   setAvatarState('working');
 
-  // Issue #35: 送信時の「考え中…」ポップアップは非表示（返答受信まで非表示を維持）
+  // Issue #35: hide the "Thinking…" popup when sending (keep it hidden until a reply arrives)
   hideMascotBubble();
 
   try {
@@ -708,14 +708,14 @@ async function sendMascotQuickMessage() {
     await invoke('send_chat_message', { text });
   } catch (err) {
     console.error('sendMascotQuickMessage error:', err);
-    playLupinTyping('送信エラー: ' + err);
+    playLupinTyping('Send error: ' + err);
     setAvatarState('idle');
   } finally {
     try {
       window.focus();
     } catch (_) {}
     setTimeout(() => { isSendingMessage = false; }, 800);
-    // 返答受信のため、段階的に再取得
+    // Re-fetch in stages to receive the reply
     setTimeout(loadChatMessages, 800);
     setTimeout(loadChatMessages, 1800);
     setTimeout(loadChatMessages, 3000);
@@ -726,12 +726,12 @@ async function sendMascotQuickMessage() {
   }
 }
 
-// 未読バッジ表示制御 (Issue #20)
+// Unread badge display control (Issue #20)
 function updateUnreadBadge() {
   if (!unreadBadgeEl) return;
   if (unreadCount > 0) {
     unreadBadgeEl.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
-    unreadBadgeEl.title = `未読メッセージが ${unreadCount} 件あります（クリックで開く）`;
+    unreadBadgeEl.title = `You have ${unreadCount} unread message(s) (click to open)`;
     unreadBadgeEl.classList.remove('hidden');
     unreadBadgeEl.style.display = 'flex';
   } else {
@@ -746,7 +746,7 @@ function clearUnreadBadge() {
   updateUnreadBadge();
 }
 
-// Muse のストリーミング返信がすべて完了した瞬間に確定表示するコミット関数
+// Commit function that confirms the display the moment Muse's streaming reply fully completes
 let lastCommittedAssistantText = null;
 
 function commitPendingAssistantMessage() {
@@ -774,20 +774,20 @@ function commitPendingAssistantMessage() {
   pendingAssistantText = null;
 
   recordInteraction();
-  // Issue #36: 回答完了時の歓喜ポーズを廃止し、直接通常の待機状態(idle)へ戻す
+  // Issue #36: remove the celebration pose on answer completion; return directly to the normal idle state
   setAvatarState('idle', { force: true });
-  // 会話返答完了に伴い、セッション非表示時のみ最新の利用枠を自動再取得 (Issue #33, #49)
+  // When a conversation reply completes, auto-refetch the latest usage limit only while the session is hidden (Issue #33, #49)
   setTimeout(() => {
     if (!isSessionVisible) {
       loadUsageLimit(true);
     }
   }, 2000);
-  // ただしセッション画面表示中はカタカタ音・吹き出し再生を抑止 (Issue #29)
+  // But suppress the tap-tap sound and bubble playback while the session screen is shown (Issue #29)
   if (document.body.classList.contains('mode-mascot') && !isSessionVisible) {
     playLupinTyping(textToPlay);
   }
 
-  // セッション画面が表に出ていない場合は未読バッジをカウントアップ (同一メッセージのストリーミング延長なら二重加算しない)
+  // If the session screen is not in front, count up the unread badge (don't double-count a streaming extension of the same message)
   if (!isSessionVisible && !isExtension) {
     unreadCount++;
     updateUnreadBadge();
@@ -796,13 +796,13 @@ function commitPendingAssistantMessage() {
 }
 
 // ==========================================
-// 0. §17 起動時・定期ヘルスチェック & 縮退運転制御
+// 0. §17 Startup & periodic health check & degraded-mode control
 // ==========================================
 function setHealthPill(el, label, ok, detail) {
   if (!el) return;
   el.textContent = ok ? `${label}✓` : `${label}⚠`;
   el.className = `health-pill ${ok ? 'ok' : 'degraded'}`;
-  el.title = `${label}: ${ok ? '正常' : '未検出/縮退中'} (${detail || ''})`;
+  el.title = `${label}: ${ok ? 'OK' : 'Not detected / degraded'} (${detail || ''})`;
 }
 
 async function runHealthCheck() {
@@ -839,15 +839,15 @@ async function runHealthCheck() {
     setHealthPill(healthR3, 'R3', !!h.r3_input?.ok, h.r3_input?.selector);
     setHealthPill(healthR5, 'R5', !!h.r5_limit?.ok, h.r5_limit?.selector);
 
-    // §17.1 R3（入力欄）の縮退運転: セレクタが見つからない場合は誤送信を防ぎ明示する
+    // §17.1 R3 (input field) degraded mode: if the selector is not found, prevent mistaken sends and say so explicitly
     if (h.r3_input && !h.r3_input.ok) {
       chatInput.disabled = true;
       btnSendMessage.disabled = true;
-      chatInput.placeholder = '⚠ 入力欄が未検出です（[🖥️] 公式画面をご利用ください）';
+      chatInput.placeholder = '⚠ Input field not detected (please use the [🖥️] official screen)';
     } else {
       chatInput.disabled = false;
       btnSendMessage.disabled = false;
-      chatInput.placeholder = 'Muse にメッセージを入力... (Enterで送信)';
+      chatInput.placeholder = 'Type a message to Muse... (Enter to send)';
     }
   } catch (err) {
     console.warn('runHealthCheck error:', err);
@@ -855,22 +855,22 @@ async function runHealthCheck() {
 }
 
 // ==========================================
-// 1. アバター動画エンジン (500ms クロスフェード & ステートマシン)
+// 1. Avatar video engine (500ms crossfade & state machine)
 // ==========================================
 let avatarVideoPack = null;
 let pluginItems = [];
 let lastPickedPluginKey = null;
 let currentAvatarState = 'idle';
 let currentActiveSlot = 'a'; // 'a' or 'b'
-let avatarTransitionSeq = 0; // スロット切り替え競合防止シーケンス (Issue #31)
-let isSendingMessage = false; // 送信中連打・二重送信ロック (Issue #34)
+let avatarTransitionSeq = 0; // Slot-switch race-prevention sequence (Issue #31)
+let isSendingMessage = false; // Lock against repeated / double sends while sending (Issue #34)
 let stateTimer = null;
 let isSpecialActionLocked = false;
 let specialActionTimer = null;
 let lastUserInteractionTime = Date.now();
 let lastPluginActionEndTime = 0;
 
-// setting.json の設定値（ホットリロード対応）
+// setting.json values (hot-reload supported)
 let pluginSettings = {
   idle_threshold_sec: 180,
   action_interval_sec: 15,
@@ -892,11 +892,11 @@ let pluginSettings = {
   }
 };
 
-// quotes.json の動画別設定マップ（ホットリロード対応）
+// quotes.json per-video settings map (hot-reload supported)
 let videoQuotesConfigMap = {};
 
 // ==========================================
-// ライブつぶやき生成（ウェイク方式）プール管理 (Issue #37)
+// Live remark generation (wake method) pool management (Issue #37)
 // ==========================================
 const LIVE_QUOTES_FENCE = '\x60\x60\x60';
 let liveQuotesPool = {
@@ -999,17 +999,17 @@ function consumeOneLiveQuote() {
   const slot = getCurrentTimeSlot();
   const recentSet = new Set(Array.isArray(liveQuotesPool.recent_shown) ? liveQuotesPool.recent_shown : []);
 
-  // 1. 現在の時間帯に一致し、直近表示していないものを最優先
+  // 1. Prefer one matching the current time slot that was not shown recently
   let chosenIdx = liveQuotesPool.items.findIndex(item => item.time_slot === slot && !recentSet.has(item.text));
-  // 2. 現在の時間帯に一致するもの
+  // 2. One matching the current time slot
   if (chosenIdx === -1) {
     chosenIdx = liveQuotesPool.items.findIndex(item => item.time_slot === slot);
   }
-  // 3. 直近表示していない任意のもの
+  // 3. Any one not shown recently
   if (chosenIdx === -1) {
     chosenIdx = liveQuotesPool.items.findIndex(item => !recentSet.has(item.text));
   }
-  // 4. 先頭要素
+  // 4. The first element
   if (chosenIdx === -1) {
     chosenIdx = 0;
   }
@@ -1066,7 +1066,7 @@ function extractAndStoreLiveQuotes(text) {
     if (!line) continue;
     if (/^mascot-quotes$/i.test(line)) continue;
     if (line.includes(LIVE_QUOTES_FENCE)) continue;
-    if (line.includes('ここに1行ずつ')) continue;
+    if (line.includes('one line here')) continue;
     if (line.length > 40) continue;
     if (existingTexts.has(line) || recentTexts.has(line)) continue;
 
@@ -1089,29 +1089,29 @@ function buildLiveQuotesWakePrompt(batchCount, timeSlot) {
   const n = Math.max(1, Math.min(10, Number(batchCount) || 4));
   const slot = timeSlot || getCurrentTimeSlot();
   return [
-    `あなたの普段の口調で、デスクトップマスコットの吹き出し用に短い一言を ${n} つ考えて、`,
-    '次の形式のコードブロックに1行ずつ入れて返してください。本文はそれ以外書かないでください。',
-    `条件：1行40文字以内、時間帯（${slot}）に合った内容、直近の会話や予定に触れてもよい。`,
+    `In your usual tone, come up with ${n} short one-liners for the desktop mascot's speech bubble,`,
+    'Reply with one per line inside a code block in the following format. Do not write anything else in the body.',
+    `Rules: no more than 40 characters per line, matching the time of day (${slot}); you may mention recent conversations or plans.`,
     '',
     LIVE_QUOTES_FENCE + 'mascot-quotes',
-    '（ここに1行ずつ）',
+    '(one line here)',
     LIVE_QUOTES_FENCE
   ].join('\n');
 }
 
 async function maybeTriggerLiveQuotesWake() {
   const lq = pluginSettings.live_quotes;
-  // 1. 機能が有効である
+  // 1. The feature is enabled
   if (!lq || lq.enabled !== true) return;
 
-  // 2. target_mode === "custom" の場合、有効なURLが設定されている
+  // 2. When target_mode === "custom", a valid URL is set
   const targetMode = lq.target_mode === 'custom' ? 'custom' : 'main';
   const customUrl = (lq.custom_chat_url || '').trim();
   if (targetMode === 'custom' && !customUrl.startsWith('https://')) {
     return;
   }
 
-  // 3. Muse本体の状態が IDLE であり、かつアイドル継続時間が idle_threshold_sec 以上経過
+  // 3. Muse's state is IDLE, and the idle time has lasted at least idle_threshold_sec
   if (
     currentAvatarState !== 'idle' ||
     isSpecialActionLocked ||
@@ -1126,19 +1126,19 @@ async function maybeTriggerLiveQuotesWake() {
   const thresholdSec = Math.max(1, Number(pluginSettings.idle_threshold_sec) || 180);
   if (idleSec < thresholdSec) return;
 
-  // 4. セッションウィンドウが非表示かつマスコットモード表示中
+  // 4. The session window is hidden and mascot mode is shown
   if (isSessionVisible || !document.body.classList.contains('mode-mascot')) {
     return;
   }
 
-  // 5. 前回のウェイク実行時刻から min_interval_min 分以上経過
+  // 5. At least min_interval_min minutes have passed since the last wake
   const minIntervalMs = Math.max(1, Number(lq.min_interval_min) || 60) * 60 * 1000;
   const lastWakeAt = Number(liveQuotesPool.last_wake_at) || 0;
   if (now - lastWakeAt < minIntervalMs) {
     return;
   }
 
-  // 6. 当日のウェイク実行回数が daily_limit 未満
+  // 6. Today's wake count is below daily_limit
   const today = getTodayDateString();
   if (liveQuotesPool.daily_wake_date !== today) {
     liveQuotesPool.daily_wake_date = today;
@@ -1149,20 +1149,20 @@ async function maybeTriggerLiveQuotesWake() {
     return;
   }
 
-  // 7. 現在時刻がおやすみ時間帯（quiet_hours_start 〜 quiet_hours_end）に含まれない
+  // 7. The current time is not within quiet hours (quiet_hours_start – quiet_hours_end)
   const qStart = (lq.quiet_hours_start || '22:00').trim() || '22:00';
   const qEnd = (lq.quiet_hours_end || '07:00').trim() || '07:00';
   if (isWithinTimeRanges([`${qStart}-${qEnd}`])) {
     return;
   }
 
-  // 8. ライブプール内の有効残数が 1件以下
+  // 8. At most 1 valid item remains in the live pool
   pruneExpiredLiveQuotes();
   if (liveQuotesPool.items.length > 1) {
     return;
   }
 
-  // 全ガード条件成立 -> バックグラウンドウェイク実行
+  // All guard conditions met -> run a background wake
   isWakingForLiveQuotes = true;
   isNavigatingForWake = true;
   liveQuotesPool.last_wake_at = now;
@@ -1219,45 +1219,45 @@ async function maybeTriggerLiveQuotesWake() {
   }, 45000);
 }
 
-// 放置（アイドル）時のデフォルト気まぐれつぶやき（quotes.json で上書き可能）
+// Default whimsical remarks while idle (can be overridden in quotes.json)
 let defaultIdleQuotesList = [
-  "いつでも呼んでね！",
-  "今日もいい天気だね〜",
-  "お茶でも飲んで一息つこう！",
-  "何か手伝えることがあったら言ってね！"
+  "Call me anytime!",
+  "Such lovely weather today!",
+  "Let's have some tea and take a break!",
+  "Let me know if there's anything I can help with!"
 ];
 
-// タッチ（クリック）時のリアクションつぶやき（quotes.json で上書き可能）
+// Reaction remarks on touch (click) (can be overridden in quotes.json)
 let touchReactionsList = [
-  "はーい！呼んだ？",
-  "なになに〜？",
-  "ここにいるよ！",
-  "がんばろうね！",
-  "何か聞きたいことある？",
-  "えへへ、よろしくね！"
+  "Yaaay! Did you call me?",
+  "What is it~?",
+  "I'm right here!",
+  "Let's do our best!",
+  "Got something you want to ask?",
+  "Hehe, nice to meet you!"
 ];
 
-// 時間帯に応じたつぶやき（朝・昼・夕方・深夜）（quotes.json で上書き可能）
+// Remarks by time of day (morning / afternoon / evening / late night) (can be overridden in quotes.json)
 let timeSpecificQuotesMap = {
   morning: [
-    "おはよう！今日も一日がんばろうね！",
-    "朝の空気、気持ちいいね！深呼吸してみて！",
-    "朝ごはんは食べた？しっかりエネルギー補給しよう！"
+    "Good morning! Let's make today a great day!",
+    "The morning air feels so fresh! Take a deep breath!",
+    "Did you eat breakfast? Let's fuel up properly!"
   ],
   afternoon: [
-    "こんにちは！お昼からもファイトだよ！",
-    "少し休憩してお茶でも飲まない？",
-    "集中しててすごい！でもたまには肩の力を抜いてね。"
+    "Good afternoon! Let's keep going strong!",
+    "How about a little break and some tea?",
+    "You're focusing so hard — amazing! But remember to relax your shoulders sometimes."
   ],
   evening: [
-    "今日も一日お疲れさま！よくがんばったね！",
-    "そろそろ夕暮れ時だね〜。今日の予定はひと段落ついた？",
-    "暗くなってきたね。目を休めながら進めよう！"
+    "Great work today! You did so well!",
+    "It's getting to sunset~. Are you about done with today's plans?",
+    "It's getting dark. Let's keep going while giving your eyes a rest!"
   ],
   night: [
-    "夜更かししすぎないようにね！",
-    "もう遅い時間だから、無理せず休んでね。",
-    "今日もたくさん進んだね！おやすみなさい…zzz"
+    "Try not to stay up too late!",
+    "It's already late, so take it easy and get some rest.",
+    "You got so much done today! Good night… zzz"
   ]
 };
 
@@ -1274,7 +1274,7 @@ function pickRandomIdleQuote(candidateQuotes = null) {
   const slot = getCurrentTimeSlot();
   const timeQuotes = timeSpecificQuotesMap[slot] || [];
 
-  // A. 再生中の動画に専用セリフがあるとき (Issue #38): ライブ 50% / 動画専用 50% で抽選
+  // A. When the playing video has dedicated lines (Issue #38): draw live 50% / video-dedicated 50%
   if (hasSpecificVideoQuotes) {
     if (Math.random() < 0.5) {
       const liveQuote = consumeOneLiveQuote();
@@ -1282,21 +1282,21 @@ function pickRandomIdleQuote(candidateQuotes = null) {
         return liveQuote;
       }
     }
-    // 残り 50%、またはライブプールが空の場合は動画専用セリフ（一部時間帯セリフ）
+    // For the other 50%, or when the live pool is empty, use video-dedicated lines (some time-of-day lines)
     if (timeQuotes.length > 0 && Math.random() < 0.3) {
       return timeQuotes[Math.floor(Math.random() * timeQuotes.length)];
     }
     return candidateQuotes[Math.floor(Math.random() * candidateQuotes.length)];
   }
 
-  // B. 専用セリフのない動画や通常アクション: 従来通りライブセリフ最優先 (Issue #37)
+  // B. Videos without dedicated lines, or regular actions: live lines first, as before (Issue #37)
   const liveQuote = consumeOneLiveQuote();
   if (liveQuote) {
     return liveQuote;
   }
 
-  // デフォルトまたは候補なしの場合:
-  // 現在の時間帯セリフがあれば 70% の確率で時間帯セリフ、30% の確率で通常の放置セリフ
+  // If default, or there are no candidates:
+  // If there are time-of-day lines, pick a time-of-day line with 70% probability and a regular idle line with 30% probability
   if (timeQuotes.length > 0 && (defaultIdleQuotesList.length === 0 || Math.random() < 0.7)) {
     return timeQuotes[Math.floor(Math.random() * timeQuotes.length)];
   }
@@ -1398,7 +1398,7 @@ function getVideoConfig(fileName) {
     };
   }
 
-  // 配列形式で直接セリフリストだけが書かれている場合の後方互換
+  // Backward compatibility for when only a line list is written directly in array form
   if (Array.isArray(raw)) {
     return {
       enabled: true,
@@ -1438,7 +1438,7 @@ function isWithinTimeRanges(timeRanges) {
     if (startMin <= endMin) {
       if (curMin >= startMin && curMin <= endMin) return true;
     } else {
-      // 日跨ぎ (例: "22:00-07:00")
+      // Overnight span (e.g. "22:00-07:00")
       if (curMin >= startMin || curMin <= endMin) return true;
     }
   }
@@ -1480,7 +1480,7 @@ async function loadAvatar(forceRefresh = false) {
     }
 
     let idleDataUrl = pack && pack.idle ? pack.idle : '';
-    // もし avatars/idle.mp4 が未配置（git clone 直後など）の場合は、セッションWebViewから自動取得してフォールバック
+    // If avatars/idle.mp4 is not placed yet (e.g. right after git clone), auto-fetch it from the session WebView as a fallback
     if (!idleDataUrl) {
       try {
         idleDataUrl = await invoke('get_avatar_data_url', { forceRefresh });
@@ -1540,12 +1540,12 @@ function setAvatarState(targetState, options = {}) {
   const newSrc = avatarVideoPack[targetState];
   if (!newSrc) return;
 
-  // 特殊アクション（タッチや3分放置アクション）ロック中は、強制指定以外の上書きを抑制
+  // While a special action (touch or 3-minute idle action) is locked, suppress overwrites other than forced ones
   if (isSpecialActionLocked && !force) {
     return;
   }
 
-  // ロック時間の更新
+  // Update the lock duration
   if (lockDuration && durationMs > 0) {
     isSpecialActionLocked = true;
     if (specialActionTimer) clearTimeout(specialActionTimer);
@@ -1561,7 +1561,7 @@ function setAvatarState(targetState, options = {}) {
     }
   }
 
-  // 自動復帰タイマーの更新
+  // Update the auto-return timer
   if (stateTimer) {
     clearTimeout(stateTimer);
     stateTimer = null;
@@ -1578,14 +1578,14 @@ function setAvatarState(targetState, options = {}) {
     }, durationMs);
   }
 
-  // すでに同じステートの動画を再生中の場合は、絶対に <video> スロット切替・再読込を行わない（ちらつき防止）
+  // If the same state's video is already playing, never switch <video> slots or reload (prevents flicker)
   if (currentAvatarState === targetState) {
     return;
   }
 
   currentAvatarState = targetState;
 
-  // スロット切り替え（A <-> B）500ms クロスフェード (Issue #31 競合・黒画面対策)
+  // Slot switching (A <-> B) 500ms crossfade (Issue #31 race / black-screen fix)
   const nextSlotId = currentActiveSlot === 'a' ? 'b' : 'a';
   const incomingSlot = nextSlotId === 'b' ? avatarVideoB : avatarVideoA;
   const outgoingSlot = nextSlotId === 'b' ? avatarVideoA : avatarVideoB;
@@ -1601,7 +1601,7 @@ function setAvatarState(targetState, options = {}) {
     incomingSlot.classList.remove('hidden');
 
     const finalizeCrossFade = () => {
-      // 最新の切り替え要求でない場合は何もしない（古い完了コールバックによる誤消去を防止）
+      // If this is not the latest switch request, do nothing (prevents stale completion callbacks from wrongly clearing it)
       if (thisSeq !== avatarTransitionSeq) return;
 
       incomingSlot.classList.add('active');
@@ -1613,12 +1613,12 @@ function setAvatarState(targetState, options = {}) {
 
     incomingSlot.play()
       .then(() => {
-        // 再生が開始されたらフェードイン・アウト実行
+        // Once playback starts, run the fade in/out
         finalizeCrossFade();
       })
       .catch((err) => {
         console.warn('incomingSlot.play error:', err);
-        // 再生失敗時、もし最新リクエストならフェールセーフ実行
+        // On playback failure, run the failsafe if this is the latest request
         if (thisSeq === avatarTransitionSeq) {
           finalizeCrossFade();
         }
@@ -1628,13 +1628,13 @@ function setAvatarState(targetState, options = {}) {
   }
 }
 
-// 万一スロットA・Bの両方から .active が外れて真っ黒になるのを防ぐ自己修復ガード (Issue #31)
+// Self-repair guard that prevents a black screen if .active is removed from both slots A and B (Issue #31)
 function ensureActiveAvatarSlot() {
   if (!avatarVideoA || !avatarVideoB) return;
   const aActive = avatarVideoA.classList.contains('active');
   const bActive = avatarVideoB.classList.contains('active');
 
-  // 両方とも active が外れている（画面が真っ黒になっている）場合
+  // If both have lost .active (the screen has gone black)
   if (!aActive && !bActive) {
     console.warn('ensureActiveAvatarSlot: Both slots inactive! Restoring active slot...');
     const targetSlot = currentActiveSlot === 'b' ? avatarVideoB : avatarVideoA;
@@ -1642,13 +1642,13 @@ function ensureActiveAvatarSlot() {
     targetSlot.classList.remove('hidden');
     targetSlot.play().catch(() => {});
   } else if (aActive && bActive) {
-    // 両方 active のまま残っている場合は古い方を安全にフェードアウト
+    // If both remain active, safely fade out the older one
     const staleSlot = currentActiveSlot === 'a' ? avatarVideoB : avatarVideoA;
     staleSlot.classList.remove('active');
   }
 }
 
-// 放置時間・時間帯に応じた「気まぐれアクション（plugin フォルダ内動画の条件付きランダムピックアップ）」
+// Whimsical actions based on idle time and time of day (conditional random pick from videos in the plugin folder)
 function checkIdleAction() {
   if (isSessionVisible || currentAvatarState !== 'idle' || isSpecialActionLocked) {
     return;
@@ -1658,12 +1658,12 @@ function checkIdleAction() {
   const totalInactiveSec = (now - lastUserInteractionTime) / 1000;
   const thresholdSec = Math.max(1, Number(pluginSettings.idle_threshold_sec) || 15);
 
-  // まだ IDLE 突入時間（idle_threshold_sec）に達していない場合は何もしない
+  // If the IDLE start time (idle_threshold_sec) has not been reached yet, do nothing
   if (totalInactiveSec < thresholdSec) {
     return;
   }
 
-  // 前回のプラグイン動画再生終了から action_interval_sec 秒経過しているか確認
+  // Check whether action_interval_sec seconds have passed since the last plugin video finished playing
   if (lastPluginActionEndTime > 0) {
     const sinceLastEndSec = (now - lastPluginActionEndTime) / 1000;
     const intervalSec = Math.max(1, Number(pluginSettings.action_interval_sec) || thresholdSec);
@@ -1672,11 +1672,11 @@ function checkIdleAction() {
     }
   }
 
-  // IDLE に入ってからの経過時間（秒）
+  // Elapsed time (seconds) since entering IDLE
   const idleElapsedSec = Math.max(0, totalInactiveSec - thresholdSec);
 
   if (pluginItems.length > 0) {
-    // 1. quotes.json の動画別条件（enabled, min_idle_sec, max_idle_sec, time_ranges, weight）でフィルタリング
+    // 1. Filter by the per-video conditions in quotes.json (enabled, min_idle_sec, max_idle_sec, time_ranges, weight)
     let eligible = pluginItems
       .map(item => ({ item, cfg: getVideoConfig(item.name) }))
       .filter(({ cfg }) => {
@@ -1691,12 +1691,12 @@ function checkIdleAction() {
       return;
     }
 
-    // 2. 連続再生回避設定（avoid_repeat_video）が true で候補が 2 件以上ある場合は前回動画を除外
+    // 2. If the avoid-repeat setting (avoid_repeat_video) is true and there are 2+ candidates, exclude the previous video
     if (pluginSettings.avoid_repeat_video && eligible.length > 1 && lastPickedPluginKey) {
       eligible = eligible.filter(e => e.item.stateKey !== lastPickedPluginKey);
     }
 
-    // 3. weight（重み）に基づくランダム抽選
+    // 3. Random draw based on weight
     const totalWeight = eligible.reduce((sum, e) => sum + e.cfg.weight, 0);
     let r = Math.random() * totalWeight;
     let selected = eligible[eligible.length - 1];
@@ -1713,7 +1713,7 @@ function checkIdleAction() {
 
     setAvatarState(selected.item.stateKey, { durationMs, lockDuration: true, force: true });
 
-    // 4. セリフ表示（quote_probability に応じて表示）
+    // 4. Show a line (according to quote_probability)
     if (document.body.classList.contains('mode-mascot') && Math.random() <= selected.cfg.quote_probability) {
       const quote = pickRandomIdleQuote(selected.cfg.quotes);
       if (quote) {
@@ -1733,7 +1733,7 @@ function checkIdleAction() {
   }
 }
 
-// Muse 本体のリアルタイム動作状態同期 (Issue #35)
+// Real-time sync of Muse's working state (Issue #35)
 async function syncAvatarStateWithMuse() {
   if (isNavigatingForWake) return;
   try {
@@ -1742,7 +1742,7 @@ async function syncAvatarStateWithMuse() {
       const state = res.state || 'idle';
       const statusText = (res.statusText || '').trim();
 
-      // ステータスピル更新: 「リンク済み」「待機中」等の待機テキストやアバター名そのものは表示しない (Issue #35, #57)
+      // Status pill update: don't show idle text like "linked" or "waiting", or the avatar name itself (Issue #35, #57)
       if (avatarStatusPillEl && avatarStatusTextEl) {
         const currentAvatarName = (avatarNameEl?.textContent || '').trim().toLowerCase();
         const normalizedStatus = statusText.replace(/^(\p{Emoji}|[\u2600-\u27BF]|\s)+/gu, '').trim().toLowerCase();
@@ -1753,16 +1753,16 @@ async function syncAvatarStateWithMuse() {
           avatarStatusPillEl.classList.add('hidden');
         } else {
           const fallbackByState = {
-            working: '作業中',
-            making_something: '作成中',
-            waking: '起動中',
-            milestone_level_up: 'レベルアップ',
+            working: 'Working',
+            making_something: 'Creating',
+            waking: 'Starting up',
+            milestone_level_up: 'Level up!',
           };
           let formattedText = effectiveStatusText || fallbackByState[state] || '';
           if (!formattedText) {
             avatarStatusPillEl.classList.add('hidden');
           } else {
-            // Muse側のアイコン(SVG)とテキストが分離しているため、絵文字がない場合は 🛠️ を付与
+            // Muse's icon (SVG) and text are separate, so if there's no emoji, add 🛠️
             const hasEmoji = /^(\p{Emoji}|[\u2600-\u27BF])/u.test(formattedText);
             if (!hasEmoji) {
               formattedText = `🛠️ ${formattedText}`;
@@ -1784,13 +1784,13 @@ async function syncAvatarStateWithMuse() {
         recordInteraction();
         setAvatarState('milestone_level_up', { durationMs: 6000, lockDuration: true, force: true });
       } else if (state === 'idle') {
-        // Muse本体の作業が完了して idle に戻った場合、もし保留中の返信メッセージがあれば即座に全文表示
+        // When Muse finishes working and returns to idle, immediately show the full text if a reply message is pending
         if (pendingAssistantText && pendingAssistantText !== lastSeenAssistantText) {
           commitPendingAssistantMessage();
         }
-        // タッチリアクション中や3分放置アクション中は idle で上書きしない
+        // Don't overwrite with idle during a touch reaction or a 3-minute idle action
         if (!isSpecialActionLocked) {
-          // Issue #36: 作業完了時の歓喜ポーズを廃止し、直接通常の待機状態(idle)へ戻す
+          // Issue #36: remove the celebration pose when work completes; return directly to the normal idle state
           if (currentAvatarState !== 'idle') {
             setAvatarState('idle');
           }
@@ -1801,7 +1801,7 @@ async function syncAvatarStateWithMuse() {
 }
 
 // ==========================================
-// 2. チャットスレッド (R2)
+// 2. Chat thread (R2)
 // ==========================================
 async function loadChatMessages() {
   if (isNavigatingForWake) return;
@@ -1813,7 +1813,7 @@ async function loadChatMessages() {
       renderMessages(messages);
     }
 
-    // 新着アシスタントメッセージの検知 & 会話連動のアバター状態同期
+    // Detect new assistant messages & sync the avatar state with the conversation
     if (messages && messages.length > 0) {
       const assistantMsgs = messages.filter(m => m.role === 'assistant');
       const latestAssistantObj = assistantMsgs.length > 0 ? assistantMsgs[assistantMsgs.length - 1] : null;
@@ -1821,16 +1821,16 @@ async function loadChatMessages() {
       const latestOptions = latestAssistantObj ? (latestAssistantObj.options || []) : [];
       if (latestAssistant) {
         if (lastSeenAssistantText === null) {
-          // 初回起動時: 過去の最新メッセージを記録するのみ（初回起動でいきなり過去ログをタイピングしない）
+          // On first launch: only record the latest past message (don't suddenly type out the past log on first launch)
           lastSeenAssistantText = latestAssistant;
         } else if (latestAssistant !== lastSeenAssistantText) {
-          // 新着、またはストリーミング途中のメッセージを受信！
+          // Received a new message, or one mid-stream!
           pendingAssistantText = latestAssistant;
           const isWakeMsg = isWakingForLiveQuotes || isLiveQuotesResponse(latestAssistant);
           if (!isWakeMsg) recordInteraction();
 
-          // マスコットモード時は即座に吹き出しに最新返答テキストを表示（「考え中…」から最新回答へ即座に更新・シームレス追記）
-          // ただしセッション画面表示中やウェイク中はカタカタ音・吹き出し再生を抑止 (Issue #29, #46)
+          // In mascot mode, immediately show the latest reply text in the bubble (update instantly from "Thinking…" to the latest answer, with seamless appending)
+          // But suppress the tap-tap sound and bubble playback while the session screen is shown or during a wake (Issue #29, #46)
           if (document.body.classList.contains('mode-mascot') && !isSessionVisible) {
             if (!isWakeMsg) playLupinTyping(latestAssistant, latestOptions);
           }
@@ -1840,14 +1840,14 @@ async function loadChatMessages() {
             assistantCommitTimer = null;
           }
 
-          // テキストの増加・更新が止まって 2.0 秒経過したら「生成完了」とみなして完了リアクションを実行
+          // When text stops growing/updating for 2.0 seconds, treat it as generation complete and run the completion reaction
           assistantCommitTimer = setTimeout(() => {
             commitPendingAssistantMessage();
           }, 2000);
         } else if (latestOptions.length > 0 && (!currentTypingOptions || currentTypingOptions.length === 0)) {
-          // 本文表示後に選択肢ボタンが遅れて描画された場合の追加反映 (Issue #32)
-          // 吹き出しが「このメッセージ自体」を表示しているときだけ反映する。
-          // （選択肢クリック後の「送信中…」表示中に、回答前メッセージの選択肢が再表示されるのを防ぐ）
+          // Extra handling for when the option buttons render late, after the body text (Issue #32)
+          // Only apply this when the bubble is showing "this message itself".
+          // (Prevents the pre-answer message's options from reappearing while "Sending…" is shown after an option click)
           const isShowingThisMessage = currentTypingTargetText === cleanMascotMessageText(latestAssistant);
           if (isShowingThisMessage && !mascotBubble.classList.contains('hidden') && !typingTimer) {
             currentTypingOptions = latestOptions;
@@ -1858,13 +1858,13 @@ async function loadChatMessages() {
     }
 
     const now = new Date();
-    footerSyncTime.textContent = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} 同期`;
+    footerSyncTime.textContent = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} synced`;
     statusDot.className = 'status-dot active';
   } catch (err) {
     console.warn('loadChatMessages error:', err);
-    // メッセージがまだないか未ログイン
+    // No messages yet, or not signed in
     if (chatMessagesContainer.children.length === 0 || chatMessagesContainer.querySelector('.chat-placeholder')) {
-      showEmptyPlaceholder('Muse のメッセージが見つかりません。セッション画面でログインしてください。');
+      showEmptyPlaceholder('No Muse messages found. Please sign in on the session screen.');
       statusDot.className = 'status-dot warning';
     }
   } finally {
@@ -1874,7 +1874,7 @@ async function loadChatMessages() {
 
 function renderMessages(messages) {
   if (!Array.isArray(messages) || messages.length === 0) {
-    showEmptyPlaceholder('メッセージはまだありません。');
+    showEmptyPlaceholder('No messages yet.');
     return;
   }
 
@@ -1891,7 +1891,7 @@ function renderMessages(messages) {
     chatMessagesContainer.appendChild(row);
   });
 
-  // 最下部へスクロール
+  // Scroll to the bottom
   chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 }
 
@@ -1899,8 +1899,8 @@ function showEmptyPlaceholder(msg) {
   chatMessagesContainer.innerHTML = `
     <div class="chat-placeholder">
       <p class="placeholder-main">${msg}</p>
-      <p class="placeholder-sub">※ ログイン後に [↻] を押すと同期されます</p>
-      <button class="btn-login-open" id="btn-open-session-placeholder">🖥️ セッション画面を開く</button>
+      <p class="placeholder-sub">* Press [↻] after signing in to sync</p>
+      <button class="btn-login-open" id="btn-open-session-placeholder">🖥️ Open the session screen</button>
     </div>
   `;
   const pBtn = document.getElementById('btn-open-session-placeholder');
@@ -1910,7 +1910,7 @@ function showEmptyPlaceholder(msg) {
 }
 
 // ==========================================
-// 3. メッセージ送信 (R3)
+// 3. Sending messages (R3)
 // ==========================================
 async function handleSendMessage() {
   const text = chatInput.value.trim();
@@ -1921,14 +1921,14 @@ async function handleSendMessage() {
   recordInteraction();
   setAvatarState('working');
 
-  // ウェイク待機中などで専用チャットが開かれていた場合、最優先で直前のチャットへ復帰
+  // If a dedicated chat was opened while waiting for a wake, return to the previous chat first
   if (liveQuotesPrevChatUrl) {
     isWakingForLiveQuotes = false;
     await restoreSessionUrlAfterWake();
   }
 
   try {
-    // 直前の自分メッセージを即時反映（楽観的UI）
+    // Immediately reflect your own previous message (optimistic UI)
     const row = document.createElement('div');
     row.className = 'chat-bubble-row user';
     const bubble = document.createElement('div');
@@ -1943,12 +1943,12 @@ async function handleSendMessage() {
 
     await invoke('send_chat_message', { text });
 
-    // Muse の返信反映のため、1.5 秒後と 4 秒後に再取得
+    // Re-fetch after 1.5s and 4s to reflect Muse's reply
     setTimeout(loadChatMessages, 1500);
     setTimeout(loadChatMessages, 4000);
   } catch (err) {
     console.error('handleSendMessage error:', err);
-    alert('メッセージの送信に失敗しました: ' + err);
+    alert('Failed to send message: ' + err);
   } finally {
     chatInput.disabled = false;
     btnSendMessage.disabled = false;
@@ -1962,7 +1962,7 @@ function adjustTextareaHeight() {
 }
 
 // ==========================================
-// 4. 利用枠（ウィンドウリミット）＆ セッション自動リカバリ (R5, Issue #52)
+// 4. Usage limit (window limit) & session auto-recovery (R5, Issue #52)
 // ==========================================
 const SLEEP_RESUME_THRESHOLD_MS = 3 * 60 * 1000;
 const USAGE_LIMIT_FAILURE_THRESHOLD = 2;
@@ -2099,12 +2099,12 @@ async function loadUsageLimit(forceRefresh = false, options = {}) {
   try {
     const limit = await invoke('get_usage_limit', { forceRefresh });
     if (limit) {
-      planBadge.textContent = limit.plan_name || '無料プラン';
+      planBadge.textContent = limit.plan_name || 'Free Plan';
 
       if (limit.remaining_percent !== null && limit.remaining_percent !== undefined) {
         fetchedValid = true;
         const pct = limit.remaining_percent;
-        limitPercentText.textContent = `残 ${pct}%`;
+        limitPercentText.textContent = `${pct}% left`;
         limitProgressBar.style.width = `${pct}%`;
 
         limitProgressBar.className = 'progress-bar';
@@ -2122,23 +2122,23 @@ async function loadUsageLimit(forceRefresh = false, options = {}) {
           limitPercentText.style.color = 'var(--color-danger)';
         }
 
-        // マスコットのアバター外枠色とグロー効果を連動 (Issue #19)
+        // Link the mascot avatar's outer border color and glow effect (Issue #19)
         if (avatarContainer) {
           avatarContainer.classList.remove('limit-safe', 'limit-warn', 'limit-danger');
           avatarContainer.classList.add(`limit-${limitLevel}`);
         }
 
-        // ネームプレート内の % バッジを更新 (Issue #19)
+        // Update the % badge inside the nameplate (Issue #19)
         if (avatarLimitBadgeEl) {
           avatarLimitBadgeEl.textContent = `${pct}%`;
           avatarLimitBadgeEl.className = `avatar-limit-badge limit-${limitLevel}`;
-          avatarLimitBadgeEl.title = `利用可能枠: 残り ${pct}% (${limit.reset_text || ''})`;
+          avatarLimitBadgeEl.title = `Available usage: ${pct}% remaining (${limit.reset_text || ''})`;
         }
       } else {
         if (limit.used_percent !== null && limit.used_percent !== undefined) {
           fetchedValid = true;
         }
-        // すでに有効なパーセントが表示されている場合は '--%' で消さず維持
+        // If a valid percentage is already shown, keep it instead of clearing it to '--%'
         const curBadge = avatarLimitBadgeEl ? avatarLimitBadgeEl.textContent.trim() : '';
         if (!curBadge || curBadge === '--%') {
           limitPercentText.textContent = '--%';
@@ -2153,7 +2153,7 @@ async function loadUsageLimit(forceRefresh = false, options = {}) {
         }
       }
 
-      limitResetText.textContent = limit.reset_text || '利用枠情報未取得';
+      limitResetText.textContent = limit.reset_text || 'Usage limit info not fetched';
     }
   } catch (err) {
     console.warn('loadUsageLimit error:', err);
@@ -2190,7 +2190,7 @@ async function loadUsageLimit(forceRefresh = false, options = {}) {
 }
 
 // ==========================================
-// 5. ウィンドウ・セッション・サイズ制御 (R4, R6, R7)
+// 5. Window / session / size control (R4, R6, R7)
 // ==========================================
 async function toggleSessionWindow() {
   try {
@@ -2247,8 +2247,8 @@ async function enterMascotMode() {
 }
 
 /**
- * WebView2 でウィンドウ非表示時に :hover 相当の状態が残留するのを防ぐため、
- * JS 管理のホバークラス (.is-hovered) を明示的にリセットする (Issue #61)
+ * To prevent a :hover-equivalent state from lingering in WebView2 when the window is hidden,
+ * explicitly reset the JS-managed hover class (.is-hovered) (Issue #61)
  */
 function clearMascotHoverState() {
   [avatarColumn, avatarContainer, mascotRestoreBtn, btnMascotQuickInput].forEach((el) => {
@@ -2266,14 +2266,14 @@ async function restoreFromMascot() {
       await restoreSessionUrlAfterWake();
     }
     isSessionVisible = true;
-    // 中・小画面の代わりにセッションウィンドウ（公式画面）を前面表示
+    // Show the session window (official screen) in front instead of the medium/small screens
     await invoke('open_or_show_session');
   } catch (err) {
     console.error('restoreFromMascot to session error:', err);
   }
 }
 
-// （温存）旧ガジェット中・小画面への復元処理
+// (Kept) Restore to the old gadget medium/small screens
 async function restoreToLegacyGadget() {
   try {
     const newMode = await invoke('restore_from_mascot');
@@ -2307,22 +2307,22 @@ function applyMascotScale(scale) {
 }
 
 // ==========================================
-// 初期化 & イベントリスナー
+// Initialization & event listeners
 // ==========================================
 window.addEventListener('DOMContentLoaded', async () => {
-  // ウィンドウドラッグ（通常ヘッダー）
+  // Window drag (normal header)
   dragHeader.addEventListener('mousedown', (e) => {
     if (e.target.closest('.header-controls') || e.target.closest('.avatar-wrapper')) return;
     invoke('drag_window').catch(console.error);
   });
 
-  // マスコットモード時のアバタードラッグ＆クリック分離制御
+  // Avatar drag & click separation control in mascot mode
   let isPointerDownOnAvatar = false;
   let isDraggingAvatar = false;
   let avatarDownX = 0;
   let avatarDownY = 0;
 
-  // ネームプレート（ラッキー 50%）: ドラッグとクリックを分離して手動即時リフレッシュを確実に発火
+  // Nameplate (Lucky 50%): separate drag and click so a manual instant refresh reliably fires
   if (avatarNameEl) {
     let nameMouseDownPos = null;
     avatarNameEl.addEventListener('pointerdown', (e) => {
@@ -2348,10 +2348,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       const dist = Math.hypot(e.screenX - nameMouseDownPos.x, e.screenY - nameMouseDownPos.y);
       const elapsed = Date.now() - nameMouseDownPos.time;
       nameMouseDownPos = null;
-      // 5px 以内の移動かつ 500ms 以内の押下なら「クリック」と判定して手動即時リフレッシュを実行！
+      // If the move is within 5px and the press is within 500ms, treat it as a "click" and run a manual instant refresh!
       if (dist <= 5 && elapsed < 500) {
         avatarNameEl.classList.remove('refreshing');
-        void avatarNameEl.offsetWidth; // リフロー
+        void avatarNameEl.offsetWidth; // Reflow
         avatarNameEl.classList.add('refreshing');
         setTimeout(() => avatarNameEl.classList.remove('refreshing'), 600);
         loadUsageLimit(true);
@@ -2359,7 +2359,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // アバター本体（avatarContainer）: 押下開始
+  // Avatar body (avatarContainer): press started
   avatarContainer.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
     if (e.target.closest('#mascot-restore-btn') || e.target.closest('#btn-fetch-avatar')) return;
@@ -2379,7 +2379,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         invoke('drag_window').then(() => {
           isPointerDownOnAvatar = false;
           isDraggingAvatar = false;
-          // ドラッグ終了時にカーソルがアバター上に残っている場合はホバー表示を復元 (Issue #62)
+          // When the drag ends, restore the hover display if the cursor is still over the avatar (Issue #62)
           [avatarColumn, avatarContainer, mascotRestoreBtn, btnMascotQuickInput].forEach((el) => {
             if (el && typeof el.matches === 'function' && el.matches(':hover')) {
               el.classList.add('is-hovered');
@@ -2391,14 +2391,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // ドラッグ終了またはクリック判定
+  // Drag end or click detection
   window.addEventListener('mouseup', () => {
     if (isPointerDownOnAvatar) {
       const wasDragging = isDraggingAvatar;
       isPointerDownOnAvatar = false;
       isDraggingAvatar = false;
 
-      // 6px 未満の移動で離した場合はクリックとして実行
+      // If released after moving less than 6px, run it as a click
       if (!wasDragging) {
         handleAvatarClickAction();
       } else if (document.body.classList.contains('mode-mascot')) {
@@ -2407,23 +2407,23 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // フォーカス喪失時・マウス離脱時にドラッグ状態を確実に完全リセット
+  // Fully reset the drag state when focus is lost or the mouse leaves
   window.addEventListener('blur', () => {
     isPointerDownOnAvatar = false;
     isDraggingAvatar = false;
   });
 
-  // F12 キーで開発者ツールを開くショートカット
+  // F12 shortcut to open the developer tools
   window.addEventListener('keydown', (e) => {
     if (e.key === 'F12') {
       invoke('open_mascot_devtools').catch(() => {});
     }
   });
 
-  // 最小化ボタン（マスコットモードへ移行）
+  // Minimize button (switch to mascot mode)
   btnMinimize.addEventListener('click', enterMascotMode);
 
-  // マスコット復元ボタン
+  // Mascot restore button
   if (mascotRestoreBtn) {
     mascotRestoreBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2431,7 +2431,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ホバー状態管理 (Issue #61: ウィンドウ非表示時の :hover 残留防止 / Issue #62: ドラッグ後の復帰)
+  // Hover state management (Issue #61: prevent :hover lingering when the window is hidden / Issue #62: restore after dragging)
   [avatarColumn, avatarContainer, mascotRestoreBtn, btnMascotQuickInput].forEach((el) => {
     if (!el) return;
     el.addEventListener('pointerenter', () => {
@@ -2449,7 +2449,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (document.hidden) clearMascotHoverState();
   });
 
-  // 吹き出しクリック（通常画面へ復帰）
+  // Bubble click (return to the normal screen)
   if (mascotBubble) {
     mascotBubble.addEventListener('click', (e) => {
       if (e.target.closest('#btn-bubble-close')) return;
@@ -2457,7 +2457,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 吹き出し閉じるボタン
+  // Bubble close button
   if (btnBubbleClose) {
     btnBubbleClose.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2465,19 +2465,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 閉じる
+  // Close
   btnClose.addEventListener('click', () => invoke('close_window'));
 
-  // ブラウザで開く (R6)
+  // Open in browser (R6)
   btnOpenBrowser.addEventListener('click', () => invoke('open_in_browser'));
 
-  // セッション表示 / 非表示トグル
+  // Session show / hide toggle
   btnToggleSession.addEventListener('click', toggleSessionWindow);
 
-  // サイズ切替 (R7)
+  // Toggle size (R7)
   btnToggleSize.addEventListener('click', toggleSizeMode);
 
-  // すべて即時同期（直列実行で確実に取得）
+  // Sync everything now (run serially to fetch reliably)
   btnRefreshAll.addEventListener('click', async () => {
     btnRefreshAll.style.transform = 'rotate(180deg)';
     setTimeout(() => { btnRefreshAll.style.transform = ''; }, 300);
@@ -2487,7 +2487,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     await loadUsageLimit(true);
   });
 
-  // アバタークリック制御（シングルクリック: つついて喜ぶリアクション / ダブルクリック: 画面復元）
+  // Avatar click control (single click: poke for a happy reaction / double click: restore the screen)
   let avatarClickTimer = null;
   let avatarClickCount = 0;
 
@@ -2497,7 +2497,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (avatarClickCount === 1) {
       avatarClickTimer = setTimeout(() => {
         avatarClickCount = 0;
-        // シングルクリック: つついて反応（setting.json の touch_reaction_duration_sec 秒間維持 + つぶやき）
+        // Single click: poke to react (hold for setting.json's touch_reaction_duration_sec seconds + a remark)
         const touchDurationMs = Math.max(1, Number(pluginSettings.touch_reaction_duration_sec) || 8) * 1000;
         setAvatarState('milestone_level_up', { durationMs: touchDurationMs, lockDuration: true, force: true });
         playTouchReactionSound();
@@ -2509,7 +2509,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     } else if (avatarClickCount >= 2) {
       clearTimeout(avatarClickTimer);
       avatarClickCount = 0;
-      // ダブルクリック: 通常画面（またはセッション）へ復元
+      // Double click: restore to the normal screen (or session)
       if (document.body.classList.contains('mode-mascot')) {
         restoreFromMascot();
       } else {
@@ -2518,12 +2518,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 全画面で標準のブラウザコンテキストメニュー（再読み込み等）を抑止
+  // Suppress the standard browser context menu (reload, etc.) across the whole screen
   window.addEventListener('contextmenu', (e) => {
     e.preventDefault();
   });
 
-  // マスコットモード時の右クリック: クイック入力バーのトグル (Issue #27)
+  // Right-click in mascot mode: toggle the quick input bar (Issue #27)
   const handleMascotContextMenu = (e) => {
     recordInteraction();
     if (document.body.classList.contains('mode-mascot')) {
@@ -2537,7 +2537,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     mascotBubble.addEventListener('contextmenu', handleMascotContextMenu);
   }
 
-  // クイックミニ入力バー イベント登録 (Issue #27)
+  // Quick mini input bar event registration (Issue #27)
   if (btnMascotQuickInput) {
     btnMascotQuickInput.addEventListener('mousedown', (e) => {
       e.stopPropagation();
@@ -2561,7 +2561,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
   if (mascotInputField) {
-    // 日本語IME入力および通常文字入力で確実にカタカタ打鍵音を再生
+    // Reliably play the tap-tap keystroke sound for Japanese IME input and regular character input
     mascotInputField.addEventListener('input', () => {
       playTypingSound();
       if (activeShortcutPrompt && mascotInputField.value !== activeShortcutPrompt) {
@@ -2588,7 +2588,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 未読バッジクリック時: 既読クリアしてセッション画面を開く (Issue #20)
+  // When the unread badge is clicked: clear the unread state and open the session screen (Issue #20)
   if (unreadBadgeEl) {
     unreadBadgeEl.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2597,7 +2597,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // セッション画面が前面化・開かれた際の未読クリアイベントを受信 (Issue #20, Issue #29)
+  // Receive the unread-clear event when the session screen is brought to front / opened (Issue #20, Issue #29)
   if (window.__TAURI__ && window.__TAURI__.event && typeof window.__TAURI__.event.listen === 'function') {
     window.__TAURI__.event.listen('clear-unread', () => {
       isSessionVisible = true;
@@ -2612,19 +2612,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         hideMascotBubble();
         clearUnreadBadge();
       } else {
-        // セッション画面からマスコット画面に戻った瞬間、最新の利用枠を自動取得 (Issue #33)
+        // The moment you return from the session screen to the mascot screen, auto-fetch the latest usage limit (Issue #33)
         loadUsageLimit(true);
       }
     });
-    // GUI設定画面で設定が保存された際のホットリロード即時反映 (Issue #13)
+    // Instant hot-reload reflection when settings are saved on the GUI settings screen (Issue #13)
     window.__TAURI__.event.listen('settings-updated', () => {
       refreshPluginConfigs();
     });
-    // マスコットのスケール変更イベントを受信 (Issue #25)
+    // Receive the mascot scale-change event (Issue #25)
     window.__TAURI__.event.listen('mascot-scale-changed', (event) => {
       applyMascotScale(event.payload);
     });
-    // セッション画面リロード完了イベントを受信（手動トレイ操作等）(Issue #52)
+    // Receive the session screen reload-complete event (manual tray actions, etc.) (Issue #52)
     window.__TAURI__.event.listen('session-reloaded', (event) => {
       const payload = event?.payload || {};
       console.info('[SessionRecovery] session-reloaded event', payload);
@@ -2634,19 +2634,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 初期起動時は確実に未読バッジを非表示 (Issue #20)
+  // On initial launch, reliably hide the unread badge (Issue #20)
   clearUnreadBadge();
 
-  // 利用枠再取得
+  // Re-fetch the usage limit
   btnRefreshLimit.addEventListener('click', () => loadUsageLimit(true));
 
-  // 表示件数変更
+  // Change the number of messages shown
   msgLimitSelect.addEventListener('change', () => {
     currentLimit = parseInt(msgLimitSelect.value, 10) || 5;
     loadChatMessages();
   });
 
-  // メッセージ送信
+  // Send a message
   btnSendMessage.addEventListener('click', handleSendMessage);
 
   chatInput.addEventListener('keydown', (e) => {
@@ -2659,7 +2659,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   chatInput.addEventListener('input', adjustTextareaHeight);
 
-  // 初期設定ロード
+  // Load the initial settings
   try {
     const config = await invoke('get_gadget_config');
     if (config) {
@@ -2682,7 +2682,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.warn('Config load error:', e);
   }
 
-  // 初期データ取得（直列実行＋セッションWebViewのロード待ちリトライ）
+  // Initial data fetch (serial execution + retry while waiting for the session WebView to load)
   const syncAllSequential = async (forceLimit = false) => {
     await updateSessionStatus();
     await loadAvatar(false);
@@ -2691,12 +2691,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     await runHealthCheck();
   };
 
-  // キャッシュ済みのアバターと利用枠を即時表示
+  // Immediately show the cached avatar and usage limit
   loadLiveQuotesPool();
   loadAvatar(false);
   loadUsageLimit(false);
 
-  // ネームプレートクリックで利用枠を手動再取得＆最新化
+  // Clicking the nameplate manually re-fetches and refreshes the usage limit
   if (avatarNameEl) {
     avatarNameEl.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2704,7 +2704,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // セッションWebViewのロード完了に合わせて段階的にチャット、ヘルスチェック、利用枠を同期
+  // Sync chat, health check, and usage limit in stages as the session WebView finishes loading
   setTimeout(() => syncAllSequential(false), 1800);
   setTimeout(async () => {
     await syncAllSequential(false);
@@ -2727,7 +2727,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   }, 16000);
 
-  // 3秒ごとのリアルタイム動作状態・チャット同期 ＆ 設定ホットリロード・放置監視・スリープ復帰検知
+  // Every 3 seconds: real-time working-state & chat sync, settings hot-reload, idle monitoring, and sleep-resume detection
   setInterval(async () => {
     const nowTick = Date.now();
     const tickElapsedMs = nowTick - lastHeartbeatAt;
@@ -2744,24 +2744,24 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     if (!isReloadingSession) {
       await refreshPluginConfigs();
-      await updateSessionStatus(); // セッション開閉状態の同期
+      await updateSessionStatus(); // Sync the session open/closed state
       await loadChatMessages();
       await syncAvatarStateWithMuse();
       checkIdleAction();
       maybeTriggerLiveQuotesWake();
       loadUsageLimit(false);
-      ensureActiveAvatarSlot(); // 定期自己修復チェック (Issue #31)
+      ensureActiveAvatarSlot(); // Periodic self-repair check (Issue #31)
     }
   }, 3000);
 
-  // 12 秒ごとの自動バックグラウンド同期（チャット＆ヘルスチェック）
+  // Automatic background sync every 12 seconds (chat & health check)
   setInterval(async () => {
     await updateSessionStatus();
     await runHealthCheck();
     await loadChatMessages();
   }, 12000);
 
-  // §16 5 分ごとの利用枠定期自動取得（ガードレール①: セッション画面が非表示のときのみ実行, Issue #49）
+  // §16 Automatic usage-limit fetch every 5 minutes (guardrail 1: only while the session screen is hidden, Issue #49)
   setInterval(async () => {
     await updateSessionStatus();
     invoke('log_session_recovery_event', {
@@ -2773,10 +2773,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   }, 300000);
 
-  // おまかせショートカット初期化 (Issue #68)
+  // One-click shortcut initialization (Issue #68)
   renderMascotShortcuts();
 
-  // マスコットモード時のインタラクティブ矩形監視 (Issue #60)
+  // Interactive rectangle monitoring in mascot mode (Issue #60)
   const hitTargets = ['avatar-column', 'mascot-bubble', 'mascot-input-bar']
     .map((id) => document.getElementById(id))
     .filter(Boolean);

@@ -6,9 +6,9 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     await page.addInitScript(() => {
       window.__TAURI_INVOKED__ = [];
       window.__TAURI_LISTENERS__ = {};
-      window.__MOCK_AVATAR_STATE__ = { state: 'idle', statusText: 'リンク済み' };
+      window.__MOCK_AVATAR_STATE__ = { state: 'idle', statusText: 'Linked' };
       window.__MOCK_MESSAGES__ = [
-        { role: 'assistant', text: 'こんにちは！何かお手伝いしましょうか？' },
+        { role: 'assistant', text: 'Hello! How can I help you?' },
       ];
 
       window.__TAURI__ = {
@@ -21,7 +21,7 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
                 mascot_scale: 'standard',
                 mascot_bubble_on_left: true,
                 message_limit: 5,
-                avatar_name: 'ラッキー',
+                avatar_name: 'Lucky',
               };
             }
             if (cmd === 'get_session_status') {
@@ -49,10 +49,10 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
             }
             if (cmd === 'get_usage_limit') {
               return {
-                plan_name: 'Proプラン',
+                plan_name: 'Pro Plan',
                 used_percent: 20,
                 remaining_percent: 80,
-                reset_text: '1週間の上限は11月14日にリセットされます',
+                reset_text: 'Weekly limit resets on Nov 14',
               };
             }
             if (cmd === 'get_chat_messages') {
@@ -63,7 +63,7 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
             }
             if (cmd === 'check_bridge_health') {
               return {
-                avatar_name: 'ラッキー',
+                avatar_name: 'Lucky',
                 avatar_state: window.__MOCK_AVATAR_STATE__.state,
                 r1_avatar: { ok: true, selector: 'video' },
                 r2_messages: { ok: true, selector: '.group/msg' },
@@ -74,7 +74,7 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
             if (cmd === 'get_plugin_configs') {
               return {
                 setting: {
-                  avatar_name: 'ラッキー',
+                  avatar_name: 'Lucky',
                   idle_threshold_sec: 180,
                   action_interval_sec: 180,
                   default_duration_sec: 30,
@@ -94,8 +94,8 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
                   },
                 },
                 quotes: {
-                  touch_reactions: ['はーい！'],
-                  default_idle_quotes: ['今日もいい天気だね'],
+                  touch_reactions: ['Yes, you called?'],
+                  default_idle_quotes: ['The weather is nice today'],
                   videos: {},
                 },
               };
@@ -114,41 +114,41 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     });
   });
 
-  test('Issue #35, #36: ステータスピル表示・非表示切り替え時にアバターの位置が 1px もブレないこと', async ({ page }) => {
+  test('Issue #35, #36: the avatar position does not shift by even 1px when the status pill is shown/hidden', async ({ page }) => {
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/mode-mascot/);
 
     const avatarContainer = page.locator('#avatar-container');
     const statusPill = page.locator('#avatar-status-pill');
 
-    // 初期状態（idle / リンク済み）ではステータスピルは非表示
+    // In the initial state (idle / Linked), the status pill is hidden
     await expect(statusPill).toBeHidden();
     const rectBefore = await avatarContainer.boundingBox();
     expect(rectBefore).not.toBeNull();
 
-    // Muse が動作中（考え中...）に変化した場合をシミュレート
+    // Simulate Muse becoming active (Thinking...)
     await page.evaluate(async () => {
-      window.__MOCK_AVATAR_STATE__ = { state: 'working', statusText: '考え中...' };
+      window.__MOCK_AVATAR_STATE__ = { state: 'working', statusText: 'Thinking...' };
       if (typeof syncAvatarStateWithMuse === 'function') {
         await syncAvatarStateWithMuse();
       }
     });
 
     await expect(statusPill).toBeVisible();
-    await expect(page.locator('#avatar-status-text')).toHaveText('🛠️ 考え中...');
+    await expect(page.locator('#avatar-status-text')).toHaveText('🛠️ Thinking...');
 
     const rectDuringWorking = await avatarContainer.boundingBox();
     expect(rectDuringWorking).not.toBeNull();
 
-    // アバターの X, Y, Width, Height が 1px もブレていないことを検証
+    // Verify the avatar X, Y, Width, and Height have not shifted by even 1px
     expect(Math.round(rectDuringWorking.x)).toBe(Math.round(rectBefore.x));
     expect(Math.round(rectDuringWorking.y)).toBe(Math.round(rectBefore.y));
     expect(Math.round(rectDuringWorking.width)).toBe(Math.round(rectBefore.width));
     expect(Math.round(rectDuringWorking.height)).toBe(Math.round(rectBefore.height));
 
-    // 再び idle（リンク済み）に戻ったときにピルが消え、位置も変わらないこと
+    // When it returns to idle (Linked), the pill disappears and the position stays the same
     await page.evaluate(async () => {
-      window.__MOCK_AVATAR_STATE__ = { state: 'idle', statusText: 'リンク済み' };
+      window.__MOCK_AVATAR_STATE__ = { state: 'idle', statusText: 'Linked' };
       if (typeof syncAvatarStateWithMuse === 'function') {
         await syncAvatarStateWithMuse();
       }
@@ -156,7 +156,7 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     await expect(statusPill).toBeHidden();
   });
 
-  test('Issue #25: マスコットスケール切替 (small / standard / large) で実描画サイズが正確に変化すること', async ({ page }) => {
+  test('Issue #25: the actual rendered size changes accurately when switching the mascot scale (small / standard / large)', async ({ page }) => {
     await page.goto('/index.html');
     const avatarContainer = page.locator('#avatar-container');
 
@@ -179,18 +179,18 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     expect(Math.round(boxLarge.width)).toBe(145);
   });
 
-  test('Issue #32: 選択肢付き返答の吹き出し表示とワンクリック返信が正常に動作すること', async ({ page }) => {
+  test('Issue #32: speech bubble display and one-click replies work correctly for replies with options', async ({ page }) => {
     await page.goto('/index.html');
 
-    // まず初回同期（過去ログのベースライン記録）を実行し、その後に選択肢付きの新着メッセージを配信
+    // First run the initial sync (baseline recording of past logs), then deliver a new message with options
     await page.evaluate(async () => {
       await loadChatMessages();
       window.__MOCK_MESSAGES__ = [
-        { role: 'assistant', text: 'こんにちは！何かお手伝いしましょうか？' },
+        { role: 'assistant', text: 'Hello! How can I help you?' },
         {
           role: 'assistant',
-          text: '進める方針を選んでね！',
-          options: ['方針Aで実行', '方針Bで実行'],
+          text: 'Pick a plan to proceed with!',
+          options: ['Run plan A', 'Run plan B'],
         },
       ];
       await loadChatMessages();
@@ -199,45 +199,45 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     const bubble = page.locator('#mascot-bubble');
     await expect(bubble).toBeVisible();
 
-    // タイピング完了後に選択肢ボタンが表示されるのを待つ
-    const optionBtnA = page.locator('.mascot-option-btn', { hasText: '方針Aで実行' });
+    // Wait for the option buttons to appear after typing completes
+    const optionBtnA = page.locator('.mascot-option-btn', { hasText: 'Run plan A' });
     await expect(optionBtnA).toBeVisible({ timeout: 5000 });
 
-    // 選択肢ボタンをクリックしてワンクリック送信
+    // Click an option button to send with one click
     await optionBtnA.click();
 
     const sentCall = await page.evaluate(() => {
       return window.__TAURI_INVOKED__.find(
-        (c) => c.cmd === 'send_chat_message' && c.args?.text === '方針Aで実行'
+        (c) => c.cmd === 'send_chat_message' && c.args?.text === 'Run plan A'
       );
     });
     expect(sentCall).toBeTruthy();
   });
 
-  test('Issue #37, #39: 設定画面のタブ切り替え、専用チャットURL登録ボタン、設定保存が正常に機能すること', async ({ page }) => {
+  test('Issue #37, #39: settings screen tab switching, dedicated chat URL register button, and settings saving work correctly', async ({ page }) => {
     await page.setViewportSize({ width: 640, height: 720 });
     await page.goto('/settings.html');
 
-    // 初期状態でタイマータブが表示されていること
+    // The timers tab is shown in the initial state
     await expect(page.locator('#tab-timers')).toBeVisible();
-    await expect(page.locator('#input-avatar-name')).toHaveValue('ラッキー');
+    await expect(page.locator('#input-avatar-name')).toHaveValue('Lucky');
 
-    // 「🎬 放置アクション ＆ セリフ」タブへ切り替え
+    // Switch to the "🎬 Idle actions & lines" tab
     await page.locator('.tab-btn[data-tab="tab-quotes"]').click();
     await expect(page.locator('#tab-quotes')).toBeVisible();
 
-    // 専用チャットURLモードを選択するとURL入力欄が表示されること
+    // Selecting dedicated chat URL mode shows the URL input field
     await expect(page.locator('#live-quotes-custom-url-group')).toBeHidden();
     await page.locator('input[name="live-quotes-target-mode"][value="custom"]').check();
     await expect(page.locator('#live-quotes-custom-url-group')).toBeVisible();
 
-    // 「📍 今開いているチャットを登録」ボタンをクリックするとセッションの現在URLが入ること
+    // Clicking the "📍 Register the currently open chat" button fills in the session's current URL
     await page.locator('#btn-fill-current-chat-url').click();
     await expect(page.locator('#live-quotes-custom-url')).toHaveValue(
       'https://muse.ai/chat/dedicated-room-123'
     );
 
-    // 「💾 保存して適用」をクリックすると save_plugin_configs が呼ばれること
+    // Clicking "💾 Save and apply" calls save_plugin_configs
     await page.locator('#btn-save').click();
     const savedCall = await page.evaluate(() => {
       return window.__TAURI_INVOKED__.find((c) => c.cmd === 'save_plugin_configs');
@@ -249,15 +249,15 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     );
   });
 
-  test('Issue #50: 長文メッセージのタイピング表示時に .mascot-bubble-body のスクロールが最下部へ自動追従すること', async ({ page }) => {
+  test('Issue #50: .mascot-bubble-body scroll auto-follows to the bottom during long-message typing display', async ({ page }) => {
     await page.goto('/index.html');
 
-    const longMessage = Array.from({ length: 12 }, (_, i) => `${i + 1}行目: 長文スクロール自動追従の検証メッセージです。`).join('\n');
+    const longMessage = Array.from({ length: 12 }, (_, i) => `Line ${i + 1}: This is a long-message scroll auto-follow verification message.`).join('\n');
 
     await page.evaluate(async (msg) => {
       await loadChatMessages();
       window.__MOCK_MESSAGES__ = [
-        { role: 'assistant', text: 'こんにちは！何かお手伝いしましょうか？' },
+        { role: 'assistant', text: 'Hello! How can I help you?' },
         { role: 'assistant', text: msg },
       ];
       await loadChatMessages();
@@ -266,8 +266,8 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     const bubble = page.locator('#mascot-bubble');
     await expect(bubble).toBeVisible();
 
-    // タイピングが完了して末尾の「12行目」が表示されるまで待機
-    await expect(page.locator('#mascot-bubble-text')).toContainText('12行目:', { timeout: 5000 });
+    // Wait until typing completes and the final "Line 12" appears
+    await expect(page.locator('#mascot-bubble-text')).toContainText('Line 12:', { timeout: 5000 });
 
     const scrollMetrics = await page.evaluate(() => {
       const body = document.querySelector('.mascot-bubble-body');
@@ -280,16 +280,16 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
 
     expect(scrollMetrics.scrollHeight).toBeGreaterThan(scrollMetrics.clientHeight);
     expect(scrollMetrics.scrollTop).toBeGreaterThan(0);
-    // 最下部付近までスクロール追従していること
+    // It has scrolled to follow near the bottom
     expect(scrollMetrics.scrollTop + scrollMetrics.clientHeight).toBeGreaterThanOrEqual(
       scrollMetrics.scrollHeight - 5
     );
   });
 
-  test('Issue #68: クイック入力バー展開時におまかせショートカットが表示され、クリックで入力欄にプレビューセット・送信できること', async ({ page }) => {
+  test('Issue #68: expanding the quick input bar shows the one-click shortcuts, and clicking one previews it in the input field and sends it', async ({ page }) => {
     await page.goto('/index.html');
 
-    // 右クリックでクイック入力バーを展開
+    // Right-click to expand the quick input bar
     await page.locator('#avatar-container').click({ button: 'right' });
     const inputBar = page.locator('#mascot-input-bar');
     await expect(inputBar).toBeVisible();
@@ -297,10 +297,10 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     const chips = page.locator('.mascot-shortcut-chip');
     await expect(chips).toHaveCount(4);
 
-    // 「会話を仕切り直して」をクリックすると即送信されず入力欄へセットされる
-    await page.locator('.mascot-shortcut-chip', { hasText: '会話を仕切り直して' }).click();
+    // Clicking "Start the conversation over" sets it in the input field without sending immediately
+    await page.locator('.mascot-shortcut-chip', { hasText: 'Start the conversation over' }).click();
     const inputField = page.locator('#mascot-input-field');
-    await expect(inputField).toHaveValue(/引き継ぎメモを作って/);
+    await expect(inputField).toHaveValue(/handover note/i);
     await expect(page.locator('#mascot-shortcut-note')).toHaveClass(/is-selected/);
 
     const sentBeforeConfirm = await page.evaluate(() => {
@@ -308,11 +308,11 @@ test.describe('Desktop Mascot for Muse - Real Browser UI & Layout Regression Sui
     });
     expect(sentBeforeConfirm).toBe(false);
 
-    // 送信ボタンで確定送信されること
+    // Clicking the send button confirms and sends it
     await page.locator('#btn-mascot-input-send').click();
     const sentAfterConfirm = await page.evaluate(() => {
       return window.__TAURI_INVOKED__.find(
-        (c) => c.cmd === 'send_chat_message' && c.args?.text?.includes('引き継ぎメモを作って')
+        (c) => c.cmd === 'send_chat_message' && c.args?.text?.includes('handover note')
       );
     });
     expect(sentAfterConfirm).toBeTruthy();

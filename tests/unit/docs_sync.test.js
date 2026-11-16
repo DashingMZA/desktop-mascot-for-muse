@@ -17,18 +17,18 @@ describe('Documentation & Version Sync Checks', () => {
   const readme = readRepoFile('README.md');
   const spec = readRepoFile('docs/SPEC.md');
 
-  it('package.json / tauri.conf.json / Cargo.toml のバージョンが一致していること', () => {
+  it('package.json / tauri.conf.json / Cargo.toml versions match', () => {
     const cargoVersionMatch = cargoToml.match(/^version\s*=\s*"([^"]+)"/m);
     expect(cargoVersionMatch).not.toBeNull();
     expect(tauriConf.version).toBe(pkg.version);
     expect(cargoVersionMatch[1]).toBe(pkg.version);
   });
 
-  it('README.md のバージョンバッジが現在のアプリバージョンと一致していること', () => {
+  it('The README.md version badge matches the current app version', () => {
     expect(readme).toContain(`version-v${pkg.version}-blue.svg`);
   });
 
-  it('docs/SPEC.md のバージョンと機能の対応表に現在のバージョンが含まれていること', () => {
+  it('The docs/SPEC.md version-to-feature table includes the current version', () => {
     expect(spec).toContain(`| v${pkg.version} |`);
   });
 });

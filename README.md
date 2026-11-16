@@ -4,21 +4,21 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg)](https://www.microsoft.com/windows)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Muse（パーソナルAIエージェント `https://muse.ai`）の Windows 向け常駐型デスクトップマスコット＆チャット連携アプリです。
-普段はデスクトップの隅に円形アバターマスコットとして控えめに常駐し、Muse の状態に応じたアニメーション・気まぐれアクション・新着メッセージのルパン風タイピング吹き出しを表示します。ダブルクリックやショートカットキー（`Ctrl + Shift + M`）で、いつでもフル機能の Muse AI チャット画面（セッション画面）を即座に呼び出せます。
+A resident Windows desktop mascot and chat-integration app for Muse (a personal AI agent, `https://muse.ai`).
+It normally sits unobtrusively in a corner of the desktop as a circular avatar mascot, showing animations matched to Muse's state, whimsical idle actions, and new-message speech bubbles with Lupin-style pattering typing. Double-click or press the shortcut key (`Ctrl + Shift + M`) to instantly bring up the full-featured Muse AI chat screen (session screen) at any time.
 
 > [!NOTE]
-> 本アプリは非公式のサードパーティ製で、Metaとは関係なく、推奨を受けたものでもありません。Muse は Meta Platforms, Inc. の商標です。
+> This app is an unofficial third-party product, unrelated to Meta and not endorsed by it. Muse is a trademark of Meta Platforms, Inc.
 
 <div align="center">
   <table>
     <tr>
       <td align="center" width="40%">
-        <b>✨ マスコット状態（タスクバー・デスクトップ常駐）</b><br />
+        <b>✨ Mascot state (resident on the taskbar / desktop)</b><br />
         <img src="docs/screenshot_mascot.png" alt="Desktop Mascot for Muse Mode" width="300" />
       </td>
       <td align="center" width="60%">
-        <b>💬 チャット画面（Muse AI セッション画面）</b><br />
+        <b>💬 Chat screen (Muse AI session screen)</b><br />
         <img src="docs/screenshot_session.png" alt="Muse AI Session Chat Screen" width="500" />
       </td>
     </tr>
@@ -27,34 +27,34 @@ Muse（パーソナルAIエージェント `https://muse.ai`）の Windows 向�
 
 ---
 
-## 🌟 特徴
+## 🌟 Features
 
-- **状態に連動するアバターアニメーション**：Muse の状態（待機・思考中・作業中・完了）を監視し、対応するアバター動画を 500ms の滑らかなクロスフェードで自動切替
-- **放置（IDLE）アクション**：操作がない状態が続くと、プラグイン動画（食事・メイク・スマホ・居眠りなど）をランダム再生し、セリフを吹き出し表示
-- **ライブつぶやき**：IDLE 中に Muse 本人が生成した一言をその場で取得して表示（任意機能・既定 OFF）→ [詳細](#-ライブつぶやき任意機能)
-- **新着通知**：新着メッセージをルパン風パタパタタイピング吹き出しで通知。未読バッジ（🔴 1〜9+）も表示
-- **クイック1行入力＆おまかせショートカット**：セッション画面を開かず、マスコット横のミニ入力バーからそのまま質問を送信（日本語打鍵音つき）。「物忘れが多いから改善して」「会話を仕切り直して」などの初心者向け定型リクエストもワンクリックで呼び出し可能
-- **利用枠の可視化**：残り利用枠に応じてマスコット外周枠の色が変化し、ネームプレートに残量 % を常時表示
+- **Avatar animations linked to state**: Watches Muse's state (idle, thinking, working, done) and automatically switches to the matching avatar video with a smooth 500ms crossfade
+- **Idle (IDLE) actions**: When no interaction continues for a while, randomly plays plugin videos (eating, makeup, phone use, napping, and more) and shows a line in a speech bubble
+- **Live remarks**: Shows a one-liner generated on the spot by Muse itself while idle (optional feature, OFF by default) → [Details](#-live-remarks-optional-feature)
+- **New-message notifications**: Notifies you of new messages with a Lupin-style pattering typing speech bubble. Also shows an unread badge (🔴 1–9+)
+- **Quick one-line input & one-click shortcuts**: Send a question right from the mini input bar beside the mascot, without opening the session screen (with Japanese keystroke sounds). Beginner-friendly preset requests such as "I forget things a lot, help me improve that" and "Let's start the conversation over" are also one click away
+- **Usage-limit visualization**: The color of the mascot's outer frame changes with the remaining usage limit, and the nameplate always shows the remaining %
 
 <div align="center">
   <table>
     <tr>
-      <th align="center">🟢 安全（残り80%以上）</th>
-      <th align="center">🟠 注意警戒（50%〜79%）</th>
-      <th align="center">🔴 危険（50%未満）＋ 未読通知</th>
+      <th align="center">🟢 Safe (80%+ remaining)</th>
+      <th align="center">🟠 Caution (50%–79%)</th>
+      <th align="center">🔴 Danger (under 50%) + unread notification</th>
     </tr>
     <tr>
       <td align="center">
-        <img src="docs/mascot_status_safe.png" alt="安全（緑枠・85%）" width="170" /><br />
-        <b><code>[ ラッキー 85% ]</code></b>
+        <img src="docs/mascot_status_safe.png" alt="Safe (green frame, 85%)" width="170" /><br />
+        <b><code>[ Lucky 85% ]</code></b>
       </td>
       <td align="center">
-        <img src="docs/mascot_status_warn.png" alt="注意（オレンジ枠・59%）" width="170" /><br />
-        <b><code>[ ラッキー 59% ]</code></b>
+        <img src="docs/mascot_status_warn.png" alt="Caution (orange frame, 59%)" width="170" /><br />
+        <b><code>[ Lucky 59% ]</code></b>
       </td>
       <td align="center">
-        <img src="docs/mascot_status_danger.png" alt="危険（赤枠・15% ＋ 未読通知バッジ）" width="170" /><br />
-        <b><code>[ ラッキー 15% ]</code> ＋ 🔴<code>1</code></b>
+        <img src="docs/mascot_status_danger.png" alt="Danger (red frame, 15% + unread notification badge)" width="170" /><br />
+        <b><code>[ Lucky 15% ]</code> ＋ 🔴<code>1</code></b>
       </td>
     </tr>
   </table>
@@ -62,153 +62,153 @@ Muse（パーソナルAIエージェント `https://muse.ai`）の Windows 向�
 
 ---
 
-## 📥 インストール
+## 📥 Installation
 
-[Releases](https://github.com/mowthow-works/desktop-mascot-for-muse/releases) からインストーラ（`Desktop-Mascot-for-Muse_x64-setup.exe`）またはポータブル版 ZIP（`desktop-mascot-for-muse-windows-x64.zip`）をダウンロードして実行してください。インストーラは管理者権限不要（Per-user インストール）で、デスクトップショートカットとアンインストーラが自動構成されます。
+Download and run the installer (`Desktop-Mascot-for-Muse_x64-setup.exe`) or the portable ZIP (`desktop-mascot-for-muse-windows-x64.zip`) from [Releases](https://github.com/mowthow-works/desktop-mascot-for-muse/releases). The installer needs no administrator privileges (per-user installation), and the desktop shortcut and uninstaller are set up automatically.
 
-### Windows SmartScreen 警告が出た場合
+### If a Windows SmartScreen warning appears
 
-ダウンロードしたインストーラやポータブル版の実行時に **「Windows によって PC が保護されました」** という青い画面が表示される場合があります。これは、個人開発・オープンソースの新しいバイナリに対して SmartScreen が「ダウンロード実績がまだ少ない未知のアプリ」として機械的に表示する安全確認の画面です。以下の手順でそのままインストール・起動できます。
+When you run the downloaded installer or portable version, you may see a blue screen saying **"Windows protected your PC"**. This is a safety-confirmation screen that SmartScreen shows automatically for a new binary from an individual developer / open-source project, treating it as an "unknown app with few downloads so far". You can still install and launch it with the steps below.
 
 <div align="center">
-  <img src="docs/smartscreen_warning.png" alt="Windows SmartScreen 警告画面" width="340" />
+  <img src="docs/smartscreen_warning.png" alt="Windows SmartScreen warning screen" width="340" />
 </div>
 
-1. 警告画面の左上にある **「詳細情報」**（下線リンク）をクリックします。
-2. 画面右下に現れる **「実行」** ボタンをクリックします。
-3. 通常通りセットアップ画面（またはアプリ）が起動します。
+1. Click **"More info"** (the underlined link) at the top left of the warning screen.
+2. Click the **"Run anyway"** button that appears at the bottom right.
+3. The setup screen (or the app) launches as usual.
 
 > [!TIP]
-> ダウンロードした `.exe` ファイルを右クリック ➜ **「プロパティ」** を開き、全般タブの一番下にある **「セキュリティ: 許可する」**（または「ブロックの解除」）にチェックを入れて「OK」を押すことでも警告を回避できます。
+> You can also avoid the warning by right-clicking the downloaded `.exe` file ➜ opening **"Properties"**, checking **"Security: Unblock"** (or "Unblock") at the bottom of the General tab, and clicking "OK".
 
 ---
 
-## 🚀 クイックスタート
+## 🚀 Quick Start
 
-1. アプリを起動すると、デスクトップ右下付近にマスコットが表示されます。
-2. マスコットを **ダブルクリック**（または `Ctrl + Shift + M` / トレイアイコンをクリック）して **Muse AI チャット画面** を開きます。
-3. Google OAuth またはメールアドレス等で Muse にサインインします。
-4. ログイン完了後、チャット画面右上の `−` または `×` を押すとマスコット状態に戻り、アバター名称・ステータス・新着チャットが自動同期されます（次回以降はログインセッションが自動維持されます）。
+1. When you launch the app, the mascot appears near the bottom right of the desktop.
+2. **Double-click** the mascot (or press `Ctrl + Shift + M` / click the tray icon) to open the **Muse AI chat screen**.
+3. Sign in to Muse with Google OAuth, an email address, or another method.
+4. After signing in, press `−` or `×` at the top right of the chat screen to return to the mascot state; the avatar name, status, and new chats sync automatically (from the next time on, the login session is maintained automatically).
 
-アカウントの認証情報（パスワードや Google OAuth）はアプリ側で一切保存しません。ログインは公式セッション画面上で行われ、セッション Cookie はアプリ専用のローカルデータフォルダにのみ永続化されます。
+The app never stores your account credentials (password or Google OAuth). Sign-in happens on the official session screen, and the session cookie is persisted only in the app's own local data folder.
 
 ---
 
-## 🖱️ 基本操作
+## 🖱️ Basic Operations
 
-| 操作 | 動作 |
+| Action | Behavior |
 | :--- | :--- |
-| **マスコットをドラッグ** | デスクトップの好きな位置へ移動（位置は自動保存） |
-| **マスコットをシングルクリック** | 喜びポーズ＋一言リアクション吹き出し |
-| **クイック1行入力（💬）** | アバター右クリック または 💬ボタンでミニ入力バーを展開、その場で質問や「おまかせショートカット」の定型リクエストを送信（`Enter` で送信 / `Esc` で閉じる） |
-| **マスコットをダブルクリック** | Muse AI チャット画面（セッション画面）を開く（前回終了時の位置・サイズを復元） |
-| **吹き出し / 未読バッジをクリック** | チャット画面を開いてすぐ返信（未読バッジクリア） |
-| **チャット画面の `−` / `×` ボタン** | チャット画面を隠してマスコット状態へ最小化 |
-| **他アプリを操作（チャット画面が裏へ）** | マスコットが自動的に最前面へ現れる（チャット画面が表に戻ると自動非表示） |
-| **`Ctrl + Shift + M`** | チャット画面 ⇄ マスコット状態の表示トグル（グローバルホットキー） |
-| **トレイアイコン左クリック** | チャット画面 ⇄ マスコット状態の表示トグル |
-| **トレイアイコン右クリック** | コンテキストメニュー表示（設定、セッション再読み込み、表示サイズ、自動起動、効果音、ブラウザで開く、完全終了 等） |
+| **Drag the mascot** | Move it to any position on the desktop (position is saved automatically) |
+| **Single-click the mascot** | Joy pose + a one-line reaction speech bubble |
+| **Quick one-line input (💬)** | Right-click the avatar or press the 💬 button to expand the mini input bar, then send a question or a preset one-click shortcut request right there (`Enter` to send / `Esc` to close) |
+| **Double-click the mascot** | Open the Muse AI chat screen (session screen) (restores the position and size from the last time it was closed) |
+| **Click a speech bubble / unread badge** | Open the chat screen and reply right away (clears the unread badge) |
+| **`−` / `×` buttons on the chat screen** | Hide the chat screen and minimize back to the mascot state |
+| **Using another app (chat screen goes behind)** | The mascot automatically comes to the front (it hides automatically when the chat screen comes back to the front) |
+| **`Ctrl + Shift + M`** | Toggle between the chat screen ⇄ mascot state (global hotkey) |
+| **Left-click the tray icon** | Toggle between the chat screen ⇄ mascot state |
+| **Right-click the tray icon** | Show the context menu (Settings, reload session, display size, auto-start, sound effects, open in browser, fully quit, etc.) |
 
-マスコットの表示サイズ（大 125% / 標準 100% / 小 80%）、Windows 起動時の自動起動、効果音の有効/無効などは、トレイメニューまたは設定画面から変更できます。
-
----
-
-## 🎨 カスタマイズ
-
-本リポジトリには、著作権および汎用性（ユーザーごとにアバターが異なる点）への配慮から **アバター動画（`.mp4`）を含めていません**（設定ファイル `setting.json` と `quotes.json` のみ同梱）。ご自身のアバター動画を用意して配置してください。
-
-- **GUI 設定画面**：トレイメニューの「設定...」から、動作タイマー（放置時間・吹き出し秒数等）、放置動画ごとの有効/無効、セリフの追加・編集が行えます
-- **ホットリロード**：`setting.json` と `quotes.json` は、アプリ起動中でも保存するだけで 3 秒以内に自動反映されます
-- **動画の配置先**：設定画面（「フォルダ・データ管理」タブ）の「フォルダを開く」からアクセスできます。アプリアップデート時の動画・設定消失を防ぐため、通常は OS の永続データ領域（`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`）が使用されます。基本動画 5 種類（`idle` / `waking` / `working` / `making_something` / `milestone_level_up`）は `avatars/` 直下、放置アクション用は `avatars/plugin/` フォルダへ配置してください（実行ファイル階層に `portable` ファイルを置くことでローカルの `avatars/` を使うポータブル運用も可能）
-
-動画の取得・配置手順、`setting.json` / `quotes.json` の全項目リファレンス、トレイメニューの全項目、開発者ツールの活用例は **[カスタマイズガイド](docs/CUSTOMIZE.md)** を参照してください。
+You can change the mascot's display size (Large 125% / Standard 100% / Small 80%), auto-start at Windows startup, sound effects on/off, and more from the tray menu or the Settings screen.
 
 ---
 
-## 💬 ライブつぶやき（任意機能）
+## 🎨 Customization
 
-IDLE 中のセリフを、固定の `quotes.json` だけでなく **Muse 本人がその場で生成した一言** にできます。
+For copyright reasons and because every user has a different avatar, this repository does **not include avatar videos (`.mp4`)** (only the config files `setting.json` and `quotes.json` are bundled). Please prepare and place your own avatar videos.
 
-- マスコットが待機状態のときだけ、アプリが Muse のチャットへ短い作成依頼（ウェイク）を送り、返ってきた一言をプールに貯めて IDLE アクションで表示します
-- 取得先は **メインチャット**（普段のチャット。そのまま使えて文脈の濃い一言になりやすい）か **専用チャット**（URL を設定に登録。普段のスレッドを汚さない。ウェイク完了後はウェイク前に開いていたチャットへ自動復帰）から選べます
-- 実行中の会話を割り込まないよう、Muse が IDLE のときだけ取得します。取得間隔の下限（既定 60 分）、1 日の上限（既定 6 回）、静かな時間帯（既定 22:00〜07:00）も設定できます
-- プールのセリフは 24 時間で破棄され、表示すると消費されます。プールが空の間は従来の固定セリフが表示されます
+- **GUI Settings screen**: From "Settings..." in the tray menu, you can adjust behavior timers (idle time, speech-bubble duration, etc.), toggle each idle video on/off, and add or edit lines
+- **Hot reload**: `setting.json` and `quotes.json` are automatically applied within 3 seconds of saving, even while the app is running
+- **Where to place videos**: Accessible via "Open folder" in the Settings screen ("Folder & Data Management" tab). To prevent videos and settings from being lost when the app updates, the OS persistent data area (`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`) is normally used. Place the 5 basic videos (`idle` / `waking` / `working` / `making_something` / `milestone_level_up`) directly under `avatars/`, and idle-action videos in the `avatars/plugin/` folder (placing a `portable` file next to the executable also lets you use the local `avatars/` folder in portable mode)
+
+For how to obtain and place videos, the full reference for every item in `setting.json` / `quotes.json`, every tray menu item, and examples of using the developer tools, see the **[Customization Guide](docs/CUSTOMIZE.md)**.
+
+---
+
+## 💬 Live Remarks (Optional Feature)
+
+Idle lines can be more than the fixed lines in `quotes.json` — they can be **a one-liner generated on the spot by Muse itself**.
+
+- Only while the mascot is idle, the app sends a short creation request (a wake) to Muse's chat, pools the returned one-liners, and shows them in idle actions
+- Choose the source as either the **main chat** (your everyday chat. It works as-is and tends to produce context-rich one-liners) or a **dedicated chat** (register its URL in Settings. It keeps your everyday thread clean. After a wake completes, it automatically returns to the chat that was open before the wake)
+- To avoid interrupting an ongoing conversation, remarks are fetched only while Muse is idle. You can also set a minimum fetch interval (default 60 minutes), a daily cap (default 6 times), and quiet hours (default 22:00–07:00)
+- Pooled lines are discarded after 24 hours and are consumed when shown. While the pool is empty, the usual fixed lines are shown
 
 > [!IMPORTANT]
-> **利用枠（Limit）の消費について**：ウェイク 1 回は Muse の会話 1 ターン分の利用枠を消費します。そのため本機能は **既定で OFF** です。有効にする場合は設定画面で ON にしてください。
+> **About usage-limit (Limit) consumption**: One wake consumes one turn of Muse conversation usage limit. That is why this feature is **OFF by default**. Turn it ON in the Settings screen if you want to use it.
 
-設定項目の詳細は [カスタマイズガイド](docs/CUSTOMIZE.md) を参照してください。
-
----
-
-## 🔒 セキュリティ
-
-1. **ゼロ・ケイパビリティ設計**：Tauri の IPC 権限はマスコット本体ウィンドウのみに限定し、セッション画面（`https://muse.ai/?__pwa=1`）およびリモートオリジンには一切付与していません。
-2. **Title Bridge**：リモート側に IPC を露出しないため、ステータス・新着メッセージ・アバター名などの同期データは WebView2 の `document.title` を使ったカスタムブリッジ経由で安全に渡されます。
-3. **認証情報の保護**：パスワードや OAuth 情報をアプリ側で保存しません（クイックスタート節も参照）。
+See the [Customization Guide](docs/CUSTOMIZE.md) for details on the settings.
 
 ---
 
-## 📚 ドキュメント構成
+## 🔒 Security
 
-| ドキュメント | 役割 |
+1. **Zero-capability design**: Tauri IPC permissions are limited to the mascot's main window only, and are not granted at all to the session screen (`https://muse.ai/?__pwa=1`) or any remote origin.
+2. **Title Bridge**: To avoid exposing IPC to the remote side, sync data such as status, new messages, and avatar name is passed safely via a custom bridge using WebView2's `document.title`.
+3. **Credential protection**: Passwords and OAuth information are never stored in the app (see also the Quick Start section).
+
+---
+
+## 📚 Documentation Structure
+
+| Document | Role |
 | :--- | :--- |
-| **README.md**（本書） | 本アプリの概要・クイックスタート・基本操作 |
-| **[カスタマイズガイド](docs/CUSTOMIZE.md)** | 利用者向けリファレンス（アバター動画の準備・配置手順、設定項目、トレイメニュー詳細） |
-| **[機能仕様書](docs/SPEC.md)** | **実装の正（Single Source of Truth）**。セリフ選択抽選仕様、Title Bridge プロトコル、動作詳細仕様 |
-| **[初期設計書](DESIGN.md)** | 初期構想・設計意図のアーカイブ（現行仕様は機能仕様書が優先） |
+| **README.md** (this document) | Overview, quick start, and basic operations for this app |
+| **[Customization Guide](docs/CUSTOMIZE.md)** | User reference (how to prepare and place avatar videos, settings, tray menu details) |
+| **[Feature Specification](docs/SPEC.md)** | **The implementation source of truth (Single Source of Truth)**. Line-selection lottery specification, Title Bridge protocol, detailed behavior specification |
+| **[Initial Design Document](DESIGN.md)** | Archive of the initial concept and design intent (the feature specification takes precedence for current behavior) |
 
 ---
 
-## 🛠️ 開発・ビルド手順
+## 🛠️ Development and Build Steps
 
-### 必要環境
+### Requirements
 - Windows 11 / 10
 - Node.js 20+
-- Rust (stable, MSVC ツールチェーン)
+- Rust (stable, MSVC toolchain)
 - Visual Studio C++ Build Tools
 
-### 開発起動
+### Starting development
 ```powershell
-# PATH の設定（必要に応じて）
+# Set PATH (if needed)
 $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\Program Files\nodejs;" + $env:PATH
 
-# 依存関係のインストール（初回のみ）
+# Install dependencies (first time only)
 npm install
 
-# 開発モード起動
+# Start development mode
 npm run dev
 ```
 
-### 自動テストの実行
+### Running automated tests
 ```powershell
-# 全3層テスト（Vitest単体 + Playwright E2E + Rust単体）の一括実行
+# Run all 3 layers of tests at once (Vitest unit + Playwright E2E + Rust unit)
 npm test
 
-# 個別実行
-npm run test:unit   # フロントエンド＆ブリッジ単体テスト (Vitest + jsdom)
-npm run test:e2e    # 実ブラウザUI・レイアウト回帰テスト (Playwright + Edge)
-npm run test:rust   # Rustバックエンド単体テスト (cargo test)
+# Run individually
+npm run test:unit   # Frontend & bridge unit tests (Vitest + jsdom)
+npm run test:e2e    # Real-browser UI / layout regression tests (Playwright + Edge)
+npm run test:rust   # Rust backend unit tests (cargo test)
 ```
 
-### プロダクションビルド
+### Production build
 
-ポータブル単体実行ファイル（手動配置・ZIP 配布向け）：
+Portable standalone executable (for manual placement / ZIP distribution):
 ```powershell
 cargo build --release --manifest-path "src-tauri/Cargo.toml"
-# 生成先: src-tauri/target/release/desktop-mascot-for-muse.exe
+# Output: src-tauri/target/release/desktop-mascot-for-muse.exe
 ```
 
-NSIS セットアップインストーラ（一般配布向け）：
+NSIS setup installer (for general distribution):
 ```powershell
 npm run build:installer
-# または
+# or
 npx tauri build
-# 生成先: src-tauri/target/release/bundle/nsis/Desktop Mascot for Muse_<version>_x64-setup.exe
+# Output: src-tauri/target/release/bundle/nsis/Desktop Mascot for Muse_<version>_x64-setup.exe
 ```
 
 ---
 
-## 📜 ライセンス
+## 📜 License
 
 [MIT License](LICENSE) © 2026 mowthow-works

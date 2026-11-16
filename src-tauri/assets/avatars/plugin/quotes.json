@@ -1,38 +1,38 @@
 {
   "touch_reactions": [
-    "はーい！呼んだ？",
-    "なになに〜？",
-    "ここにいるよ！",
-    "がんばろうね！",
-    "何か聞きたいことある？",
-    "えへへ、よろしくね！"
+    "Yaaay! Did you call me?",
+    "What is it~?",
+    "I'm right here!",
+    "Let's do our best!",
+    "Got something you'd like to ask?",
+    "Ehehe, nice to meet you!"
   ],
   "default_idle_quotes": [
-    "いつでも呼んでね！",
-    "今日もいい天気だね〜",
-    "お茶でも飲んで一息つこう！",
-    "何か手伝えることがあったら言ってね！"
+    "Call me anytime!",
+    "Such lovely weather today!",
+    "Let's have some tea and take a breather!",
+    "Let me know if there's anything I can help with!"
   ],
   "time_specific_quotes": {
     "morning": [
-      "おはよう！今日もいい一日にしようね！",
-      "朝ごはん、ちゃんと食べた？",
-      "今日も元気にがんばろう！"
+      "Good morning! Let's make today a great day!",
+      "Did you eat breakfast properly?",
+      "Let's stay cheerful and do our best today!"
     ],
     "afternoon": [
-      "お昼ご飯食べた？午後もファイト！",
-      "集中しすぎは禁物だよ、少し伸びしてみて！",
-      "お茶でも飲んで一息つこう〜"
+      "Did you eat lunch? Let's power through the afternoon!",
+      "Don't overdo the focus — stretch a little!",
+      "Let's have some tea and take a breather~"
     ],
     "evening": [
-      "今日もお疲れさま！",
-      "夕飯は何にするの〜？",
-      "今日の作業も一段落したかな？"
+      "Great work today!",
+      "What are we having for dinner~?",
+      "Did your work reach a good stopping point today?"
     ],
     "night": [
-      "夜更かしは体に毒だよ〜",
-      "そろそろ休む時間かも…おやすみなさい",
-      "遅くまでお仕事お疲れさま。無理しないでね"
+      "Staying up late isn't good for you~",
+      "Maybe it's about time to rest… good night",
+      "Thanks for working so late. Don't push yourself too hard"
     ]
   },
   "videos": {
@@ -45,9 +45,9 @@
       "weight": 2,
       "quote_probability": 1.0,
       "quotes": [
-        "もぐもぐ…たい焼き、甘くておいしい〜！",
-        "ちょっとおやつタイムにするね♪",
-        "頭を使ったあとは甘いものに限るね！"
+        "Nom nom… this taiyaki is so sweet and yummy!",
+        "Time for a little snack break♪",
+        "After using your brain, something sweet is just the thing!"
       ]
     },
     "makeup.mp4": {
@@ -59,9 +59,9 @@
       "weight": 1,
       "quote_probability": 1.0,
       "quotes": [
-        "ちょっと身だしなみチェック中…♪",
-        "よし、今日もバッチリかな！",
-        "パタパタ…どう？似合うかな？"
+        "Just doing a quick appearance check…♪",
+        "Okay, looking perfect today!",
+        "Pat pat… how do I look? Does it suit me?"
       ]
     },
     "sleeping.mp4": {
@@ -73,9 +73,9 @@
       "weight": 1,
       "quote_probability": 1.0,
       "quotes": [
-        "すやぁ…ちょっとだけうたた寝…",
-        "ふぁ〜…少し眠くなってきちゃった…zzZ",
-        "むにゃむにゃ…いつでも起こしてね…"
+        "Suya… just a little nap…",
+        "Fwaa~… I'm getting a bit sleepy…zzZ",
+        "Munya munya… wake me up anytime…"
       ]
     },
     "smartphone.mp4": {
@@ -87,9 +87,9 @@
       "weight": 3,
       "quote_probability": 1.0,
       "quotes": [
-        "スマホでちょっとトレンドチェック中〜",
-        "ふむふむ、面白いニュース見つけたよ！",
-        "何か新しい連絡きてないかな〜"
+        "Checking the latest trends on my phone~",
+        "Hmm hmm, I found some interesting news!",
+        "I wonder if there's any new message~"
       ]
     },
     "waking.mp4": {
@@ -101,9 +101,9 @@
       "weight": 3,
       "quote_probability": 1.0,
       "quotes": [
-        "ふぁ〜、背伸び！リフレッシュ完了！",
-        "ずっと座ってたから、ちょっとストレッチ♪",
-        "いつでも動けるように準備万端だよ！"
+        "Fwaa~, a big stretch! Feeling refreshed!",
+        "I've been sitting so long — time for a little stretch♪",
+        "All ready to jump into action anytime!"
       ]
     },
     "working.mp4": {
@@ -115,9 +115,9 @@
       "weight": 4,
       "quote_probability": 1.0,
       "quotes": [
-        "カタカタ…次のタスクの予習をしておくね！",
-        "今のうちにちょっとメモを整理中…",
-        "いつでもサポートできるように準備中だよ！"
+        "Clickety-clack… I'll prep for the next task!",
+        "Tidying up my notes while I have a moment…",
+        "Getting ready so I can support you anytime!"
       ]
     }
   }

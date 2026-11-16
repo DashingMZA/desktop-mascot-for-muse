@@ -1,10 +1,18 @@
 /**
  * session_bridge.js
  *
- * Muse (https://muse.ai/?__pwa=1) のセッション WebView 内で実行される DOM 調査・操作スクリプト。
- * 設計書 §4・§16・§17 に従い、DOM セレクタとリモート処理はすべて本ファイルに集約されます。
+ * DOM inspection / manipulation script that runs inside the Muse
+ * (https://muse.ai/?__pwa=1) session WebView.
+ * Per spec §4, §16, and §17, all DOM selectors and remote handling are
+ * centralized in this file.
  *
- * 通信方式: Document Title Bridge (即時通信 + チャンク分割ハンドシェイク Pull)
+ * Transport: Document Title Bridge (instant messaging + chunked handshake Pull)
+ *
+ * NOTE ON JAPANESE STRINGS IN THIS FILE: Muse's own web UI can be displayed
+ * in Japanese, so Japanese selector / regex / label matches are DELIBERATELY
+ * KEPT here as fallbacks. Every Japanese match has an English equivalent
+ * alongside it; do not remove the Japanese alternatives, or matching will
+ * break for users whose Muse UI is in Japanese.
  */
 
 window.__MUSE_STORE__ = window.__MUSE_STORE__ || {};
@@ -13,9 +21,11 @@ window.__MUSE_SESSION_VISIBLE__ = window.__MUSE_SESSION_VISIBLE__ || false;
 window.__MUSE_FETCHING_LIMIT__ = window.__MUSE_FETCHING_LIMIT__ || false;
 
 /**
- * §17.2 セレクタの多重化定義
- * アクセシビリティ向け属性 (aria-label, placeholder, .sr-only) を最優先し、
- * 変更されやすいクラス名 (hatch-*, group/msg) は予備候補として定義。
+ * §17.2 Multiplexed selector definitions
+ * Accessibility attributes (aria-label, placeholder, .sr-only) take top
+ * priority; volatile class names (hatch-*, group/msg) are backup candidates.
+ * Japanese matches are kept as fallbacks for a Japanese Muse UI; each has
+ * an English equivalent alongside it.
  */
 const SELECTORS = {
   avatarVideo: [
@@ -32,14 +42,19 @@ const SELECTORS = {
   ],
   chatInput: [
     'textarea[placeholder*="メッセージ"]',
+    'textarea[placeholder*="Message"]',
     'textarea[aria-label*="メッセージ"]',
+    'textarea[aria-label*="Message"]',
     '[role="textbox"][aria-label*="メッセージ"]',
+    '[role="textbox"][aria-label*="Message"]',
     'main textarea',
     'textarea:not([readonly])'
   ],
   sendButton: [
     'button[aria-label="送信"]:not([disabled])',
+    'button[aria-label="Send"]:not([disabled])',
     'button[aria-label*="送信"]:not([disabled])',
+    'button[aria-label*="Send"]:not([disabled])',
     'button[aria-label*="send" i]:not([disabled])',
     'button[type="submit"]:not([disabled])'
   ],
@@ -93,11 +108,12 @@ function queryAllFirst(candidates, root = document) {
       if (list.length > 0) return { list, selector: sel };
     } catch (_) {}
   }
-  // フォールバック: sr-only で「自分:」「アシスタントメッセージ:」を持つ要素の親
+  // Fallback: parents of elements whose sr-only text is "自分:" / "アシスタントメッセージ:"
+  // ("You:" / "Assistant message:" in English; Japanese kept as a fallback)
   try {
     const srSpans = Array.from(root.querySelectorAll('span.sr-only')).filter(s => {
       const t = (s.textContent || '').trim();
-      return t.startsWith('自分:') || t.startsWith('アシスタントメッセージ:');
+      return t.startsWith('自分:') || t.startsWith('アシスタントメッセージ:') || t.startsWith('You:') || t.startsWith('Assistant message:');
     });
     if (srSpans.length > 0) {
       return {
@@ -110,8 +126,10 @@ function queryAllFirst(candidates, root = document) {
 }
 
 /**
- * 回答生成中の停止ボタンが有効状態で存在するか検出する (Issue #63)
- * "Desktop" 等の無関係な単語に含まれる "stop" 部分一致での誤検出を防ぐため単語境界で判定する。
+ * Detect whether an enabled stop button exists while an answer is being
+ * generated (Issue #63).
+ * Word boundaries are used to avoid false positives from partial "stop"
+ * matches inside unrelated words such as "Desktop".
  */
 function findActiveStopButton() {
   const buttons = document.querySelectorAll('button[aria-label], button[title]');
@@ -171,7 +189,7 @@ function scanDomForLimit() {
     }
   }
 
-  // プログレスバー要素の属性（aria-valuenow や style="width: 50%" 等）からパーセントを検出
+  // Detect the percentage from progress-bar attributes (aria-valuenow, style="width: 50%", etc.)
   const progressBars = Array.from(document.querySelectorAll('[role="progressbar"], [class*="progress" i]'));
   for (const bar of progressBars) {
     let p = null;
@@ -199,7 +217,7 @@ function scanDomForLimit() {
     }
   }
 
-  // 結合テキスト（innerText または textContent）からの判定を最優先（React等で「56%」と「使用済み」が別ノードに分割されている場合に対応）
+  // Prefer judging from the combined text (innerText or textContent) — handles cases where React splits "56%" and "used" across separate nodes
   const allText = document.body ? (document.body.innerText || document.body.textContent || '') : '';
   if (allText) {
     if (usedPercent === null) {
@@ -223,14 +241,14 @@ function scanDomForLimit() {
       }
     }
     if (!resetText) {
-      const mReset = allText.match(/(\d+週間の上限は[^\n。]*リセットされます|\d+月\d+日にリセットされます|リセット\s*[:：]?\s*[^\n。]+)/);
+      const mReset = allText.match(/(\d+週間の上限は[^\n。]*リセットされます|\d+月\d+日にリセットされます|リセット\s*[:：]?\s*[^\n。]+|(?:weekly limit\s+)?resets?\s+on\s+[^\n.]+|will\s+reset\s+[^\n.]+|reset\s*[:：]?\s*[^\n.]+)/i);
       if (mReset) {
         resetText = mReset[1].trim();
       }
     }
   }
 
-  // 補助: 個別テキストノード走査（TreeWalker）
+  // Backup: walk individual text nodes (TreeWalker)
   if ((usedPercent === null || remainingPercent === null || !resetText) && document.body) {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     let node;
@@ -256,7 +274,7 @@ function scanDomForLimit() {
         }
       }
       if (!resetText) {
-        const matchReset = txt.match(/(\d+週間の上限は[^\n。]*リセットされます|\d+月\d+日にリセットされます|リセット\s*[:：]?\s*[^\n。]+)/);
+        const matchReset = txt.match(/(\d+週間の上限は[^\n。]*リセットされます|\d+月\d+日にリセットされます|リセット\s*[:：]?\s*[^\n。]+|(?:weekly limit\s+)?resets?\s+on\s+[^\n.]+|will\s+reset\s+[^\n.]+|reset\s*[:：]?\s*[^\n.]+)/i);
         if (matchReset) resetText = matchReset[1].trim();
       }
     }
@@ -264,7 +282,7 @@ function scanDomForLimit() {
 
   if (remainingPercent !== null || usedPercent !== null || planName || resetText) {
     return {
-      plan_name: planName || '無料プラン',
+      plan_name: planName || 'Free Plan',
       used_percent: usedPercent,
       remaining_percent: remainingPercent,
       reset_text: resetText || ''
@@ -274,7 +292,7 @@ function scanDomForLimit() {
 }
 
 function findGeneralTab() {
-  // 1. 明示的なタブ・メニュー・ボタン要素でテキストが「一般」または「General」に一致するものを最優先
+  // 1. Prefer explicit tab / menu / button elements whose text is "一般" or "General"
   const interactiveCandidates = Array.from(
     document.querySelectorAll('[role="tab"], [role="menuitem"], button, a, [role="button"]')
   );
@@ -284,7 +302,7 @@ function findGeneralTab() {
   });
   if (exactInteractive) return exactInteractive;
 
-  // 2. 子要素を持たないリーフ要素（親コンテナの誤クリック防止）でテキストが「一般」または「General」に一致するもの
+  // 2. Leaf elements with no children (to avoid misclicking a parent container) whose text is "一般" or "General"
   const leafCandidates = Array.from(
     document.querySelectorAll('button, a, [role="tab"], [role="menuitem"], [role="button"], div, span')
   );
@@ -297,8 +315,10 @@ function findGeneralTab() {
 }
 
 /**
- * 1段目の「設定」ボタンクリック後に開くポップオーバーメニュー内の「設定」項目を検出する (Issue #63, #67)
- * ショートカット表記（例: "設定Ctrl+," / "SettingsCtrl+,"）や role="dialog" 以外のポップオーバーにも対応する。
+ * Detect the "設定" / "Settings" item inside the popover menu that opens after
+ * clicking the first-level Settings button (Issue #63, #67).
+ * Also handles shortcut notation (e.g. "設定Ctrl+," / "SettingsCtrl+,") and
+ * popovers without role="dialog".
  */
 function findSettingsSubmenuItem(excludeEl) {
   const isMatch = (el) => {
@@ -319,14 +339,14 @@ function findSettingsSubmenuItem(excludeEl) {
     if (found) return found;
   }
 
-  // フォールバック: ポップオーバーに role="dialog"/"menu" が無い場合も全メニュー項目・ボタンから検出
+  // Fallback: detect from all menu items / buttons even when the popover has no role="dialog" / "menu"
   const fallbackCandidates = Array.from(
     document.querySelectorAll('[role="menuitem"], button, a, [role="button"]')
   );
   return fallbackCandidates.find(isMatch) || null;
 }
 
-// パッシブ監視: ユーザーまたはスクリプトが「設定 ＞ 一般」を開いた際に自動的に利用枠をキャッシュ (Issue #49)
+// Passive watch: automatically cache the usage limit when the user or a script opens "設定 ＞ 一般" / "Settings > General" (Issue #49)
 if (!window.__MUSE_PASSIVE_WATCHER__) {
   window.__MUSE_PASSIVE_WATCHER__ = setInterval(() => {
     try {
@@ -340,11 +360,11 @@ if (!window.__MUSE_PASSIVE_WATCHER__) {
 
 window.__MUSE_BRIDGE__ = {
   /**
-   * アバター名称の抽出 (例: "ラッキー")
+   * Extract the avatar name (e.g. "Lucky")
    */
   extractAvatarName() {
     try {
-      // 1. <video> の祖先コンテナから「リンク済み」の直前行を探す
+      // 1. Look for the line just before "リンク済み" / "Linked" in an ancestor container of the <video>
       const { el: video } = queryFirst(SELECTORS.avatarVideo);
       let curr = video ? video.parentElement : null;
       for (let depth = 0; depth < 6 && curr; depth++) {
@@ -352,10 +372,10 @@ window.__MUSE_BRIDGE__ = {
           .split(/\n+/)
           .map(s => s.trim())
           .filter(s => s.length > 0 && s.length <= 24);
-        const linkIdx = lines.findIndex(l => l.includes('リンク済み'));
+        const linkIdx = lines.findIndex(l => l.includes('リンク済み') || l.includes('Linked'));
         if (linkIdx > 0) {
           const candidate = lines[linkIdx - 1];
-          if (candidate && !candidate.includes('招待') && !candidate.includes('チャット')) {
+          if (candidate && !candidate.includes('招待') && !candidate.includes('Invite') && !candidate.includes('チャット') && !candidate.includes('Chat')) {
             window.__MUSE_CACHED_AVATAR_NAME__ = candidate;
             return candidate;
           }
@@ -363,9 +383,9 @@ window.__MUSE_BRIDGE__ = {
         curr = curr.parentElement;
       }
 
-      // 2. ページ内の「リンク済み」要素の親から探す
+      // 2. Search from the parent of a "リンク済み" / "Linked" element on the page
       const allEls = Array.from(document.querySelectorAll('span, div, p'));
-      const linkEl = allEls.find(e => e.children.length === 0 && (e.textContent || '').trim() === 'リンク済み');
+      const linkEl = allEls.find(e => e.children.length === 0 && ((e.textContent || '').trim() === 'リンク済み' || (e.textContent || '').trim() === 'Linked'));
       if (linkEl) {
         let p = linkEl.parentElement;
         for (let d = 0; d < 4 && p; d++) {
@@ -373,7 +393,7 @@ window.__MUSE_BRIDGE__ = {
             .split(/\n+/)
             .map(s => s.trim())
             .filter(s => s.length > 0 && s.length <= 24);
-          const idx = lines.findIndex(l => l.includes('リンク済み'));
+          const idx = lines.findIndex(l => l.includes('リンク済み') || l.includes('Linked'));
           if (idx > 0) {
             window.__MUSE_CACHED_AVATAR_NAME__ = lines[idx - 1];
             return lines[idx - 1];
@@ -386,8 +406,9 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * アバター状態（State）のリアルタイム判定 (Issue #10)
-   * Muse本体のアバターコンポーネントのステータスおよび再生中の動画Blobサイズから直接一致させる
+   * Real-time avatar state determination (Issue #10)
+   * Matches directly against the status of Muse's own avatar component and
+   * the Blob size of the video currently playing
    */
   async getAvatarState() {
     try {
@@ -398,7 +419,7 @@ window.__MUSE_BRIDGE__ = {
         document.querySelector('video[data-hatch-media-owner="avatar-layer"]') ||
         queryFirst(SELECTORS.avatarVideo).el;
 
-      // 1. React Fiber / Props に明示的なステータス値がある場合は最優先で取得
+      // 1. If React Fiber / Props carry an explicit status value, use it first
       const validStates = new Set([
         'idle',
         'connecting',
@@ -440,19 +461,19 @@ window.__MUSE_BRIDGE__ = {
         curr = curr.parentElement;
       }
 
-      // 2. アバター下のステータステキスト（「🛠️ は動作中です」「リンク済み」など）の取得 (Issue #35)
+      // 2. Get the status text under the avatar (e.g. "🛠️ is working", "リンク済み" / "Linked") (Issue #35)
       let statusText = '';
       let statusEl = null;
 
-      // チャット本文・入力欄要素から誤ってテキストを拾わないよう除外ガード (Issue #42)
+      // Exclusion guard so text is not mistakenly picked up from chat body / input elements (Issue #42)
       const isInsideChat = (el) => {
         if (!el) return false;
         return !!el.closest('main, [class*="chat" i], [class*="prose" i], [class*="group/msg" i], [role="log"], textarea');
       };
 
-      const STATUS_TEXT_REGEX = /動作中|リンク済み|考え中|思考|作業中|実行中|作成|生成|構築|描画|検索|調査|確認|返信|オンライン|待機中|待機|オフライン|準備完了|接続|working|thinking|making|generating|searching|ready|idle|online|connected/i;
+      const STATUS_TEXT_REGEX = /動作中|リンク済み|考え中|思考|作業中|実行中|作成|生成|構築|描画|検索|調査|確認|返信|オンライン|待機中|待機|オフライン|準備完了|接続|working|thinking|making|creating|building|generating|searching|running|waiting|ready|idle|online|connected|linked|drawing|rendering|researching|checking|replying|offline/i;
 
-      // 優先探索: アバター動画 v の直近コンテナ内、またはアバター名周辺からステータス文字列を探索 (固定XPathは全廃)
+      // Priority search: look for the status string inside the container nearest to avatar video v, or near the avatar name (fixed XPaths have all been removed)
       try {
         const rootContainer = v ? (v.closest('[class*="avatar" i], [class*="dock" i], [class*="header" i], aside') || v.parentElement) : document.body;
         const candidates = Array.from(rootContainer.querySelectorAll('span, div, p')).filter(e => {
@@ -468,7 +489,7 @@ window.__MUSE_BRIDGE__ = {
         }
       } catch (_) {}
 
-      // statusEl 自身の React Fiber / Props も探索
+      // Also search statusEl's own React Fiber / Props
       if (statusEl && !fiberState) {
         let sc = statusEl;
         for (let depth = 0; depth < 6 && sc && !fiberState; depth++) {
@@ -492,7 +513,7 @@ window.__MUSE_BRIDGE__ = {
         }
       }
 
-      // 親要素フォールバック（チャット領域を含む祖先へ到達したら即打ち切り、本文の誤抽出を防止）
+      // Parent-element fallback (stop immediately on reaching an ancestor that contains the chat area, to prevent mistakenly extracting body text)
       if (!statusText && v) {
         let p = v.parentElement;
         for (let d = 0; d < 6 && p; d++) {
@@ -518,7 +539,7 @@ window.__MUSE_BRIDGE__ = {
         return { state: fiberState, statusText, source: 'fiber' };
       }
 
-      // 3. ステータステキストが明確に「リンク済み」等の待機状態であれば idle、稼働中テキストであれば対応状態を判定
+      // 3. If the status text clearly indicates an idle state such as "リンク済み" / "Linked", map to idle; if it indicates activity, map to the matching state
       const mapStatusTextToState = (txt) => {
         if (!txt) return null;
         const t = txt.trim();
@@ -526,28 +547,28 @@ window.__MUSE_BRIDGE__ = {
         if (validStates.has(lower)) {
           return normalizeState(lower);
         }
-        if (t === 'リンク済み' || t === 'オンライン' || t === '待機中' || /接続|linked|online|idle|ready|connected/i.test(t)) {
+        if (t === 'リンク済み' || t === 'Linked' || t === 'オンライン' || t === 'Online' || t === '待機中' || t === 'Waiting' || /接続|linked|online|idle|ready|connected/i.test(t)) {
           return 'idle';
         }
         if (/起動|目覚め|waking/i.test(t)) {
           return 'waking';
         }
-        if (/歓喜|レベルアップ|達成|milestone|level.?up/i.test(t)) {
+        if (/歓喜|レベルアップ|達成|milestone|level.?up|celebrat|achievement/i.test(t)) {
           return 'milestone_level_up';
         }
-        if (/作成|生成|構築|描画|コード|ファイル|making|creating|building|generating/i.test(t)) {
+        if (/作成|生成|構築|描画|コード|ファイル|making|creating|building|generating|code|file/i.test(t)) {
           return 'making_something';
         }
-        if (/作業|考え|思考|返信|検索|調査|確認|サブエージェント|待機|実行|working|thinking|searching|waiting|running/i.test(t)) {
+        if (/作業|考え|思考|返信|検索|調査|確認|サブエージェント|待機|実行|working|thinking|searching|waiting|running|replying|researching|checking|subagent/i.test(t)) {
           return 'working';
         }
-        // 「リンク済み」以外のステータステキストが表示されている場合は作業中とみなす
+        // Any other status text being shown is treated as working
         return 'working';
       };
 
       const textMappedState = mapStatusTextToState(statusText);
 
-      // 4. 再生中の <video src="blob:..."> のバイトサイズから 5 種類の MP4 を 100% 特定
+      // 4. Identify the 5 MP4 types with 100% certainty from the byte size of the currently playing <video src="blob:...">
       //    - waking.mp4:             262,753 bytes
       //    - working.mp4:            369,723 bytes
       //    - making_something.mp4:   406,030 bytes
@@ -580,7 +601,7 @@ window.__MUSE_BRIDGE__ = {
 
         const cached = window.__MUSE_BLOB_STATE_MAP__[currentBlob];
         if (cached && cached.state) {
-          // もし動画Blobが idle であっても、ステータステキストが明確に稼働中（「リンク済み」以外）を示していればステータス表示を優先
+          // Even if the video Blob is idle, prefer the status display when the status text clearly indicates activity (anything other than "リンク済み" / "Linked")
           if (cached.state === 'idle' && textMappedState && textMappedState !== 'idle') {
             return {
               state: textMappedState,
@@ -609,7 +630,7 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * §17.3 起動時・定期ヘルスチェック (R1 / R2 / R3 / R5 のセレクタ生存確認 + アバター名取得 + アバター状態)
+   * §17.3 Startup / periodic health check (selector liveness for R1 / R2 / R3 / R5 + avatar name + avatar state)
    */
   async checkHealth() {
     const vFound = queryFirst(SELECTORS.avatarVideo);
@@ -645,16 +666,16 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * 1. アバター動画 (R1) の Base64 Data URL 取得
+   * 1. Get the avatar video (R1) as a Base64 Data URL
    */
   async getAvatarVideoBase64() {
     const { el: video } = queryFirst(SELECTORS.avatarVideo);
     if (!video) {
-      throw new Error("UNSUPPORTED_DOM: アバター動画要素が見つかりません");
+      throw new Error("UNSUPPORTED_DOM: Avatar video element not found");
     }
     const src = video.currentSrc || video.src;
     if (!src) {
-      throw new Error("UNSUPPORTED_DOM: アバター動画の src が空です");
+      throw new Error("UNSUPPORTED_DOM: Avatar video src is empty");
     }
 
     const response = await fetch(src);
@@ -678,21 +699,22 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * 2. メインチャットのメッセージ一覧読み取り (R2)
+   * 2. Read the main chat's message list (R2)
    */
   async getMessages(limit = 5) {
     const { list: messageEls } = queryAllFirst(SELECTORS.messageItems);
     const { el: inputEl } = queryFirst(SELECTORS.chatInput);
 
-    // メッセージも入力欄も見つからない場合は未ログインまたは未対応画面構造
+    // If neither messages nor the input field is found, the user is not logged in or the screen structure is unsupported
     if (messageEls.length === 0 && !inputEl) {
-      throw new Error("UNSUPPORTED_OR_UNAUTH: メインチャットの画面構造が見つかりません");
+      throw new Error("UNSUPPORTED_OR_UNAUTH: Main chat screen structure not found");
     }
 
-    // 選択肢（クイックリプライ / サジェスチョンボタン）抽出用 (Issue #32)
+    // For extracting options (quick replies / suggestion buttons) (Issue #32)
     const systemKeywords = [
       'コピー', 'オプション', '再生成', '評価', '編集', '共有', '削除', 'フィードバック',
       '詳細', '閉じる', 'メニュー', 'いいね', '低評価', 'good', 'bad', 'copy', 'option',
+      'details', 'like', 'dislike', 'rating',
       'edit', 'share', 'delete', 'retry', 'regenerate', 'feedback', 'menu', 'close'
     ];
 
@@ -733,7 +755,7 @@ window.__MUSE_BRIDGE__ = {
       const srText = srEl ? (srEl.textContent || '').trim() : '';
       const hasProse = !!el.querySelector('.prose');
       const rawElText = (el.innerText || '').trim();
-      const isUser = srText.startsWith('自分:') || (!hasProse && rawElText.startsWith('自分:'));
+      const isUser = srText.startsWith('自分:') || srText.startsWith('You:') || (!hasProse && (rawElText.startsWith('自分:') || rawElText.startsWith('You:')));
       const role = isUser ? 'user' : 'assistant';
 
       const { el: bubbleEl } = queryFirst(SELECTORS.messageBubble, el);
@@ -747,17 +769,17 @@ window.__MUSE_BRIDGE__ = {
       }
 
       let text = rawText
-        .replace(/^(自分:|アシスタントメッセージ:)\s*/i, '')
+        .replace(/^(自分:|アシスタントメッセージ:|You:|Assistant message:)\s*/i, '')
         .replace(/^[\s\uFEFF\xA0\u3000]+/g, '')
         .replace(/[\s\uFEFF\xA0\u3000]+$/g, '')
         .replace(/^[ \t\u3000]+/gm, '')
         .trim();
 
-      // アシスタント返答内の選択肢の抽出 (Issue #32)
+      // Extract options inside an assistant reply (Issue #32)
       let options = [];
       if (!isUser) {
         options = extractOptions(el);
-        // 本文末尾にボタンのテキストが混入している場合はクリーンアップ
+        // Clean up if button text leaked into the end of the body text
         for (const opt of [...options].reverse()) {
           if (text.endsWith(opt)) {
             text = text.slice(0, -opt.length).trim();
@@ -779,7 +801,7 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * 2.1 最新メッセージおよび動画・リンク詳細の調査 (Issue #10)
+   * 2.1 Inspect the latest message and video / link details (Issue #10)
    */
   async inspectLatestMessage() {
     const { list: messageEls } = queryAllFirst(SELECTORS.messageItems);
@@ -787,13 +809,13 @@ window.__MUSE_BRIDGE__ = {
       return { error: "No messages found" };
     }
 
-    // 全メッセージから動画や素材関連の要素も横断探索
+    // Also search across all messages for video / material-related elements
     const targetMsg = messageEls[messageEls.length - 1];
     
-    // 素材関連のキーワードを含むメッセージがあればそれも特定
+    // Identify any message containing material-related keywords, if one exists
     const materialMsg = messageEls.slice().reverse().find(m => {
       const t = m.innerText || '';
-      return t.includes('素材') || t.includes('7パターン') || t.includes('MP4') || t.includes('idle');
+      return t.includes('素材') || t.includes('material') || t.includes('7パターン') || t.includes('7 patterns') || t.includes('MP4') || t.includes('idle');
     }) || targetMsg;
 
     function extractMedia(el) {
@@ -823,7 +845,7 @@ window.__MUSE_BRIDGE__ = {
         className: b.className || ''
       }));
 
-      // カード・コンテナ要素
+      // Card / container elements
       const cards = Array.from(el.querySelectorAll('[class*="card"], [class*="media"], [class*="asset"], [data-testid]')).map(c => ({
         tag: c.tagName,
         className: c.className || '',
@@ -837,7 +859,7 @@ window.__MUSE_BRIDGE__ = {
     const latestMedia = extractMedia(targetMsg);
     const materialMedia = extractMedia(materialMsg);
 
-    // アバター要素およびその親コンテナの属性詳細
+    // Attribute details for the avatar element and its parent containers
     const v = document.querySelector('video[data-hatch-media-owner="avatar-layer"]') || document.querySelector('video');
     const avatarDomInfo = v ? {
       src: v.src,
@@ -847,7 +869,7 @@ window.__MUSE_BRIDGE__ = {
       gpAttrs: v.parentElement?.parentElement ? Array.from(v.parentElement.parentElement.attributes).map(a => `${a.name}="${a.value}"`) : []
     } : null;
 
-    // 画面内のボタン一覧（送信ボタンや停止ボタンの特定用）
+    // List of buttons on screen (for identifying the send / stop button)
     const allButtons = Array.from(document.querySelectorAll('button')).map(b => ({
       ariaLabel: b.getAttribute('aria-label') || '',
       type: b.type || '',
@@ -858,7 +880,7 @@ window.__MUSE_BRIDGE__ = {
 
     const recent = messageEls.slice(-5).map(m => {
       const sr = m.querySelector('.sr-only');
-      const role = sr && (sr.textContent || '').includes('自分') ? 'user' : 'assistant';
+      const role = sr && ((sr.textContent || '').includes('自分') || (sr.textContent || '').includes('You')) ? 'user' : 'assistant';
       return {
         role,
         text: (m.innerText || '').trim()
@@ -881,7 +903,7 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * 3. メインチャットへのメッセージ入力・送信 (R3) + 失敗検知 (§4)
+   * 3. Type and send a message in the main chat (R3) + failure detection (§4)
    */
   async sendMessage(text) {
     if (!text || typeof text !== 'string') {
@@ -890,7 +912,7 @@ window.__MUSE_BRIDGE__ = {
 
     const { el: ta } = queryFirst(SELECTORS.chatInput);
     if (!ta) {
-      throw new Error("UNSUPPORTED_DOM: 未対応の画面構造です（入力欄が見つかりません）");
+      throw new Error("UNSUPPORTED_DOM: Unsupported screen structure (input field not found)");
     }
 
     const beforeCount = queryAllFirst(SELECTORS.messageItems).list.length;
@@ -911,7 +933,7 @@ window.__MUSE_BRIDGE__ = {
       if (!btn) return false;
       const label = (btn.getAttribute('aria-label') || btn.getAttribute('title') || btn.textContent || '').toLowerCase();
       const cls = (btn.className || '').toLowerCase();
-      return label.includes('stop') || label.includes('停止') || label.includes('キャンセル') || label.includes('interrupt') || cls.includes('stop');
+      return label.includes('stop') || label.includes('停止') || label.includes('キャンセル') || label.includes('cancel') || label.includes('interrupt') || cls.includes('stop');
     };
 
     const { el: sendBtn } = queryFirst(SELECTORS.sendButton);
@@ -921,7 +943,7 @@ window.__MUSE_BRIDGE__ = {
       ta.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
     }
 
-    // §4 失敗検知: 送信後に入力欄がクリアされたか、メッセージ数が増えたかを確認
+    // §4 failure detection: after sending, check whether the input was cleared or the message count increased
     for (let i = 0; i < 10; i++) {
       await new Promise(r => setTimeout(r, 150));
       const afterCount = queryAllFirst(SELECTORS.messageItems).list.length;
@@ -931,13 +953,13 @@ window.__MUSE_BRIDGE__ = {
       }
     }
 
-    throw new Error("SEND_VERIFY_FAILED: 送信後にメッセージの反映を確認できませんでした");
+    throw new Error("SEND_VERIFY_FAILED: Could not confirm the message was reflected after sending");
   },
 
   /**
-   * 4. ウィンドウリミット（利用枠）の取得 (R5, §16 ガードレール対応, Issue #49 ポーリング待機強化)
-   * @param {boolean} passiveOnly true の場合は画面遷移（設定クリック）を一切行わない（ガードレール①）
-   * @param {object} options ポーリング間隔・最大待機時間のオプション（テスト・調整用）
+   * 4. Get the window limit (usage limit) (R5, §16 guardrail support, Issue #49 polling-wait strengthening)
+   * @param {boolean} passiveOnly if true, never navigate screens (no Settings click) (guardrail ①)
+   * @param {object} options polling interval / max wait options (for tests and tuning)
    */
   scanDomForLimit,
 
@@ -958,7 +980,7 @@ window.__MUSE_BRIDGE__ = {
       window.__MUSE_LAST_LIMIT_TRACE__ = trace;
     };
 
-    // 1. まず現在の画面でスキャン
+    // 1. First scan the current screen
     const immediate = scanDomForLimit();
     if (immediate && (immediate.remaining_percent !== null || immediate.used_percent !== null)) {
       window.__MUSE_CACHED_LIMIT__ = immediate;
@@ -968,10 +990,10 @@ window.__MUSE_BRIDGE__ = {
 
     const fallbackResult = (reason = 'unknown') => {
       const base = window.__MUSE_CACHED_LIMIT__ || immediate || {
-        plan_name: '無料プラン',
+        plan_name: 'Free Plan',
         used_percent: null,
         remaining_percent: null,
-        reset_text: 'セッション画面の[設定>一般]で自動取得'
+        reset_text: 'Auto-fetched from the session screen under [Settings > General]'
       };
       const cacheTag = window.__MUSE_CACHED_LIMIT__ ? 'cached' : (immediate ? 'immediate_partial' : 'empty');
       setTrace(`${reason}:${cacheTag}`);
@@ -984,7 +1006,7 @@ window.__MUSE_BRIDGE__ = {
     const closeWaitMs = Math.max(10, Number(options?.closeWaitMs) || 200);
     const navWaitMs = Math.max(10, Number(options?.navWaitMs) || 250);
 
-    // ガードレール: 開始時点で既にダイアログが開いている場合はユーザーが操作中のため、絶対に閉じず値のみ読み取る (Issue #49)
+    // Guardrail: if a dialog is already open when starting, the user is operating it, so never close it — only read the values (Issue #49)
     if (isDialogOpen()) {
       if (!passiveOnly) {
         const passiveSteps = Math.ceil(maxTabWaitMs / pollIntervalMs);
@@ -1003,7 +1025,7 @@ window.__MUSE_BRIDGE__ = {
       return fallbackResult(`dialog_open_fallback(snap=${dlgSnap})`);
     }
 
-    // ガードレール①: session WebView が可視中、AIが回答生成中、または別リクエスト実行中の場合は自動遷移・Escape送信を抑止 (Issue #34, #49)
+    // Guardrail ①: suppress automatic navigation / Escape sending while the session WebView is visible, the AI is generating an answer, or another request is running (Issue #34, #49)
     const stopBtn = findActiveStopButton();
     const isGenerating = !!stopBtn;
     if (passiveOnly || isGenerating || isSessionVisible() || window.__MUSE_FETCHING_LIMIT__) {
@@ -1013,21 +1035,21 @@ window.__MUSE_BRIDGE__ = {
 
     window.__MUSE_FETCHING_LIMIT__ = true;
     try {
-      // 2. 非表示時は「設定 ＞ 一般」を開いて確認し、ガードレール③に従いメインチャットへ明示的に戻す
+      // 2. When hidden, open "設定 ＞ 一般" / "Settings > General" to check, then explicitly return to the main chat per guardrail ③
       const { el: settingsBtn, selector: settingsSel } = queryFirst(SELECTORS.settingsButton);
       if (settingsBtn) {
         const sBtnDesc = (settingsBtn.getAttribute('aria-label') || settingsBtn.getAttribute('title') || settingsBtn.textContent || '').trim().slice(0, 30);
         triggerReactClick(settingsBtn);
 
-        // 設定クリック後、「一般」タブまたは利用枠の描画完了まで最大 maxTabWaitMs ポーリング待機 (Issue #49, #63)
-        // 2段階メニュー（「設定」ボタン → ポップオーバー内の「設定」項目 → 設定モーダル）にも対応
+        // After clicking Settings, poll up to maxTabWaitMs for the "一般" / "General" tab or the usage limit to finish rendering (Issue #49, #63)
+        // Also supports the two-step menu (Settings button → Settings item in the popover → settings modal)
         let afterClick = null;
         let generalTab = null;
         let clickedSubSettings = false;
         const tabMaxSteps = Math.ceil(maxTabWaitMs / pollIntervalMs);
         for (let i = 0; i < tabMaxSteps; i++) {
           await new Promise(r => setTimeout(r, pollIntervalMs));
-          // ポーリング中にユーザーがセッション画面を表示した場合は即座に中断し、勝手に閉じない
+          // If the user shows the session screen during polling, abort immediately and never close it on our own
           if (isSessionVisible()) {
             if (afterClick) {
               setTrace('aborted_visible_tab_wait');
@@ -1053,7 +1075,7 @@ window.__MUSE_BRIDGE__ = {
           }
         }
 
-        // まだ利用枠が取得できていない場合、非同期API通信・DOM描画完了まで最大 maxLimitWaitMs ポーリング待機 (Issue #49)
+        // If the usage limit still has not been fetched, poll up to maxLimitWaitMs for the async API call / DOM rendering to finish (Issue #49)
         if (!afterClick || (afterClick.used_percent === null && afterClick.remaining_percent === null)) {
           const limitMaxSteps = Math.ceil(maxLimitWaitMs / pollIntervalMs);
           for (let i = 0; i < limitMaxSteps; i++) {
@@ -1084,7 +1106,7 @@ window.__MUSE_BRIDGE__ = {
           }
         }
 
-        // クローズ処理直前にもセッション可視状態を再確認（ユーザーが開いた画面を絶対に閉じない）
+        // Re-check session visibility just before closing (never close a screen the user opened)
         if (isSessionVisible()) {
           if (afterClick && (afterClick.used_percent !== null || afterClick.remaining_percent !== null)) {
             window.__MUSE_CACHED_LIMIT__ = afterClick;
@@ -1094,7 +1116,7 @@ window.__MUSE_BRIDGE__ = {
           return fallbackResult('aborted_visible_before_close');
         }
 
-        // 失敗時の診断用スナップショット（モーダルを閉じる前に取得）
+        // Diagnostic snapshot on failure (taken before closing the modal)
         let failDiag = '';
         if (!afterClick || (afterClick.used_percent === null && afterClick.remaining_percent === null)) {
           const dlg = document.querySelector('[role="dialog"]');
@@ -1106,7 +1128,7 @@ window.__MUSE_BRIDGE__ = {
           failDiag = `,sel=${settingsSel},btn=${sBtnDesc},dlg=${!!dlg},items=[${items.join('|')}]`.slice(0, 220);
         }
 
-        // §16 ガードレール③: Escape 任せにせず、閉じるボタン＋Escape＋チャットナビゲーションで明示的にメインチャットへ戻す
+        // §16 guardrail ③: do not rely on Escape alone — return explicitly to the main chat via the close button + Escape + chat navigation
         const { el: closeBtn } = queryFirst(SELECTORS.modalCloseButton);
         if (closeBtn) {
           triggerReactClick(closeBtn);
@@ -1114,7 +1136,7 @@ window.__MUSE_BRIDGE__ = {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true }));
         await new Promise(r => setTimeout(r, closeWaitMs));
 
-        // もしメインチャットの入力欄が見えていなければ、左ドックの「チャット」ボタンを明示的にクリック
+        // If the main chat input is not visible, explicitly click the "チャット" / "Chat" button in the left dock
         if (!isSessionVisible()) {
           const { el: inputAfter } = queryFirst(SELECTORS.chatInput);
           if (!inputAfter) {
@@ -1141,7 +1163,7 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * チャット画面の準備状態およびURL一致判定 (Issue #46)
+   * Chat screen readiness and URL-match check (Issue #46)
    */
   async checkChatReady(expectedUrl) {
     const getNormPath = (u) => {
@@ -1171,10 +1193,10 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * 自動リロード実行前の DOM 安全性チェック (Issue #52)
-   * - isGenerating: 回答生成中（停止ボタン表示中）か
-   * - hasDraft: セッション入力欄に未送信の下書きが残っているか
-   * - isDialogOpen: 設定等のモーダルが開いているか
+   * DOM safety check before running an automatic reload (Issue #52)
+   * - isGenerating: is an answer being generated (stop button showing)?
+   * - hasDraft: is there an unsent draft left in the session input field?
+   * - isDialogOpen: is a modal such as Settings open?
    */
   inspectReloadSafety() {
     const isGenerating = !!findActiveStopButton();
@@ -1199,7 +1221,7 @@ window.__MUSE_BRIDGE__ = {
   },
 
   /**
-   * Title Bridge アクション実行ディスパッチャー
+   * Title Bridge action execution dispatcher
    */
   async executeAction(action, args, nonce) {
     let payload;

@@ -1,4 +1,4 @@
-/* settings.css - Desktop Mascot for Muse 設定画面スタイル */
+/* settings.css - Desktop Mascot for Muse Settings screen styles */
 
 :root {
   --bg-primary: #0f172a;
@@ -41,7 +41,7 @@ body {
   height: 100vh;
 }
 
-/* ヘッダー */
+/* Header */
 .settings-header {
   padding: 16px 20px;
   background: rgba(15, 23, 42, 0.85);
@@ -70,7 +70,7 @@ body {
   color: var(--text-secondary);
 }
 
-/* タブメニュー */
+/* Tab menu */
 .settings-tabs {
   display: flex;
   gap: 6px;
@@ -103,7 +103,7 @@ body {
   background: rgba(56, 189, 248, 0.08);
 }
 
-/* メインコンテンツ */
+/* Main content */
 .settings-content {
   flex: 1;
   overflow-y: auto;
@@ -131,7 +131,7 @@ body {
   display: flex;
 }
 
-/* カード */
+/* Cards */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -155,7 +155,7 @@ body {
   margin-bottom: 14px;
 }
 
-/* フォーム要素 */
+/* Form elements */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -210,7 +210,7 @@ input[type="text"]:focus {
   color: var(--text-muted);
 }
 
-/* 読み取り専用グループ */
+/* Read-only group */
 .readonly-input-group {
   display: flex;
   align-items: center;
@@ -235,7 +235,7 @@ input[type="text"]:focus {
   white-space: nowrap;
 }
 
-/* アクションバー */
+/* Action bar */
 .action-bar {
   display: flex;
   justify-content: space-between;
@@ -248,7 +248,7 @@ input[type="text"]:focus {
   font-weight: 700;
 }
 
-/* 動画プラグインリスト */
+/* Video plugin list */
 .video-settings-list {
   display: flex;
   flex-direction: column;
@@ -289,7 +289,7 @@ input[type="text"]:focus {
   font-family: monospace;
 }
 
-/* トグルスイッチ */
+/* Toggle switch */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -362,7 +362,7 @@ input:checked + .slider:before {
   font-size: 12px;
 }
 
-/* Quotes セリフエリア */
+/* Quotes line area */
 .quotes-section {
   display: flex;
   flex-direction: column;
@@ -433,7 +433,7 @@ input:checked + .slider:before {
   background: rgba(56, 189, 248, 0.2);
 }
 
-/* フォルダカード */
+/* Folder cards */
 .folder-actions {
   display: flex;
   flex-direction: column;
@@ -476,7 +476,7 @@ input:checked + .slider:before {
   color: var(--accent-rose);
 }
 
-/* ボタンスタイル */
+/* Button styles */
 .btn {
   border: none;
   border-radius: var(--radius-sm);
@@ -536,7 +536,7 @@ input:checked + .slider:before {
   transform: translateY(-1px);
 }
 
-/* フッター */
+/* Footer */
 .settings-footer {
   padding: 12px 20px;
   background: rgba(15, 23, 42, 0.9);
@@ -566,7 +566,7 @@ input:checked + .slider:before {
   gap: 10px;
 }
 
-/* 時間帯別セリフカード */
+/* Time-of-day line cards */
 .time-slots-container {
   display: flex;
   flex-direction: column;
@@ -591,7 +591,7 @@ input:checked + .slider:before {
   margin: 0;
 }
 
-/* 効果音設定 (Issue #24) */
+/* Sound effects settings (Issue #24) */
 .sound-setting-group {
   display: flex;
   flex-direction: column;
@@ -658,7 +658,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   font-size: 12px;
 }
 
-/* マスコット表示サイズ (Issue #25) */
+/* Mascot display size (Issue #25) */
 .scale-options-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -719,7 +719,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 
-/* ライブつぶやき生成（ウェイク方式）設定 (Issue #37) */
+/* Live remark generation (wake method) settings (Issue #37) */
 .live-quotes-notice {
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.35);

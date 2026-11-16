@@ -49,7 +49,7 @@ fn main() {
     let _guard = match single_instance::acquire("Local\\works.mowthow.muse.gadgets.single_instance") {
         Some(g) => g,
         None => {
-            // 既に起動中のプロセスが存在するため多重起動せずに終了
+            // Another instance is already running, so exit without launching a duplicate
             return;
         }
     };

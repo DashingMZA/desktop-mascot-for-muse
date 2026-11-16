@@ -148,7 +148,7 @@ pub struct UsageLimitInfo {
 }
 
 fn default_avatar_name() -> String {
-    "ラッキー".to_string()
+    "Lucky".to_string()
 }
 
 fn default_last_normal_mode() -> String {
@@ -595,8 +595,8 @@ fn ensure_session_window(app: &AppHandle) -> Result<WebviewWindow, String> {
         .title("Muse AI - Session")
         .inner_size(init_w, init_h)
         .visible(false)
-        // WebView2 標準の HTML5 ドラッグ＆ドロップ（チャット入力欄への画像ドロップ等）を有効化するため
-        // Tauri 側のネイティブ D&D フックを無効化する
+        // Enable WebView2's standard HTML5 drag & drop (e.g. dropping images into the chat input)
+        // by disabling Tauri's native D&D hook
         .disable_drag_drop_handler()
         .on_navigation(move |url| {
             if should_open_session_url_externally(&url) {
@@ -634,16 +634,16 @@ fn ensure_session_window(app: &AppHandle) -> Result<WebviewWindow, String> {
             }
         });
 
-    // アプリ専用データディレクトリで Cookie / ログインセッションを永続化
+    // Persist cookies / the login session in the app-specific data directory
     if let Ok(data_dir) = app.path().app_local_data_dir() {
         let session_data_dir = data_dir.join("webview2_session");
         builder = builder.data_directory(session_data_dir);
     }
 
-    // Google OAuth 対策の最新 Chrome / Edge User-Agent
+    // Latest Chrome / Edge User-Agent, to avoid Google OAuth issues
     builder = builder.user_agent(USER_AGENT);
 
-    // ページロード毎に session_bridge.js を初期化スクリプトとして注入
+    // Inject session_bridge.js as an initialization script on every page load
     builder = builder.initialization_script(SESSION_BRIDGE_JS);
 
     let window = builder
@@ -652,13 +652,13 @@ fn ensure_session_window(app: &AppHandle) -> Result<WebviewWindow, String> {
 
     let _ = window.set_icon(tauri::include_image!("icons/128x128.png"));
 
-    // 保存済みの座標があれば復元（モニタ外はみ出し防止クランプ）
+    // Restore the saved position if there is one (clamped so it cannot end up off-monitor)
     if let Some(pos) = config.session_pos {
         clamp_window_to_monitor(&window, Some(pos), None);
     }
 
-    // セッション画面のフォーカス・表示状態とマスコットを完全同期
-    // 「Session画面が表にいないときはマスコット表示、Session画面が表にいるときはマスコット非表示」
+    // Keep the mascot fully in sync with the session screen's focus / visibility state:
+    // "Show the mascot when the session screen is not in front; hide it when the session screen is in front"
     let handle_for_session = app.clone();
     window.on_window_event(move |event| {
         match event {
@@ -687,7 +687,7 @@ fn ensure_session_window(app: &AppHandle) -> Result<WebviewWindow, String> {
                 });
             }
             tauri::WindowEvent::Resized(size) => {
-                // Windows で最小化された場合、内部サイズが 0x0 になる
+                // On Windows, minimizing makes the inner size 0x0
                 if size.width == 0 && size.height == 0 {
                     let h = handle_for_session.clone();
                     tauri::async_runtime::spawn(async move {
@@ -714,7 +714,7 @@ fn ensure_session_window(app: &AppHandle) -> Result<WebviewWindow, String> {
                 }
             }
             tauri::WindowEvent::Focused(true) => {
-                // セッション画面が表に出た（フォーカス獲得）: 実際に可視状態の場合のみマスコットへ通知
+                // The session screen came to the front (gained focus): notify the mascot only when it is actually visible
                 let h = handle_for_session.clone();
                 tauri::async_runtime::spawn(async move {
                     if let Some(s) = h.get_webview_window("session") {
@@ -743,8 +743,8 @@ fn ensure_session_window(app: &AppHandle) -> Result<WebviewWindow, String> {
                 });
             }
             tauri::WindowEvent::Focused(false) => {
-                // セッション画面が裏に回った / 最小化された / 他アプリへフォーカスが移動した
-                // ダイアログ表示等の一時的なフォーカス変動を考慮し、100ms 後に状態を確定してマスコットを表示
+                // The session screen went to the back / was minimized / focus moved to another app.
+                // Allow for temporary focus changes (e.g. a dialog appearing) and settle the state after 100ms before showing the mascot
                 let h = handle_for_session.clone();
                 tauri::async_runtime::spawn(async move {
                     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -789,7 +789,7 @@ async fn run_bridge_action(
 ) -> Result<serde_json::Value, String> {
     let _lock = acquire_bridge_lock().await;
 
-    // ブリッジスクリプトが未ロードなら念のため注入
+    // Inject the bridge script just in case it has not loaded yet
     let ensure_js = format!(
         "if (!window.__MUSE_BRIDGE__) {{ {} }}",
         SESSION_BRIDGE_JS
@@ -826,7 +826,7 @@ async fn run_bridge_action(
     while start.elapsed() < timeout {
         tokio::time::sleep(interval).await;
         if let Some(title) = get_latest_doc_title() {
-            // ケース1: 1チャンクで即座に完了
+            // Case 1: completed immediately in a single chunk
             if let Some(encoded) = title.strip_prefix(&res_prefix) {
                 let decoded = urlencoding::decode(encoded)
                     .map_err(|e| format!("Decode error: {}", e))?;
@@ -836,7 +836,7 @@ async fn run_bridge_action(
                 return parse_bridge_payload(val);
             }
 
-            // ケース2: チャンク分割ハンドシェイク Pull（アバター動画 Base64 等の大容量通信）
+            // Case 2: chunked handshake Pull (large payloads such as avatar video Base64)
             if let Some(total_str) = title.strip_prefix(&ready_prefix) {
                 let total_chunks: usize = total_str
                     .trim()
@@ -894,7 +894,7 @@ async fn run_bridge_action(
 }
 
 // ==========================================
-// Tauri コマンド群
+// Tauri commands
 // ==========================================
 
 fn is_portable_mode() -> bool {
@@ -912,7 +912,7 @@ fn is_portable_mode() -> bool {
 }
 
 fn get_writable_avatar_dir(app: &AppHandle) -> PathBuf {
-    // 1. ポータブルモード指定時 (exeと同階層に portable マーカーが存在する場合)
+    // 1. Portable mode (a portable marker exists next to the exe)
     if is_portable_mode() {
         if let Ok(exe_path) = std::env::current_exe() {
             if let Some(exe_dir) = exe_path.parent() {
@@ -921,13 +921,13 @@ fn get_writable_avatar_dir(app: &AppHandle) -> PathBuf {
         }
     }
 
-    // 2. 通常動作: OS ユーザー永続データ領域 (%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars)
-    //    インストーラによるアンインストール・アップデートでも永続保持される
+    // 2. Normal operation: the OS user's persistent data area (%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars)
+    //    This survives uninstalls and updates via the installer
     if let Ok(local_dir) = app.path().app_local_data_dir() {
         return local_dir.join("avatars");
     }
 
-    // 3. 開発環境フォールバック: src-tauri/assets/avatars
+    // 3. Dev environment fallback: src-tauri/assets/avatars
     let manifest_avatars = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("assets")
         .join("avatars");
@@ -938,7 +938,7 @@ fn get_writable_avatar_dir(app: &AppHandle) -> PathBuf {
     PathBuf::from("avatars")
 }
 
-// インストール先・配布先への初期設定ファイル（setting.json / quotes.json）の自動シード配置
+// Auto-seed the initial config files (setting.json / quotes.json) into the install / distribution location
 fn ensure_avatar_seeds(app: &AppHandle) {
     let base_dir = get_writable_avatar_dir(app);
     let _ = fs::create_dir_all(&base_dir);
@@ -961,13 +961,13 @@ fn ensure_avatar_seeds(app: &AppHandle) {
 fn collect_avatar_dirs(app: &AppHandle) -> Vec<PathBuf> {
     let mut avatar_dirs: Vec<PathBuf> = Vec::new();
 
-    // 1. 最優先: 書き込み可能アバターディレクトリ (%LOCALAPPDATA%、またはポータブル時は exe 同階層)
+    // 1. Highest priority: the writable avatar directory (%LOCALAPPDATA%, or next to the exe in portable mode)
     let writable = get_writable_avatar_dir(app);
     if writable.exists() && !avatar_dirs.contains(&writable) {
         avatar_dirs.push(writable.clone());
     }
 
-    // 2. 実行ファイルと同じ階層の avatars フォルダ (通常モード時でも exe 隣に動画等がある場合の探索)
+    // 2. The avatars folder next to the executable (searched even in normal mode, in case videos etc. sit beside the exe)
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
             let exe_avatars = exe_dir.join("avatars");
@@ -977,7 +977,7 @@ fn collect_avatar_dirs(app: &AppHandle) -> Vec<PathBuf> {
         }
     }
 
-    // 3. resource_dir (NSIS インストーラ同梱リソース)
+    // 3. resource_dir (resources bundled with the NSIS installer)
     if let Ok(res_dir) = app.path().resource_dir() {
         let r1 = res_dir.join("assets").join("avatars");
         if r1.exists() && !avatar_dirs.contains(&r1) {
@@ -989,7 +989,7 @@ fn collect_avatar_dirs(app: &AppHandle) -> Vec<PathBuf> {
         }
     }
 
-    // 4. プロジェクト内の src-tauri/assets/avatars (開発用フォールバック)
+    // 4. src-tauri/assets/avatars inside the project (dev fallback)
     let manifest_avatars = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("assets")
         .join("avatars");
@@ -1016,7 +1016,7 @@ fn load_plugin_configs_internal(app: &AppHandle) -> PluginConfigsPayload {
         .map(|d| d.join("plugin"))
         .find(|p| p.exists() && p.is_dir());
 
-    // setting.json の探索 (avatars/setting.json -> plugin/setting.json -> プロジェクトルート/setting.json)
+    // Search for setting.json (avatars/setting.json -> plugin/setting.json -> project-root/setting.json)
     let mut setting_candidates: Vec<PathBuf> = Vec::new();
     for d in &avatar_dirs {
         setting_candidates.push(d.join("setting.json"));
@@ -1039,7 +1039,7 @@ fn load_plugin_configs_internal(app: &AppHandle) -> PluginConfigsPayload {
         }
     }
 
-    // quotes.json の探索
+    // Search for quotes.json
     if let Some(ref pdir) = plugin_dir_opt {
         let quotes_path = pdir.join("quotes.json");
         if quotes_path.exists() {
@@ -1084,7 +1084,7 @@ fn save_plugin_configs(
     fs::write(&quotes_path, quotes_str)
         .map_err(|e| format!("Failed to write quotes.json: {}", e))?;
 
-    // main ウィンドウへ設定更新イベントを発行
+    // Emit a settings-updated event to the main window
     if let Some(main_win) = app.get_webview_window("main") {
         let _ = main_win.emit("settings-updated", ());
     }
@@ -1232,7 +1232,7 @@ async fn send_live_quotes_wake(
     } else {
     }
 
-    // 送信直前の最新アシスタントメッセージ（過去ログベースライン）を取得
+    // Get the latest assistant message just before sending (past-log baseline)
     let pre_msgs = run_bridge_action(
         &session,
         "get_messages",
@@ -1332,7 +1332,7 @@ async fn open_settings_window(app: AppHandle) -> Result<bool, String> {
         "settings",
         WebviewUrl::App("settings.html".into()),
     )
-    .title("Desktop Mascot for Muse - 設定")
+    .title("Desktop Mascot for Muse - Settings")
     .inner_size(640.0, 720.0)
     .min_inner_size(480.0, 540.0)
     .resizable(true)
@@ -1381,7 +1381,7 @@ fn get_avatar_video_pack(app: AppHandle) -> Result<AvatarVideoPack, String> {
     let configs = load_plugin_configs_internal(&app);
     let mut plugins: Vec<PluginVideoItem> = Vec::new();
 
-    // 候補ディレクトリすべてから plugin/*.mp4 を網羅的に収集・マージ (Issue #38)
+    // Collect and merge plugin/*.mp4 exhaustively from every candidate directory (Issue #38)
     let mut loaded_plugin_names: std::collections::HashSet<String> = std::collections::HashSet::new();
     for d in &avatar_dirs {
         let pdir = d.join("plugin");
@@ -1453,7 +1453,7 @@ async fn get_avatar_data_url(
         }
     }
 
-    // セッションからアバター動画 Base64 を取得
+    // Fetch the avatar video Base64 from the session
     let session = ensure_session_window(&app)?;
     let res = run_bridge_action(&session, "get_avatar", &serde_json::json!({}), 30000).await?;
 
@@ -1536,7 +1536,7 @@ async fn get_usage_limit(
         let config = load_config_internal(&app);
         if let Some(mut info) = config.last_limit_info {
             if info.used_percent.is_some() || info.remaining_percent.is_some() {
-                // キャッシュのTTLチェック (2分以内ならキャッシュ有効、それ以上経過していたら自動再取得)
+                // Cache TTL check (valid within 2 minutes; re-fetch automatically once older)
                 let is_fresh = chrono::NaiveDateTime::parse_from_str(&format!("{}:00", info.updated_at), "%Y-%m-%d %H:%M:%S")
                     .map(|dt| {
                         let now = Local::now().naive_local();
@@ -1546,7 +1546,7 @@ async fn get_usage_limit(
 
                 if is_fresh {
                     if info.reset_text.contains("mp4") || info.reset_text.contains("KB") {
-                        info.reset_text = "1週間の上限は11月6日にリセットされます".to_string();
+                        info.reset_text = "Your weekly limit resets on November 6".to_string();
                         let fixed = info.clone();
                         update_config_internal(&app, |cfg| {
                             cfg.last_limit_info = Some(fixed);
@@ -1559,7 +1559,7 @@ async fn get_usage_limit(
     }
 
     let session = ensure_session_window(&app)?;
-    // §16 ガードレール①: session WebView が可視状態（フルUI表示中）のとき、または非強制取得（定期ポーリング）時は自動画面遷移を抑止 (Issue #49)
+    // §16 guardrail ①: suppress automatic screen navigation while the session WebView is visible (full UI shown) or during a non-forced fetch (periodic polling) (Issue #49)
     let is_session_visible = session.is_visible().unwrap_or(false) && !session.is_minimized().unwrap_or(false);
     let passive_only = is_session_visible || !force;
     let res = match run_bridge_action(
@@ -1591,7 +1591,7 @@ async fn get_usage_limit(
     let plan_name = res
         .get("plan_name")
         .and_then(|v| v.as_str())
-        .unwrap_or("無料プラン")
+        .unwrap_or("Free Plan")
         .to_string();
 
     let mut used_percent = res
@@ -1604,7 +1604,7 @@ async fn get_usage_limit(
         .and_then(|v| v.as_u64())
         .map(|v| v as u32);
 
-    // used_percent と remaining_percent の相互自動補完 (Issue #33)
+    // Auto-fill used_percent and remaining_percent from each other (Issue #33)
     if remaining_percent.is_none() && used_percent.is_some() {
         remaining_percent = Some(100u32.saturating_sub(used_percent.unwrap()));
     } else if used_percent.is_none() && remaining_percent.is_some() {
@@ -1678,12 +1678,12 @@ async fn get_usage_limit(
         }
     }
 
-    // キャッシュも無く新規取得も未完了の場合、未取得状態の UsageLimitInfo を返す（架空のパーセント値は設定しない）
+    // If there is no cache and no fresh fetch has completed yet, return a not-yet-fetched UsageLimitInfo (do not invent percentage values)
     let fallback = UsageLimitInfo {
-        plan_name: "無料プラン".to_string(),
+        plan_name: "Free Plan".to_string(),
         used_percent: None,
         remaining_percent: None,
-        reset_text: "セッション画面の[設定>一般]で同期".to_string(),
+        reset_text: "Sync from the session screen under [Settings > General]".to_string(),
         updated_at: now_str,
     };
     Ok(fallback)
@@ -1728,7 +1728,7 @@ fn get_nearest_monitor(win: &WebviewWindow, target_x: i32, target_y: i32) -> Opt
         if monitors.is_empty() {
             return None;
         }
-        // 1. target 座標を内包するモニタを探す
+        // 1. Find the monitor containing the target coordinates
         for mon in &monitors {
             let pos = mon.position();
             let size = mon.size();
@@ -1740,7 +1740,7 @@ fn get_nearest_monitor(win: &WebviewWindow, target_x: i32, target_y: i32) -> Opt
                 return Some(mon.clone());
             }
         }
-        // 2. target 座標に最も近いモニタ（中心点間距離の二乗が最小のモニタ）
+        // 2. Find the monitor nearest to the target coordinates (smallest squared distance between center points)
         let mut best: Option<(i64, tauri::Monitor)> = None;
         for mon in monitors {
             let pos = mon.position();
@@ -1772,7 +1772,7 @@ fn get_mascot_default_position(win: &WebviewWindow, scale_str: &str) -> (i32, i3
         let scale = monitor.scale_factor();
         let win_w = (mw * scale) as i32;
         let win_h = (mh * scale) as i32;
-        // デスクトップ右下隅（タスクバーの上マージン約 56px、右端マージン約 20px）
+        // Bottom-right corner of the desktop (about 56px margin above the taskbar, about 20px from the right edge)
         let x = mon_pos.x + (mon_size.width as i32) - win_w - 20;
         let y = mon_pos.y + (mon_size.height as i32) - win_h - 56;
         (x, y)
@@ -1789,7 +1789,7 @@ fn clamp_window_to_monitor(
     let cur_pos = win.outer_position().unwrap_or(tauri::PhysicalPosition::new(100, 100));
     let (tx, ty) = target_pos.unwrap_or((cur_pos.x, cur_pos.y));
 
-    // target 座標に最も近いモニタを最優先で確実に選択
+    // Always prefer the monitor nearest to the target coordinates
     let monitor = get_nearest_monitor(win, tx, ty)
         .or_else(|| win.current_monitor().ok().flatten())
         .or_else(|| win.primary_monitor().ok().flatten());
@@ -1825,7 +1825,7 @@ async fn toggle_size_mode(app: AppHandle) -> Result<String, String> {
     let mut config = load_config_internal(&app);
     let prev_mode = config.size_mode.clone();
     
-    // もし現在 mascot なら直前の通常モードへ復元
+    // If currently in mascot mode, restore the previous normal mode
     if prev_mode == "mascot" {
         return restore_from_mascot(app).await;
     }
@@ -1948,7 +1948,7 @@ async fn set_mascot_scale(app: AppHandle, scale: String) -> Result<String, Strin
             let new_avatar_pw = new_avatar_lw * scale_factor;
             let pad_p = 6.0 * scale_factor;
 
-            // 現在の bubble-on-left 状態に基づいてアバターの絶対中心座標を厳密に算出
+            // Compute the avatar's absolute center coordinates exactly, based on the current bubble-on-left state
             let is_on_right = config.mascot_bubble_on_left;
 
             let cur_avatar_cx = if is_on_right {
@@ -1958,7 +1958,7 @@ async fn set_mascot_scale(app: AppHandle, scale: String) -> Result<String, Strin
             };
             let cur_avatar_cy = (cur_pos.y as f64) + (old_ph as f64) / 2.0;
 
-            // 新しいウィンドウ位置: アバターの画面中心座標が寸分違わず一致するように逆算
+            // New window position: work backwards so the avatar's on-screen center coordinates match exactly
             let target_x = if is_on_right {
                 cur_avatar_cx - ((new_pw as f64) - (pad_p + new_avatar_pw / 2.0))
             } else {
@@ -2004,7 +2004,7 @@ async fn sync_mascot_bubble_direction(app: AppHandle, current_on_left: bool) -> 
             let avatar_pw = avatar_lw * scale_factor;
             let pad_p = 6.0 * scale_factor;
 
-            // 現在の CSS 状態 (current_on_left) におけるアバターの中心座標
+            // The avatar's center coordinates under the current CSS state (current_on_left)
             let avatar_cx = if current_on_left {
                 (cur_pos.x as f64) + win_pw - (pad_p + avatar_pw / 2.0)
             } else {
@@ -2188,7 +2188,7 @@ async fn reset_mascot_position(app: AppHandle) -> Result<(), String> {
 async fn open_or_show_session(app: AppHandle) -> Result<SessionStatus, String> {
     let session = ensure_session_window(&app)?;
     
-    // セッション表示時はマスコットへ未読クリアを通知し、現在位置を保存して非表示にする
+    // When showing the session, notify the mascot to clear unread messages, save the current position, and hide it
     if let Some(main_win) = app.get_webview_window("main") {
         let _ = main_win.emit("clear-unread", ());
         let _ = main_win.emit("session-visibility-changed", true);
@@ -2254,7 +2254,7 @@ async fn hide_session(app: AppHandle) -> Result<SessionStatus, String> {
         let _ = session.eval("window.__MUSE_SESSION_VISIBLE__ = false;");
         let _ = session.hide();
 
-        // セッション非表示時はマスコットモードを表示（位置をリセットせず既存位置で復元）
+        // When the session is hidden, show mascot mode (restore at the existing position without resetting it)
         restore_mascot_window(&app, true).await;
 
         let title = session.title().ok();
@@ -2286,7 +2286,7 @@ async fn toggle_minimize_restore(app: AppHandle) -> Result<String, String> {
         let _ = hide_session(app).await;
         Ok("mascot".to_string())
     } else if !is_visible {
-        // セッション非表示時: マスコットが最小化・非表示になっていたらマスコットを優先復帰
+        // When the session is hidden: if the mascot was minimized or hidden, restore the mascot first
         if let Some(main_win) = app.get_webview_window("main") {
             let main_visible = main_win.is_visible().unwrap_or(false);
             let main_minimized = main_win.is_minimized().unwrap_or(false);
@@ -2611,32 +2611,32 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle();
 
-            // 初期設定ファイル（setting.json / quotes.json）の自動シード配置
+            // Auto-seed the initial config files (setting.json / quotes.json)
             ensure_avatar_seeds(handle);
 
-            // システムトレイの初期化
-            let toggle_app = MenuItem::with_id(handle, "toggle_app", "セッション画面 ⇄ マスコット (Ctrl+Shift+M)", true, None::<&str>)?;
-            let open_session = MenuItem::with_id(handle, "open_session", "セッション画面を開く (公式UI)", true, None::<&str>)?;
-            let reload_session_item = MenuItem::with_id(handle, "reload_session", "セッションを再読み込み", true, None::<&str>)?;
-            let item_settings = MenuItem::with_id(handle, "open_settings", "設定...", true, None::<&str>)?;
-            let item_open_mascot_devtools = MenuItem::with_id(handle, "open_mascot_devtools", "マスコットの開発者ツールを開く", true, None::<&str>)?;
-            let item_open_session_devtools = MenuItem::with_id(handle, "open_devtools", "セッションの開発者ツールを開く", true, None::<&str>)?;
-            let toggle_mascot = MenuItem::with_id(handle, "toggle_mascot", "マスコットモード (アバター単体)", true, None::<&str>)?;
-            let item_reset_pos = MenuItem::with_id(handle, "reset_mascot_pos", "マスコット位置を初期位置に戻す", true, None::<&str>)?;
+            // Initialize the system tray
+            let toggle_app = MenuItem::with_id(handle, "toggle_app", "Session Screen ⇄ Mascot (Ctrl+Shift+M)", true, None::<&str>)?;
+            let open_session = MenuItem::with_id(handle, "open_session", "Open Session Screen (Official UI)", true, None::<&str>)?;
+            let reload_session_item = MenuItem::with_id(handle, "reload_session", "Reload Session", true, None::<&str>)?;
+            let item_settings = MenuItem::with_id(handle, "open_settings", "Settings...", true, None::<&str>)?;
+            let item_open_mascot_devtools = MenuItem::with_id(handle, "open_mascot_devtools", "Open Mascot Developer Tools", true, None::<&str>)?;
+            let item_open_session_devtools = MenuItem::with_id(handle, "open_devtools", "Open Session Developer Tools", true, None::<&str>)?;
+            let toggle_mascot = MenuItem::with_id(handle, "toggle_mascot", "Mascot Mode (Avatar Only)", true, None::<&str>)?;
+            let item_reset_pos = MenuItem::with_id(handle, "reset_mascot_pos", "Reset Mascot Position to Initial Position", true, None::<&str>)?;
 
-            // スタートアップ自動起動の初期化・永続化同期 (Issue #22, #53)
+            // Initialize and persist-sync autostart on startup (Issue #22, #53)
             let is_autostart = sync_autostart_on_startup(handle);
             let item_autostart = CheckMenuItem::with_id(
                 handle,
                 "toggle_autostart",
-                "Windows起動時に自動起動",
+                "Launch automatically on Windows startup",
                 true,
                 is_autostart,
                 None::<&str>,
             )?;
             let item_autostart_clone = item_autostart.clone();
 
-            // 効果音（SE）の初期化 (Issue #24)
+            // Initialize sound effects (SE) (Issue #24)
             let initial_sound_enabled = load_plugin_configs_internal(handle)
                 .setting
                 .get("sound_enabled")
@@ -2645,19 +2645,19 @@ pub fn run() {
             let item_sound = CheckMenuItem::with_id(
                 handle,
                 "toggle_sound",
-                "効果音（SE）を鳴らす",
+                "Play sound effects (SE)",
                 true,
                 initial_sound_enabled,
                 None::<&str>,
             )?;
             let item_sound_clone = item_sound.clone();
 
-            // マスコットの表示サイズ設定 (Issue #25)
+            // Mascot display size setting (Issue #25)
             let cur_scale = load_config_internal(handle).mascot_scale;
             let item_scale_large = CheckMenuItem::with_id(
                 handle,
                 "scale_large",
-                "大 (125%)",
+                "Large (125%)",
                 true,
                 cur_scale == "large",
                 None::<&str>,
@@ -2665,7 +2665,7 @@ pub fn run() {
             let item_scale_standard = CheckMenuItem::with_id(
                 handle,
                 "scale_standard",
-                "標準 (100%)",
+                "Standard (100%)",
                 true,
                 cur_scale == "standard" || (cur_scale != "large" && cur_scale != "small"),
                 None::<&str>,
@@ -2673,7 +2673,7 @@ pub fn run() {
             let item_scale_small = CheckMenuItem::with_id(
                 handle,
                 "scale_small",
-                "小 (80%)",
+                "Small (80%)",
                 true,
                 cur_scale == "small",
                 None::<&str>,
@@ -2685,13 +2685,13 @@ pub fn run() {
 
             let sub_mascot_size = Submenu::with_items(
                 handle,
-                "マスコット表示サイズ",
+                "Mascot Display Size",
                 true,
                 &[&item_scale_large, &item_scale_standard, &item_scale_small],
             )?;
 
-            let open_browser = MenuItem::with_id(handle, "open_browser", "ブラウザで Muse を開く", true, None::<&str>)?;
-            let quit = MenuItem::with_id(handle, "quit", "終了", true, None::<&str>)?;
+            let open_browser = MenuItem::with_id(handle, "open_browser", "Open Muse in Browser", true, None::<&str>)?;
+            let quit = MenuItem::with_id(handle, "quit", "Quit", true, None::<&str>)?;
 
             let menu = Menu::with_items(
                 handle,
@@ -2856,7 +2856,7 @@ pub fn run() {
                 })
                 .build(handle)?;
 
-            // グローバルホットキーの登録 (Ctrl+Shift+M): 最小化 / 元に戻す
+            // Register the global hotkey (Ctrl+Shift+M): minimize / restore
             if let Ok(shortcut) = "Ctrl+Shift+M".parse::<Shortcut>() {
                 let _ = app.global_shortcut().on_shortcut(shortcut, |app, _sc, event| {
                     if event.state() == ShortcutState::Pressed {
@@ -2868,7 +2868,7 @@ pub fn run() {
                 });
             }
 
-            // 設定の初期サイズ・位置・アイコンをメインウィンドウに反映
+            // Apply the config's initial size, position, and icon to the main window
             let config = load_config_internal(handle);
             set_mascot_mode_hit_state(handle, config.size_mode == "mascot");
             if let Some(main_win) = app.get_webview_window("main") {
@@ -2907,12 +2907,12 @@ pub fn run() {
                     clamp_window_to_monitor(&main_win, config.small_pos, Some(target_size));
                 }
 
-                // ウィンドウ終了・移動イベント
+                // Window close / move events
                 let app_handle_for_events = handle.clone();
                 main_win.on_window_event(move |event| {
                     match event {
                         tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed => {
-                            // main ウィンドウが閉じられた場合はプロセスを残さず確実に完全終了
+                            // If the main window is closed, exit completely without leaving the process behind
                             flush_config_to_disk(&app_handle_for_events);
                             app_handle_for_events.exit(0);
                         }
@@ -2920,7 +2920,7 @@ pub fn run() {
                             if IS_RESTORING_MASCOT.load(Ordering::SeqCst) {
                                 return;
                             }
-                            // 最小化・非表示時の異常座標（Windowsの -32000 等）は絶対に保存しない
+                            // Never save abnormal coordinates from minimized / hidden states (e.g. Windows -32000)
                             if pos.x < -10000 || pos.y < -10000 {
                                 return;
                             }
@@ -2945,10 +2945,10 @@ pub fn run() {
                 });
             }
 
-            // セッションウィンドウをバックグラウンドで先行初期化
+            // Pre-initialize the session window in the background
             let _ = ensure_session_window(handle);
 
-            // マスコットモード時の透明領域クリック透過ポーリング (Issue #60)
+            // Polling for click-through on transparent areas in mascot mode (Issue #60)
             let app_handle_for_hit = handle.clone();
             tauri::async_runtime::spawn(async move {
                 let mut interval = tokio::time::interval(std::time::Duration::from_millis(50));
@@ -3079,11 +3079,11 @@ mod tests {
         assert_eq!(def.size_mode, "mascot");
         assert_eq!(def.last_normal_mode, "small");
         assert_eq!(def.message_limit, 5);
-        assert_eq!(def.avatar_name, "ラッキー");
+        assert_eq!(def.avatar_name, "Lucky");
         assert_eq!(def.mascot_scale, "standard");
         assert!(def.mascot_bubble_on_left);
 
-        // 旧バージョンの設定JSON（新規フィールド欠落）からのデシリアライズ互換性検証
+        // Verify deserialization compatibility with an older version's config JSON (new fields missing)
         let legacy_json = r#"{
             "size_mode": "small",
             "message_limit": 10,
@@ -3094,7 +3094,7 @@ mod tests {
         assert_eq!(parsed.size_mode, "small");
         assert_eq!(parsed.last_normal_mode, "small");
         assert_eq!(parsed.message_limit, 10);
-        assert_eq!(parsed.avatar_name, "ラッキー");
+        assert_eq!(parsed.avatar_name, "Lucky");
         assert_eq!(parsed.mascot_scale, "standard");
         assert!(parsed.mascot_bubble_on_left);
         assert!(parsed.mascot_pos.is_none());
@@ -3114,7 +3114,7 @@ mod tests {
 
     #[test]
     fn test_last_mascot_pos_ignores_invalid_minimized_coordinates() {
-        // Issue #30: Windows最小化時の -32000 等の異常座標で上書きされないことを検証
+        // Issue #30: verify that abnormal coordinates like Windows -32000 on minimize do not overwrite the saved position
         set_last_mascot_pos((450, 620));
         assert_eq!(get_last_mascot_pos(), Some((450, 620)));
 
@@ -3124,7 +3124,7 @@ mod tests {
 
     #[test]
     fn test_normalize_url_for_compare() {
-        // Issue #46: 専用チャットURL比較時のクエリ・ハッシュ・末尾スラッシュ正規化検証
+        // Issue #46: verify query / hash / trailing-slash normalization when comparing dedicated chat URLs
         assert_eq!(
             normalize_url_for_compare("https://muse.ai/chat/abc-123/?__pwa=1#bottom"),
             "https://muse.ai/chat/abc-123"
@@ -3138,18 +3138,18 @@ mod tests {
     #[test]
     fn test_extract_latest_assistant_text() {
         let msgs = serde_json::json!([
-            { "role": "user", "text": "こんにちは" },
-            { "role": "assistant", "text": "最初の返答" },
-            { "role": "user", "text": "次の質問" },
-            { "role": "assistant", "text": "最新の返答です！" }
+            { "role": "user", "text": "Hello" },
+            { "role": "assistant", "text": "First reply" },
+            { "role": "user", "text": "Next question" },
+            { "role": "assistant", "text": "This is the latest reply!" }
         ]);
         assert_eq!(
             extract_latest_assistant_text(&msgs),
-            Some("最新の返答です！".to_string())
+            Some("This is the latest reply!".to_string())
         );
 
         let user_only = serde_json::json!([
-            { "role": "user", "text": "まだ返答なし" }
+            { "role": "user", "text": "No reply yet" }
         ]);
         assert_eq!(extract_latest_assistant_text(&user_only), None);
     }
@@ -3186,7 +3186,7 @@ mod tests {
 
     #[test]
     fn test_seed_and_multi_dir_plugin_collection() {
-        // Issue #38, #47: AppData優先シード生成と複数フォルダからのプラグイン動画マージ（同名重複排除）検証
+        // Issue #38, #47: verify AppData-priority seed generation and merging plugin videos from multiple folders (deduplicating same names)
         let tmp_base = std::env::temp_dir().join(format!("muse_mascot_test_{}", std::process::id()));
         let _ = fs::remove_dir_all(&tmp_base);
 
@@ -3202,12 +3202,12 @@ mod tests {
         fs::create_dir_all(&p1).unwrap();
         fs::create_dir_all(&p2).unwrap();
 
-        // dir_appdata に eating.mp4 ("custom_eating")
+        // eating.mp4 ("custom_eating") in dir_appdata
         fs::write(p1.join("eating.mp4"), b"custom_eating").unwrap();
-        // dir_fallback に eating.mp4 ("default_eating") と sleeping.mp4 ("default_sleeping")
+        // eating.mp4 ("default_eating") and sleeping.mp4 ("default_sleeping") in dir_fallback
         fs::write(p2.join("eating.mp4"), b"default_eating").unwrap();
         fs::write(p2.join("sleeping.mp4"), b"default_sleeping").unwrap();
-        // 空ファイルは無視されるべき
+        // Empty files should be ignored
         fs::write(p2.join("empty.mp4"), b"").unwrap();
 
         let collected = collect_plugins_from_dirs(&[dir_appdata.clone(), dir_fallback.clone()]);
@@ -3216,11 +3216,11 @@ mod tests {
         let eating = collected.iter().find(|i| i.name == "eating.mp4").expect("eating.mp4 should exist");
         let sleeping = collected.iter().find(|i| i.name == "sleeping.mp4").expect("sleeping.mp4 should exist");
 
-        // 優先ディレクトリ(dir_appdata)の eating.mp4 が採用されていること
+        // The eating.mp4 from the priority directory (dir_appdata) should be the one adopted
         let expected_eating = format!("data:video/mp4;base64,{}", BASE64_STANDARD.encode(b"custom_eating"));
         assert_eq!(eating.data_url, expected_eating);
 
-        // 第2ディレクトリ(dir_fallback)の sleeping.mp4 もマージ収集されていること
+        // The sleeping.mp4 from the second directory (dir_fallback) should also be merged in
         let expected_sleeping = format!("data:video/mp4;base64,{}", BASE64_STANDARD.encode(b"default_sleeping"));
         assert_eq!(sleeping.data_url, expected_sleeping);
 
@@ -3257,7 +3257,7 @@ mod tests {
         assert!(body.contains("[sleep_resume] reason=sleep_resume, ready=true"));
         assert!(body.contains("[reload_success] url_matched=true"));
 
-        // 1MB 超えでローテートされることを確認
+        // Verify rotation once the file exceeds 1MB
         let oversized = vec![b'x'; 1_048_600];
         fs::write(&log_path, oversized).unwrap();
         append_recovery_log_to_path(&log_path, "post_rotate", "ok=true");
@@ -3294,7 +3294,7 @@ mod tests {
 
     #[test]
     fn test_plan_autostart_reconciliation() {
-        // 初回移行時（config 未保存）は OS の現在状態を取り込んで config に保存する
+        // On first migration (no config saved yet), adopt the OS's current state and save it to config
         assert_eq!(
             plan_autostart_reconciliation(None, true),
             AutostartReconcilePlan {
@@ -3312,7 +3312,7 @@ mod tests {
             }
         );
 
-        // config が true なのに OS 側が消えている場合は自動復元する
+        // If config is true but the OS-side setting has been removed, restore it automatically
         assert_eq!(
             plan_autostart_reconciliation(Some(true), false),
             AutostartReconcilePlan {
@@ -3322,7 +3322,7 @@ mod tests {
             }
         );
 
-        // config と OS 側が一致していれば何もしない
+        // If config and the OS side agree, do nothing
         assert_eq!(
             plan_autostart_reconciliation(Some(true), true),
             AutostartReconcilePlan {
@@ -3340,7 +3340,7 @@ mod tests {
             }
         );
 
-        // config が false なのに OS 側が有効な場合は無効化して同期する
+        // If config is false but the OS side is enabled, disable it to sync
         assert_eq!(
             plan_autostart_reconciliation(Some(false), true),
             AutostartReconcilePlan {
@@ -3359,25 +3359,25 @@ mod tests {
         let cfg_path = tmp_base.join("gadget_config.json");
 
         let cfg1 = GadgetConfig::default();
-        // 初回はファイルが無いため書き出される
+        // First time: no file exists, so it is written out
         assert!(write_config_to_path_if_changed(&cfg_path, None, &cfg1).unwrap());
         assert!(cfg_path.exists());
         assert!(!cfg_path.with_extension("json.tmp").exists());
 
-        // 同一内容ならスキップされる (false)
+        // Identical content is skipped (false)
         assert!(!write_config_to_path_if_changed(&cfg_path, Some(&cfg1), &cfg1).unwrap());
 
-        // 内容が変わったら書き出される (true)
+        // Changed content is written out (true)
         let mut cfg2 = cfg1.clone();
         cfg2.autostart_enabled = Some(true);
         assert!(write_config_to_path_if_changed(&cfg_path, Some(&cfg1), &cfg2).unwrap());
 
-        // UsageLimitInfo は updated_at のみの変化なら変更なし扱い
+        // A UsageLimitInfo that differs only in updated_at counts as unchanged
         let lim1 = UsageLimitInfo {
             plan_name: "Pro".to_string(),
             used_percent: Some(42),
             remaining_percent: Some(58),
-            reset_text: "1週間の上限".to_string(),
+            reset_text: "Weekly limit".to_string(),
             updated_at: "2026-11-12 22:00:00".to_string(),
         };
         let mut lim2 = lim1.clone();
@@ -3401,21 +3401,21 @@ mod tests {
             height: 170.0,
         }];
 
-        // 空の場合は安全のため透過しない (true)
+        // Empty: do not pass through, to stay safe (true)
         assert!(is_cursor_in_hit_rects((10.0, 10.0), (100, 100), 1.0, &[]));
 
-        // スケール 1.0: ウィンドウ左上 (100, 100)、ローカル座標 (500, 100) はアバター矩形内
+        // Scale 1.0: window top-left (100, 100), local coords (500, 100) are inside the avatar rect
         assert!(is_cursor_in_hit_rects((600.0, 200.0), (100, 100), 1.0, &rects));
 
-        // スケール 1.0: 左側の透明吹き出し予定領域 (ローカル x=200, y=100) は矩形外 -> 透過 (false)
+        // Scale 1.0: the transparent speech-bubble area on the left (local x=200, y=100) is outside the rect -> pass through (false)
         assert!(!is_cursor_in_hit_rects((300.0, 200.0), (100, 100), 1.0, &rects));
 
-        // パディング (4px) 境界内はヒット扱い (x = 492 - 3 = 489)
+        // Inside the padding (4px) boundary counts as a hit (x = 492 - 3 = 489)
         assert!(is_cursor_in_hit_rects((589.0, 200.0), (100, 100), 1.0, &rects));
 
-        // 高DPI (1.5x): 物理 (100 + 500*1.5, 100 + 100*1.5) = (850, 250) -> ローカル (500, 100)
+        // High DPI (1.5x): physical (100 + 500*1.5, 100 + 100*1.5) = (850, 250) -> local (500, 100)
         assert!(is_cursor_in_hit_rects((850.0, 250.0), (100, 100), 1.5, &rects));
-        // 高DPI (1.5x): 物理 (100 + 200*1.5, 100 + 100*1.5) = (400, 250) -> ローカル (200, 100) は透過
+        // High DPI (1.5x): physical (100 + 200*1.5, 100 + 100*1.5) = (400, 250) -> local (200, 100) passes through
         assert!(!is_cursor_in_hit_rects((400.0, 250.0), (100, 100), 1.5, &rects));
     }
 }

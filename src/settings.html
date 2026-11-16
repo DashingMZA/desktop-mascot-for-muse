@@ -1,75 +1,75 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Desktop Mascot for Muse - 設定</title>
+  <title>Desktop Mascot for Muse - Settings</title>
   <link rel="stylesheet" href="settings.css">
 </head>
 <body>
   <div class="settings-container">
-    <!-- ヘッダー -->
+    <!-- Header -->
     <header class="settings-header">
       <div class="header-title-box">
         <div class="header-icon">⚙️</div>
         <div>
-          <h1>Desktop Mascot for Muse 設定</h1>
-          <p class="header-sub">マスコット動作タイマー・セリフ・動画プラグインの管理</p>
+          <h1>Desktop Mascot for Muse Settings</h1>
+          <p class="header-sub">Manage mascot timers, lines, and video plugins</p>
         </div>
       </div>
     </header>
 
-    <!-- タブメニュー -->
+    <!-- Tab menu -->
     <nav class="settings-tabs">
-      <button class="tab-btn active" data-tab="tab-timers">⏱️ タイマー・基本設定</button>
-      <button class="tab-btn" data-tab="tab-quotes">🎬 放置アクション ＆ セリフ</button>
-      <button class="tab-btn" data-tab="tab-folders">📁 フォルダ・データ管理</button>
+      <button class="tab-btn active" data-tab="tab-timers">⏱️ Timers & Basic Settings</button>
+      <button class="tab-btn" data-tab="tab-quotes">🎬 Idle Actions & Lines</button>
+      <button class="tab-btn" data-tab="tab-folders">📁 Folders & Data</button>
     </nav>
 
-    <!-- タブコンテンツエリア -->
+    <!-- Tab content area -->
     <main class="settings-content">
-      <!-- タブ1: タイマー・基本設定 -->
+      <!-- Tab 1: Timers & Basic Settings -->
       <section class="tab-pane active" id="tab-timers">
         <div class="card">
           <div class="card-header">
-            <h3>アバター情報</h3>
+            <h3>Avatar info</h3>
           </div>
           <div class="form-group">
-            <label for="input-avatar-name">現在のアバター名</label>
+            <label for="input-avatar-name">Current avatar name</label>
             <div class="readonly-input-group">
-              <input type="text" id="input-avatar-name" readonly value="ラッキー">
-              <span class="badge-synced">Muse本体と自動同期</span>
+              <input type="text" id="input-avatar-name" readonly value="Lucky">
+              <span class="badge-synced">Auto-synced with Muse</span>
             </div>
-            <p class="form-hint">※アバター名は Muse 本体のセッションから自動取得・同期されるため、本設定画面では変更できません。</p>
+            <p class="form-hint">* The avatar name is automatically fetched and synced from the Muse session, so it cannot be changed on this settings screen.</p>
           </div>
         </div>
 
-        <!-- マスコット表示サイズ (Issue #25) -->
+        <!-- Mascot display size (Issue #25) -->
         <div class="card">
           <div class="card-header">
-            <h3>📐 マスコット表示サイズ（スケール）</h3>
+            <h3>📐 Mascot display size (scale)</h3>
           </div>
-          <p class="card-desc">お使いのディスプレイ解像度や作業スペースに合わせて、マスコットの大きさを変更できます。</p>
+          <p class="card-desc">You can change the mascot's size to suit your display resolution and workspace.</p>
           <div class="scale-options-grid">
             <label class="scale-option-card">
               <input type="radio" name="mascot-scale" value="small">
               <div class="scale-card-content">
-                <span class="scale-label">小 (80%)</span>
-                <span class="scale-desc">省スペース・ノートPC向け</span>
+                <span class="scale-label">Small (80%)</span>
+                <span class="scale-desc">Space-saving, for laptops</span>
               </div>
             </label>
             <label class="scale-option-card">
               <input type="radio" name="mascot-scale" value="standard" checked>
               <div class="scale-card-content">
-                <span class="scale-label">標準 (100%)</span>
-                <span class="scale-desc">標準的なフルHD画面向け</span>
+                <span class="scale-label">Standard (100%)</span>
+                <span class="scale-desc">For standard Full HD screens</span>
               </div>
             </label>
             <label class="scale-option-card">
               <input type="radio" name="mascot-scale" value="large">
               <div class="scale-card-content">
-                <span class="scale-label">大 (125%)</span>
-                <span class="scale-desc">高解像度（WQHD / 4K）向け</span>
+                <span class="scale-label">Large (125%)</span>
+                <span class="scale-desc">For high-resolution (WQHD / 4K) screens</span>
               </div>
             </label>
           </div>
@@ -77,69 +77,69 @@
 
         <div class="card">
           <div class="card-header">
-            <h3>動作タイマー設定（秒単位）</h3>
+            <h3>Action timer settings (in seconds)</h3>
           </div>
 
           <div class="form-grid">
             <div class="form-group">
               <label for="input-idle-threshold">
-                放置（IDLE）突入時間
-                <span class="unit">秒</span>
+                Idle (IDLE) start time
+                <span class="unit">sec</span>
               </label>
               <input type="number" id="input-idle-threshold" min="10" max="3600" step="5" value="180">
-              <p class="form-hint">無操作がこの秒数続くと、放置アクションを開始します。（デフォルト: 180秒）</p>
+              <p class="form-hint">When there has been no interaction for this many seconds, idle actions begin. (Default: 180 sec)</p>
             </div>
 
             <div class="form-group">
               <label for="input-action-interval">
-                放置アクション発生間隔
-                <span class="unit">秒</span>
+                Idle action interval
+                <span class="unit">sec</span>
               </label>
               <input type="number" id="input-action-interval" min="10" max="3600" step="5" value="180">
-              <p class="form-hint">放置中に次の気まぐれアクションを行う間隔です。（デフォルト: 180秒）</p>
+              <p class="form-hint">How often the next whimsical action happens while idle. (Default: 180 sec)</p>
             </div>
 
             <div class="form-group">
               <label for="input-default-duration">
-                放置動画の標準再生時間
-                <span class="unit">秒</span>
+                Default idle video playback time
+                <span class="unit">sec</span>
               </label>
               <input type="number" id="input-default-duration" min="5" max="300" step="1" value="30">
-              <p class="form-hint">プラグイン動画で個別時間が未指定の場合に適用されます。（デフォルト: 30秒）</p>
+              <p class="form-hint">Applies when a plugin video has no individual time set. (Default: 30 sec)</p>
             </div>
 
             <div class="form-group">
               <label for="input-bubble-duration">
-                吹き出し表示時間
-                <span class="unit">秒</span>
+                Speech bubble display time
+                <span class="unit">sec</span>
               </label>
               <input type="number" id="input-bubble-duration" min="3" max="300" step="1" value="30">
-              <p class="form-hint">セリフタイピング完了後、自動非表示になるまでの秒数です。（デフォルト: 30秒）</p>
+              <p class="form-hint">Seconds until it hides automatically after the line finishes typing. (Default: 30 sec)</p>
             </div>
 
             <div class="form-group full-width">
               <label for="input-touch-duration">
-                タッチリアクション維持時間
-                <span class="unit">秒</span>
+                Touch reaction hold time
+                <span class="unit">sec</span>
               </label>
               <input type="number" id="input-touch-duration" min="2" max="60" step="1" value="8">
-              <p class="form-hint">マスコットをクリックした際の喜びポーズを維持する時間です。（デフォルト: 8秒）</p>
+              <p class="form-hint">How long the happy pose is held when you click the mascot. (Default: 8 sec)</p>
             </div>
           </div>
         </div>
 
-        <!-- 効果音設定 (Issue #24) -->
+        <!-- Sound effects settings (Issue #24) -->
         <div class="card">
           <div class="card-header">
-            <h3>🔊 効果音（SE）設定</h3>
+            <h3>🔊 Sound effects (SE) settings</h3>
           </div>
-          <p class="card-desc">新着メッセージ通知音（ピコン♪）や吹き出しタイピング音（カタカタ…）、タッチ反応音を設定できます。</p>
+          <p class="card-desc">Set the new-message notification sound (ping♪), speech bubble typing sound (tap-tap…), and touch reaction sound.</p>
 
           <div class="sound-setting-group">
             <div class="sound-toggle-row">
               <div class="sound-label-area">
-                <span class="sound-title">効果音を鳴らす</span>
-                <span class="form-hint">新着通知やセリフ表示時の効果音を有効化します</span>
+                <span class="sound-title">Play sound effects</span>
+                <span class="form-hint">Enables sound effects for new notifications and when lines are shown</span>
               </div>
               <label class="toggle-switch">
                 <input type="checkbox" id="toggle-sound-enabled" checked>
@@ -150,40 +150,40 @@
             <div class="sound-volume-row">
               <div class="sound-label-area">
                 <label for="input-sound-volume">
-                  効果音の音量
+                  Sound effects volume
                   <span class="unit" id="sound-volume-display">30%</span>
                 </label>
-                <span class="form-hint">全体の音量を調整します（0〜100%）</span>
+                <span class="form-hint">Adjusts the overall volume (0–100%)</span>
               </div>
               <div class="volume-slider-wrapper">
                 <input type="range" id="input-sound-volume" min="0" max="100" step="1" value="30">
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-test-sound">🔊 テスト再生</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-test-sound">🔊 Test playback</button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- タブ2: 放置アクション ＆ セリフ -->
+      <!-- Tab 2: Idle Actions & Lines -->
       <section class="tab-pane" id="tab-quotes">
-        <!-- Muse本体によるライブつぶやき生成（ウェイク方式） (Issue #37) -->
+        <!-- Live remarks generated by Muse (wake method) (Issue #37) -->
         <div class="card">
           <div class="card-header">
-            <h3>✨ Muse本体によるライブつぶやき生成（ウェイク方式）</h3>
+            <h3>✨ Live remarks generated by Muse (wake method)</h3>
           </div>
           <p class="card-desc">
-            放置（IDLE）中にバックグラウンドで Muse 本体に短い一言（<code>mascot-quotes</code>）をまとめて生成してもらい、マスコット本人の言葉として優先表示します。プールが空のときは下の固定セリフ（<code>quotes.json</code>）へ自動的にフォールバックします。
+            While idle (IDLE), Muse generates a batch of short one-liners (<code>mascot-quotes</code>) in the background, which are shown first as the mascot's own words. When the pool is empty, it automatically falls back to the fixed lines below (<code>quotes.json</code>).
           </p>
 
           <div class="live-quotes-notice">
-            ⚠️ <b>ご注意:</b> 1回のウェイクにつき Muse の利用枠（Usage Limit）を 1 ターン消費します。また「メインチャット」を選択時は、ウェイク用の依頼と返答がチャット履歴に残ります。
+            ⚠️ <b>Note:</b> Each wake uses 1 turn of Muse's usage limit (Usage Limit). If you select "Main chat", the wake request and reply remain in the chat history.
           </div>
 
           <div class="sound-setting-group" style="margin-bottom: 14px;">
             <div class="sound-toggle-row">
               <div class="sound-label-area">
-                <span class="sound-title">ライブつぶやき生成（ウェイク）を有効にする</span>
-                <span class="form-hint">初期値は OFF（オプトイン方式）。有効化すると条件成立時に自動補充します</span>
+                <span class="sound-title">Enable live remark generation (wake)</span>
+                <span class="form-hint">Default is OFF (opt-in). When enabled, the pool is refilled automatically when the conditions are met</span>
               </div>
               <label class="toggle-switch">
                 <input type="checkbox" id="live-quotes-enabled">
@@ -194,211 +194,211 @@
 
           <div class="form-grid">
             <div class="form-group full-width">
-              <label>送信先チャット（ターゲットモード）</label>
+              <label>Destination chat (target mode)</label>
               <div class="live-target-options">
                 <label class="radio-inline-label">
                   <input type="radio" name="live-quotes-target-mode" value="main" checked>
-                  <span>メインチャット（現在のセッション画面）</span>
+                  <span>Main chat (current session screen)</span>
                 </label>
                 <label class="radio-inline-label">
                   <input type="radio" name="live-quotes-target-mode" value="custom">
-                  <span>専用チャット URL を指定（メイン履歴を汚さない）</span>
+                  <span>Specify a dedicated chat URL (keeps the main history clean)</span>
                 </label>
               </div>
             </div>
 
             <div class="form-group full-width" id="live-quotes-custom-url-group" style="display: none;">
               <label for="live-quotes-custom-url">
-                専用チャット URL
+                Dedicated chat URL
                 <span class="unit">https://...</span>
               </label>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input type="text" id="live-quotes-custom-url" placeholder="https://muse.ai/..." style="flex: 1;">
-                <button type="button" class="btn btn-secondary" id="btn-fill-current-chat-url" style="white-space: nowrap; padding: 7px 12px; font-size: 12px;" title="セッション画面で現在開いているチャットのURLを自動入力します">📍 今開いているチャットを登録</button>
+                <button type="button" class="btn btn-secondary" id="btn-fill-current-chat-url" style="white-space: nowrap; padding: 7px 12px; font-size: 12px;" title="Automatically fills in the URL of the chat currently open on the session screen">📍 Register the chat that's open now</button>
               </div>
-              <p class="form-hint">つぶやき生成専用に作成した Muse チャットスレッドの URL を指定します。「今開いているチャットを登録」を押すと、セッション画面で開いている現在URLを自動取得できます。</p>
+              <p class="form-hint">Specify the URL of a Muse chat thread created just for generating remarks. Press "Register the chat that's open now" to automatically fetch the URL currently open on the session screen.</p>
             </div>
 
             <div class="form-group">
               <label for="live-quotes-batch-count">
-                1回の生成本数（まとめ取り）
-                <span class="unit">本</span>
+                Lines generated per wake (batch)
+                <span class="unit">lines</span>
               </label>
               <input type="number" id="live-quotes-batch-count" min="1" max="10" step="1" value="4">
-              <p class="form-hint">1回のウェイクでまとめて生成するセリフ数（推奨: 3〜5本）</p>
+              <p class="form-hint">Number of lines generated in one wake (recommended: 3–5)</p>
             </div>
 
             <div class="form-group">
               <label for="live-quotes-min-interval">
-                最小ウェイク間隔
-                <span class="unit">分</span>
+                Minimum wake interval
+                <span class="unit">min</span>
               </label>
               <input type="number" id="live-quotes-min-interval" min="10" max="1440" step="5" value="60">
-              <p class="form-hint">前回のウェイクから最低限空けるクールダウン時間（デフォルト: 60分）</p>
+              <p class="form-hint">Minimum cooldown after the previous wake (default: 60 min)</p>
             </div>
 
             <div class="form-group">
               <label for="live-quotes-daily-limit">
-                1日あたりの最大ウェイク回数
-                <span class="unit">回/日</span>
+                Maximum wakes per day
+                <span class="unit">times/day</span>
               </label>
               <input type="number" id="live-quotes-daily-limit" min="1" max="50" step="1" value="6">
-              <p class="form-hint">利用枠の意図しない消費を防ぐ日次上限（デフォルト: 6回）</p>
+              <p class="form-hint">Daily cap to prevent unintended usage-limit consumption (default: 6)</p>
             </div>
 
             <div class="form-group">
               <label>
-                おやすみ時間帯（ウェイク停止）
-                <span class="unit">時刻範囲</span>
+                Quiet hours (wake paused)
+                <span class="unit">Time range</span>
               </label>
               <div class="quiet-hours-row">
                 <input type="text" id="live-quotes-quiet-start" value="22:00" placeholder="22:00">
                 <span>〜</span>
                 <input type="text" id="live-quotes-quiet-end" value="07:00" placeholder="07:00">
               </div>
-              <p class="form-hint">この時間帯は自動ウェイクを行いません（デフォルト: 22:00 〜 07:00）</p>
+              <p class="form-hint">No automatic wakes during these hours (default: 22:00 – 07:00)</p>
             </div>
           </div>
         </div>
-        <!-- 基本セリフ（クリック反応・通常つぶやき） -->
+        <!-- Basic lines (click reactions & regular remarks) -->
         <div class="card">
           <div class="card-header">
-            <h3>👆 クリック（タッチ）時のリアクションセリフ</h3>
+            <h3>👆 Reaction lines when clicked (touched)</h3>
           </div>
-          <p class="card-desc">マスコットをシングルクリック（つついた時）に喜ぶポーズと一緒につぶやくセリフです。</p>
+          <p class="card-desc">Lines the mascot says with a happy pose when single-clicked (poked).</p>
           <div class="quotes-section">
             <div id="touch-quotes-list" class="quotes-list"></div>
-            <button class="btn-add-quote" id="btn-add-touch-quote">＋ リアクションセリフを追加</button>
+            <button class="btn-add-quote" id="btn-add-touch-quote">+ Add a reaction line</button>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">
-            <h3>💬 通常待機時の気まぐれつぶやき</h3>
+            <h3>💬 Whimsical remarks while normally idle</h3>
           </div>
-          <p class="card-desc">プラグイン動画が再生されない時（通常 idle 動画のまま）につぶやくセリフです。</p>
+          <p class="card-desc">Lines said when no plugin video is playing (while the normal idle video plays).</p>
           <div class="quotes-section">
             <div id="idle-quotes-list" class="quotes-list"></div>
-            <button class="btn-add-quote" id="btn-add-idle-quote">＋ つぶやきセリフを追加</button>
+            <button class="btn-add-quote" id="btn-add-idle-quote">+ Add a remark line</button>
           </div>
         </div>
 
-        <!-- 時間帯別のつぶやき（朝・昼・夕方・深夜） -->
+        <!-- Remarks by time of day (morning / afternoon / evening / late night) -->
         <div class="card">
           <div class="card-header">
-            <h3>⏰ 時間帯別のつぶやき（朝・昼・夕方・深夜）</h3>
+            <h3>⏰ Remarks by time of day (morning / afternoon / evening / late night)</h3>
           </div>
-          <p class="card-desc">現在時刻に応じた挨拶やつぶやきです。放置アクション時に優先的に選ばれます（時間帯セリフ 70% / 通常セリフ 30%）。</p>
+          <p class="card-desc">Greetings and remarks matched to the current time. They are picked first during idle actions (time-of-day lines 70% / regular lines 30%).</p>
           <div class="time-slots-container">
-            <!-- 朝 -->
+            <!-- Morning -->
             <div class="time-slot-card">
               <div class="time-slot-header">
-                <h4>🌅 朝のセリフ (05:00 - 10:59)</h4>
+                <h4>🌅 Morning lines (05:00 - 10:59)</h4>
               </div>
               <div class="quotes-section">
                 <div id="morning-quotes-list" class="quotes-list"></div>
-                <button class="btn-add-quote" id="btn-add-morning-quote">＋ 朝のセリフを追加</button>
+                <button class="btn-add-quote" id="btn-add-morning-quote">+ Add a morning line</button>
               </div>
             </div>
 
-            <!-- 昼 -->
+            <!-- Afternoon -->
             <div class="time-slot-card">
               <div class="time-slot-header">
-                <h4>☀️ 昼のセリフ (11:00 - 16:59)</h4>
+                <h4>☀️ Afternoon lines (11:00 - 16:59)</h4>
               </div>
               <div class="quotes-section">
                 <div id="afternoon-quotes-list" class="quotes-list"></div>
-                <button class="btn-add-quote" id="btn-add-afternoon-quote">＋ 昼のセリフを追加</button>
+                <button class="btn-add-quote" id="btn-add-afternoon-quote">+ Add an afternoon line</button>
               </div>
             </div>
 
-            <!-- 夕方 -->
+            <!-- Evening -->
             <div class="time-slot-card">
               <div class="time-slot-header">
-                <h4>🌆 夕方のセリフ (17:00 - 21:59)</h4>
+                <h4>🌆 Evening lines (17:00 - 21:59)</h4>
               </div>
               <div class="quotes-section">
                 <div id="evening-quotes-list" class="quotes-list"></div>
-                <button class="btn-add-quote" id="btn-add-evening-quote">＋ 夕方のセリフを追加</button>
+                <button class="btn-add-quote" id="btn-add-evening-quote">+ Add an evening line</button>
               </div>
             </div>
 
-            <!-- 深夜 -->
+            <!-- Late night -->
             <div class="time-slot-card">
               <div class="time-slot-header">
-                <h4>🌙 夜・深夜のセリフ (22:00 - 04:59)</h4>
+                <h4>🌙 Night / late-night lines (22:00 - 04:59)</h4>
               </div>
               <div class="quotes-section">
                 <div id="night-quotes-list" class="quotes-list"></div>
-                <button class="btn-add-quote" id="btn-add-night-quote">＋ 深夜のセリフを追加</button>
+                <button class="btn-add-quote" id="btn-add-night-quote">+ Add a late-night line</button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- プラグイン動画ごとの設定 -->
+        <!-- Per-plugin-video settings -->
         <div class="card">
           <div class="action-bar">
             <div>
-              <h3>🎬 プラグイン動画ごとの個別設定</h3>
-              <p class="form-hint">各動画（<code>.mp4</code>）の有効/無効、再生秒数、ウェイト、専用セリフを設定できます。</p>
+              <h3>🎬 Per-plugin-video settings</h3>
+              <p class="form-hint">Set each video's (<code>.mp4</code>) enabled/disabled state, playback seconds, weight, and dedicated lines.</p>
             </div>
-            <button class="btn btn-secondary" id="btn-add-video">＋ 新しい動画を追加</button>
+            <button class="btn btn-secondary" id="btn-add-video">+ Add a new video</button>
           </div>
 
           <div id="video-settings-list" class="video-settings-list">
-            <!-- JSで動的生成 -->
+            <!-- Generated dynamically by JS -->
           </div>
         </div>
       </section>
 
-      <!-- タブ3: フォルダ・データ管理 -->
+      <!-- Tab 3: Folders & Data -->
       <section class="tab-pane" id="tab-folders">
         <div class="card">
           <div class="card-header">
-            <h3>アバター動画フォルダ</h3>
+            <h3>Avatar video folders</h3>
           </div>
           <p class="card-desc">
-            マスコットにオリジナルの動画（<code>.mp4</code>）を設定する場合は、以下の各フォルダに配置してください。
+            To set your own videos (<code>.mp4</code>) for the mascot, place them in the folders below.
           </p>
 
           <div class="folder-actions">
             <div class="folder-action-card">
               <div class="folder-info">
-                <h4>基本アバター動画フォルダ</h4>
+                <h4>Base avatar video folder</h4>
                 <p><code>idle.mp4</code>, <code>waking.mp4</code>, <code>working.mp4</code>, <code>making_something.mp4</code>, <code>milestone_level_up.mp4</code></p>
               </div>
-              <button class="btn btn-primary" id="btn-open-avatars-dir">📂 フォルダを開く</button>
+              <button class="btn btn-primary" id="btn-open-avatars-dir">📂 Open folder</button>
             </div>
 
             <div class="folder-action-card">
               <div class="folder-info">
-                <h4>プラグイン動画フォルダ</h4>
-                <p>放置時に気まぐれ再生する動画（<code>meal.mp4</code>, <code>makeup.mp4</code>, <code>smartphone.mp4</code>, <code>sleeping.mp4</code> 等）</p>
+                <h4>Plugin video folder</h4>
+                <p>Videos played whimsically while idle (<code>meal.mp4</code>, <code>makeup.mp4</code>, <code>smartphone.mp4</code>, <code>sleeping.mp4</code>, etc.)</p>
               </div>
-              <button class="btn btn-primary" id="btn-open-plugin-dir">📂 フォルダを開く</button>
+              <button class="btn btn-primary" id="btn-open-plugin-dir">📂 Open folder</button>
             </div>
           </div>
         </div>
 
         <div class="card danger-card">
           <div class="card-header">
-            <h3>設定の初期化</h3>
+            <h3>Reset settings</h3>
           </div>
           <p class="card-desc">
-            タイマー設定およびセリフ設定をアプリ初期出荷状態（デフォルト値）へ戻します。
+            Returns the timer and line settings to the app's initial shipped state (default values).
           </p>
-          <button class="btn btn-danger" id="btn-reset-defaults">⚠️ 初期設定に戻す</button>
+          <button class="btn btn-danger" id="btn-reset-defaults">⚠️ Reset to defaults</button>
         </div>
       </section>
     </main>
 
-    <!-- フッター -->
+    <!-- Footer -->
     <footer class="settings-footer">
       <div id="status-message" class="status-message"></div>
       <div class="footer-buttons">
-        <button class="btn btn-secondary" id="btn-cancel">キャンセル</button>
-        <button class="btn btn-save" id="btn-save">💾 保存して適用</button>
+        <button class="btn btn-secondary" id="btn-cancel">Cancel</button>
+        <button class="btn btn-save" id="btn-save">💾 Save and Apply</button>
       </div>
     </footer>
   </div>

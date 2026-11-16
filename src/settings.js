@@ -1,4 +1,4 @@
-// settings.js - Desktop Mascot for Muse 設定画面コントローラー
+// settings.js - Desktop Mascot for Muse settings screen controller
 
 const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, args) => {
   console.log(`[Mock Settings Invoke] ${cmd}`, args);
@@ -10,19 +10,19 @@ const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, arg
         default_duration_sec: 30,
         bubble_display_duration_sec: 30,
         touch_reaction_duration_sec: 8,
-        avatar_name: "ラッキー"
+        avatar_name: "Lucky"
       },
       quotes: {
         touch_reactions: [
-          "はーい！呼んだ？",
-          "なになに〜？",
-          "ここにいるよ！",
-          "がんばろうね！"
+          "Yaaay! Did you call me?",
+          "What is it~?",
+          "I'm right here!",
+          "Let's do our best!"
         ],
         default_idle_quotes: [
-          "いつでも呼んでね！",
-          "今日もいい天気だね〜",
-          "お茶でも飲んで一息つこう！"
+          "Call me anytime!",
+          "Such lovely weather today!",
+          "Let's have some tea and take a break!"
         ],
         videos: {
           "eating.mp4": {
@@ -30,8 +30,8 @@ const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, arg
             duration_sec: 20,
             weight: 2,
             quotes: [
-              "もぐもぐ…たい焼き、甘くておいしい〜！",
-              "ちょっとおやつタイムにするね♪"
+              "Nom nom… this taiyaki is so sweet and yummy!",
+              "Time for a little snack break♪"
             ]
           },
           "makeup.mp4": {
@@ -39,8 +39,8 @@ const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, arg
             duration_sec: 20,
             weight: 1,
             quotes: [
-              "ちょっと身だしなみチェック中…♪",
-              "よし、今日もバッチリかな！"
+              "Just doing a quick appearance check…♪",
+              "Alright, looking perfect today!"
             ]
           },
           "sleeping.mp4": {
@@ -48,8 +48,8 @@ const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, arg
             duration_sec: 40,
             weight: 1,
             quotes: [
-              "すやぁ…ちょっとだけうたた寝…",
-              "ふぁ〜…少し眠くなってきちゃった…zzZ"
+              "Zzz… just a tiny nap…",
+              "Yaaawn… I'm getting a little sleepy… zzZ"
             ]
           },
           "smartphone.mp4": {
@@ -57,8 +57,8 @@ const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, arg
             duration_sec: 20,
             weight: 3,
             quotes: [
-              "スマホでちょっとトレンドチェック中〜",
-              "ふむふむ、面白いニュース見つけたよ！"
+              "Just checking the latest trends on my phone~",
+              "Hmm, I found some interesting news!"
             ]
           }
         }
@@ -68,7 +68,7 @@ const invoke = window.__TAURI__ ? window.__TAURI__.core.invoke : async (cmd, arg
   return true;
 };
 
-// 状態保持
+// Keep state
 let currentSetting = {};
 let currentQuotes = {
   touch_reactions: [],
@@ -76,7 +76,7 @@ let currentQuotes = {
   videos: {}
 };
 
-// DOM要素
+// DOM elements
 const tabs = document.querySelectorAll('.tab-btn');
 const tabPanes = document.querySelectorAll('.tab-pane');
 
@@ -108,7 +108,7 @@ const btnAddEveningQuote = document.getElementById('btn-add-evening-quote');
 const nightQuotesListEl = document.getElementById('night-quotes-list');
 const btnAddNightQuote = document.getElementById('btn-add-night-quote');
 
-// ライブつぶやき生成（ウェイク方式）要素 (Issue #37)
+// Live remark generation (wake method) elements (Issue #37)
 const liveQuotesEnabled = document.getElementById('live-quotes-enabled');
 const liveQuotesTargetRadios = document.querySelectorAll('input[name="live-quotes-target-mode"]');
 const liveQuotesCustomUrlGroup = document.getElementById('live-quotes-custom-url-group');
@@ -136,22 +136,22 @@ if (btnFillCurrentChatUrl) {
   btnFillCurrentChatUrl.addEventListener('click', async () => {
     try {
       btnFillCurrentChatUrl.disabled = true;
-      btnFillCurrentChatUrl.textContent = '取得中...';
+      btnFillCurrentChatUrl.textContent = 'Fetching...';
       const status = await invoke('get_session_status');
       if (status && status.url && (status.url.startsWith('http://') || status.url.startsWith('https://'))) {
         if (liveQuotesCustomUrl) {
           liveQuotesCustomUrl.value = status.url;
         }
-        showStatus('現在開いているチャットURLを反映しました', 'success');
+        showStatus('Applied the URL of the currently open chat', 'success');
       } else {
-        showStatus('有効なチャットURLを取得できませんでした（セッションでチャットを開いてから再試行してください）', 'error');
+        showStatus('Could not get a valid chat URL (open a chat in the session first, then try again)', 'error');
       }
     } catch (err) {
       console.error('Failed to get session status:', err);
-      showStatus('URLの取得に失敗しました: ' + (err?.message || err), 'error');
+      showStatus('Failed to get the URL: ' + (err?.message || err), 'error');
     } finally {
       btnFillCurrentChatUrl.disabled = false;
-      btnFillCurrentChatUrl.textContent = '📍 今開いているチャットを登録';
+      btnFillCurrentChatUrl.textContent = "📍 Register the chat that's open now";
     }
   });
 }
@@ -166,7 +166,7 @@ const btnCancel = document.getElementById('btn-cancel');
 const btnSave = document.getElementById('btn-save');
 const statusMessage = document.getElementById('status-message');
 
-// タブ切り替え制御
+// Tab switching control
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
     tabs.forEach(t => t.classList.remove('active'));
@@ -179,7 +179,7 @@ tabs.forEach(tab => {
   });
 });
 
-// ステータスメッセージ表示
+// Show the status message
 function showStatus(text, type = 'success', durationMs = 3000) {
   statusMessage.textContent = text;
   statusMessage.className = `status-message ${type}`;
@@ -191,7 +191,7 @@ function showStatus(text, type = 'success', durationMs = 3000) {
   }, durationMs);
 }
 
-// 汎用文字列セリフリストのレンダリング
+// Render a generic string line list
 function renderSimpleQuotesList(containerEl, quoteArray, emptyPlaceholder) {
   if (!containerEl) return;
   containerEl.innerHTML = '';
@@ -205,8 +205,8 @@ function renderSimpleQuotesList(containerEl, quoteArray, emptyPlaceholder) {
     const row = document.createElement('div');
     row.className = 'quote-row';
     row.innerHTML = `
-      <input type="text" value="${(text || '').replace(/"/g, '&quot;')}" placeholder="セリフを入力...">
-      <button class="btn-icon-del btn-del" title="削除">×</button>
+      <input type="text" value="${(text || '').replace(/"/g, '&quot;')}" placeholder="Enter a line...">
+      <button class="btn-icon-del btn-del" title="Delete">×</button>
     `;
 
     row.querySelector('input').addEventListener('input', (e) => {
@@ -222,7 +222,7 @@ function renderSimpleQuotesList(containerEl, quoteArray, emptyPlaceholder) {
   });
 }
 
-// プラグイン動画カードのレンダリング
+// Render the plugin video cards
 function renderVideoList() {
   if (!videoSettingsList) return;
   videoSettingsList.innerHTML = '';
@@ -230,7 +230,7 @@ function renderVideoList() {
   const videosObj = currentQuotes.videos || {};
   const entries = Object.entries(videosObj);
   if (entries.length === 0) {
-    videoSettingsList.innerHTML = '<p class="form-hint" style="padding: 16px; text-align: center;">登録されている放置動画プラグインはありません。</p>';
+    videoSettingsList.innerHTML = '<p class="form-hint" style="padding: 16px; text-align: center;">No idle video plugins are registered.</p>';
     return;
   }
 
@@ -254,57 +254,57 @@ function renderVideoList() {
           </label>
           <span class="video-name">${videoName}</span>
         </div>
-        <button class="btn-icon-del btn-del-video" title="この動画設定を削除">🗑️</button>
+        <button class="btn-icon-del btn-del-video" title="Delete this video setting">🗑️</button>
       </div>
 
       <div class="video-card-meta">
         <div class="meta-field">
-          <label>再生時間 (秒):</label>
+          <label>Playback time (sec):</label>
           <input type="number" class="video-duration-input" min="5" max="300" value="${duration}">
         </div>
         <div class="meta-field">
-          <label>出現ウェイト (比率):</label>
+          <label>Appearance weight (ratio):</label>
           <input type="number" class="video-weight-input" min="1" max="100" value="${weight}">
         </div>
       </div>
 
       <div class="quotes-section">
         <div class="quotes-header">
-          <span>専用セリフ一覧 (${config.quotes.length}件):</span>
+          <span>Dedicated lines (${config.quotes.length}):</span>
         </div>
         <div class="quotes-list"></div>
-        <button class="btn-add-quote">＋ 専用セリフを追加</button>
+        <button class="btn-add-quote">+ Add a dedicated line</button>
       </div>
     `;
 
-    // セリフ一覧のレンダリング
+    // Render the line list
     const quotesListEl = card.querySelector('.quotes-list');
-    renderSimpleQuotesList(quotesListEl, config.quotes, '専用セリフはありません（無言または標準セリフ再生）');
+    renderSimpleQuotesList(quotesListEl, config.quotes, 'No dedicated lines (silent, or plays a standard line)');
 
-    // セリフ追加ボタン
+    // Add-line button
     card.querySelector('.btn-add-quote').addEventListener('click', () => {
-      config.quotes.push('新しいセリフ');
+      config.quotes.push('New line');
       renderVideoList();
     });
 
-    // 有効/無効トグル
+    // Enabled/disabled toggle
     card.querySelector('.video-enabled-toggle').addEventListener('change', (e) => {
       config.enabled = e.target.checked;
     });
 
-    // 再生時間
+    // Playback time
     card.querySelector('.video-duration-input').addEventListener('change', (e) => {
       config.duration_sec = parseInt(e.target.value, 10) || 30;
     });
 
-    // ウェイト
+    // Weight
     card.querySelector('.video-weight-input').addEventListener('change', (e) => {
       config.weight = parseInt(e.target.value, 10) || 10;
     });
 
-    // 動画設定削除
+    // Delete the video setting
     card.querySelector('.btn-del-video').addEventListener('click', () => {
-      if (confirm(`動画設定「${videoName}」を削除してもよろしいですか？`)) {
+      if (confirm(`Are you sure you want to delete the video setting "${videoName}"?`)) {
         delete videosObj[videoName];
         renderVideoList();
       }
@@ -314,20 +314,20 @@ function renderVideoList() {
   });
 }
 
-// 全セクションの再描画
+// Re-render all sections
 function renderAllQuotes() {
-  renderSimpleQuotesList(touchQuotesListEl, currentQuotes.touch_reactions, 'リアクションセリフが登録されていません。');
-  renderSimpleQuotesList(idleQuotesListEl, currentQuotes.default_idle_quotes, '通常つぶやきセリフが登録されていません。');
+  renderSimpleQuotesList(touchQuotesListEl, currentQuotes.touch_reactions, 'No reaction lines are registered.');
+  renderSimpleQuotesList(idleQuotesListEl, currentQuotes.default_idle_quotes, 'No regular remark lines are registered.');
   if (currentQuotes.time_specific_quotes) {
-    renderSimpleQuotesList(morningQuotesListEl, currentQuotes.time_specific_quotes.morning, '朝のセリフが登録されていません。');
-    renderSimpleQuotesList(afternoonQuotesListEl, currentQuotes.time_specific_quotes.afternoon, '昼のセリフが登録されていません。');
-    renderSimpleQuotesList(eveningQuotesListEl, currentQuotes.time_specific_quotes.evening, '夕方のセリフが登録されていません。');
-    renderSimpleQuotesList(nightQuotesListEl, currentQuotes.time_specific_quotes.night, '深夜のセリフが登録されていません。');
+    renderSimpleQuotesList(morningQuotesListEl, currentQuotes.time_specific_quotes.morning, 'No morning lines are registered.');
+    renderSimpleQuotesList(afternoonQuotesListEl, currentQuotes.time_specific_quotes.afternoon, 'No afternoon lines are registered.');
+    renderSimpleQuotesList(eveningQuotesListEl, currentQuotes.time_specific_quotes.evening, 'No evening lines are registered.');
+    renderSimpleQuotesList(nightQuotesListEl, currentQuotes.time_specific_quotes.night, 'No late-night lines are registered.');
   }
   renderVideoList();
 }
 
-// 設定ロード
+// Load settings
 async function loadConfigs() {
   try {
     const res = await invoke('get_plugin_configs');
@@ -335,7 +335,7 @@ async function loadConfigs() {
     const rawQuotes = res.quotes || {};
     const timeQuotes = rawQuotes.time_specific_quotes || {};
 
-    // 構造の正規化
+    // Normalize the structure
     currentQuotes = {
       touch_reactions: Array.isArray(rawQuotes.touch_reactions) ? rawQuotes.touch_reactions : [],
       default_idle_quotes: Array.isArray(rawQuotes.default_idle_quotes) ? rawQuotes.default_idle_quotes : [],
@@ -348,21 +348,21 @@ async function loadConfigs() {
       videos: (rawQuotes.videos && typeof rawQuotes.videos === 'object') ? rawQuotes.videos : {}
     };
 
-    // タイマー・基本設定のバインド
-    if (inputAvatarName) inputAvatarName.value = currentSetting.avatar_name || 'ラッキー';
+    // Bind the timer & basic settings
+    if (inputAvatarName) inputAvatarName.value = currentSetting.avatar_name || 'Lucky';
     if (inputIdleThreshold) inputIdleThreshold.value = currentSetting.idle_threshold_sec ?? 180;
     if (inputActionInterval) inputActionInterval.value = currentSetting.action_interval_sec ?? 180;
     if (inputDefaultDuration) inputDefaultDuration.value = currentSetting.default_duration_sec ?? 30;
     if (inputBubbleDuration) inputBubbleDuration.value = currentSetting.bubble_display_duration_sec ?? 30;
     if (inputTouchDuration) inputTouchDuration.value = currentSetting.touch_reaction_duration_sec ?? 8;
 
-    // 効果音設定のバインド (Issue #24)
+    // Bind the sound effects settings (Issue #24)
     if (toggleSoundEnabled) toggleSoundEnabled.checked = currentSetting.sound_enabled !== false;
     const vol = currentSetting.sound_volume ?? 30;
     if (inputSoundVolume) inputSoundVolume.value = vol;
     if (soundVolumeDisplay) soundVolumeDisplay.textContent = `${vol}%`;
 
-    // ライブつぶやき生成（ウェイク方式）のバインド (Issue #37)
+    // Bind the live remark generation (wake method) settings (Issue #37)
     const lq = currentSetting.live_quotes || {};
     if (liveQuotesEnabled) liveQuotesEnabled.checked = lq.enabled === true;
     const targetMode = lq.target_mode === 'custom' ? 'custom' : 'main';
@@ -376,7 +376,7 @@ async function loadConfigs() {
     if (liveQuotesQuietStart) liveQuotesQuietStart.value = lq.quiet_hours_start || '22:00';
     if (liveQuotesQuietEnd) liveQuotesQuietEnd.value = lq.quiet_hours_end || '07:00';
 
-    // マスコット表示サイズ（スケール）のバインド (Issue #25)
+    // Bind the mascot display size (scale) (Issue #25)
     try {
       const gConfig = await invoke('get_gadget_config');
       if (gConfig && gConfig.mascot_scale) {
@@ -388,63 +388,63 @@ async function loadConfigs() {
     renderAllQuotes();
   } catch (err) {
     console.error('Failed to load configs:', err);
-    showStatus('設定の読み込みに失敗しました', 'error');
+    showStatus('Failed to load settings', 'error');
   }
 }
 
-// リアクションセリフ追加ボタン
+// Add-reaction-line button
 if (btnAddTouchQuote) {
   btnAddTouchQuote.addEventListener('click', () => {
-    currentQuotes.touch_reactions.push('呼んだ？');
-    renderSimpleQuotesList(touchQuotesListEl, currentQuotes.touch_reactions, 'リアクションセリフが登録されていません。');
+    currentQuotes.touch_reactions.push('Did you call?');
+    renderSimpleQuotesList(touchQuotesListEl, currentQuotes.touch_reactions, 'No reaction lines are registered.');
   });
 }
 
-// 通常つぶやき追加ボタン
+// Add-regular-remark button
 if (btnAddIdleQuote) {
   btnAddIdleQuote.addEventListener('click', () => {
-    currentQuotes.default_idle_quotes.push('今日もがんばろうね！');
-    renderSimpleQuotesList(idleQuotesListEl, currentQuotes.default_idle_quotes, '通常つぶやきセリフが登録されていません。');
+    currentQuotes.default_idle_quotes.push("Let's do our best today!");
+    renderSimpleQuotesList(idleQuotesListEl, currentQuotes.default_idle_quotes, 'No regular remark lines are registered.');
   });
 }
 
-// 時間帯別つぶやき追加ボタン
+// Add time-of-day remark button
 if (btnAddMorningQuote) {
   btnAddMorningQuote.addEventListener('click', () => {
     if (!currentQuotes.time_specific_quotes) currentQuotes.time_specific_quotes = { morning: [], afternoon: [], evening: [], night: [] };
-    currentQuotes.time_specific_quotes.morning.push('おはよう！今日も一日がんばろうね！');
-    renderSimpleQuotesList(morningQuotesListEl, currentQuotes.time_specific_quotes.morning, '朝のセリフが登録されていません。');
+    currentQuotes.time_specific_quotes.morning.push("Good morning! Let's make today a great day!");
+    renderSimpleQuotesList(morningQuotesListEl, currentQuotes.time_specific_quotes.morning, 'No morning lines are registered.');
   });
 }
 
 if (btnAddAfternoonQuote) {
   btnAddAfternoonQuote.addEventListener('click', () => {
     if (!currentQuotes.time_specific_quotes) currentQuotes.time_specific_quotes = { morning: [], afternoon: [], evening: [], night: [] };
-    currentQuotes.time_specific_quotes.afternoon.push('こんにちは！お昼からもファイトだよ！');
-    renderSimpleQuotesList(afternoonQuotesListEl, currentQuotes.time_specific_quotes.afternoon, '昼のセリフが登録されていません。');
+    currentQuotes.time_specific_quotes.afternoon.push("Good afternoon! Let's keep going strong!");
+    renderSimpleQuotesList(afternoonQuotesListEl, currentQuotes.time_specific_quotes.afternoon, 'No afternoon lines are registered.');
   });
 }
 
 if (btnAddEveningQuote) {
   btnAddEveningQuote.addEventListener('click', () => {
     if (!currentQuotes.time_specific_quotes) currentQuotes.time_specific_quotes = { morning: [], afternoon: [], evening: [], night: [] };
-    currentQuotes.time_specific_quotes.evening.push('今日も一日お疲れさま！よくがんばったね！');
-    renderSimpleQuotesList(eveningQuotesListEl, currentQuotes.time_specific_quotes.evening, '夕方のセリフが登録されていません。');
+    currentQuotes.time_specific_quotes.evening.push('Great work today! You did so well!');
+    renderSimpleQuotesList(eveningQuotesListEl, currentQuotes.time_specific_quotes.evening, 'No evening lines are registered.');
   });
 }
 
 if (btnAddNightQuote) {
   btnAddNightQuote.addEventListener('click', () => {
     if (!currentQuotes.time_specific_quotes) currentQuotes.time_specific_quotes = { morning: [], afternoon: [], evening: [], night: [] };
-    currentQuotes.time_specific_quotes.night.push('夜更かししすぎないようにね！');
-    renderSimpleQuotesList(nightQuotesListEl, currentQuotes.time_specific_quotes.night, '深夜のセリフが登録されていません。');
+    currentQuotes.time_specific_quotes.night.push('Try not to stay up too late!');
+    renderSimpleQuotesList(nightQuotesListEl, currentQuotes.time_specific_quotes.night, 'No late-night lines are registered.');
   });
 }
 
-// 新しい動画設定の追加
+// Add a new video setting
 if (btnAddVideo) {
   btnAddVideo.addEventListener('click', () => {
-    const fileName = prompt('追加する動画ファイル名を入力してください（例: dance.mp4）:');
+    const fileName = prompt('Enter the video file name to add (e.g. dance.mp4):');
     if (!fileName || !fileName.trim()) return;
 
     const cleanName = fileName.trim().toLowerCase();
@@ -453,7 +453,7 @@ if (btnAddVideo) {
     if (!currentQuotes.videos) currentQuotes.videos = {};
 
     if (currentQuotes.videos[validName]) {
-      alert(`「${validName}」は既に登録されています。`);
+      alert(`"${validName}" is already registered.`);
       return;
     }
 
@@ -465,21 +465,21 @@ if (btnAddVideo) {
       duration_sec: 25,
       weight: 2,
       quote_probability: 1.0,
-      quotes: ['新しい動画のアクションだよ！']
+      quotes: ['This is a new video action!']
     };
 
     renderVideoList();
   });
 }
 
-// 音量スライダー変更時
+// When the volume slider changes
 if (inputSoundVolume) {
   inputSoundVolume.addEventListener('input', (e) => {
     if (soundVolumeDisplay) soundVolumeDisplay.textContent = `${e.target.value}%`;
   });
 }
 
-// テスト再生処理 (Web Audio API)
+// Test playback (Web Audio API)
 let settingsAudioCtx = null;
 function playTestPreviewSound() {
   if (!settingsAudioCtx) {
@@ -493,7 +493,7 @@ function playTestPreviewSound() {
 
   const isEnabled = toggleSoundEnabled ? toggleSoundEnabled.checked : true;
   if (!isEnabled) {
-    showStatus('効果音が無効化されています（トグルをONにすると音が鳴ります）', 'error');
+    showStatus('Sound effects are disabled (turn the toggle ON to hear sound)', 'error');
     return;
   }
 
@@ -501,7 +501,7 @@ function playTestPreviewSound() {
   const ctx = settingsAudioCtx;
   const now = ctx.currentTime;
 
-  // 1. ピコン♪ 通知音
+  // 1. Ping♪ notification sound
   const osc1 = ctx.createOscillator();
   const gain1 = ctx.createGain();
   osc1.type = 'sine';
@@ -525,7 +525,7 @@ function playTestPreviewSound() {
   osc2.start(now + 0.08);
   osc2.stop(now + 0.35);
 
-  // 2. カタカタカタ… 打鍵音（通知音の直後、0.38秒後に70ms間隔で7打鍵プレビュー）
+  // 2. Tap-tap-tap… keystroke sounds (right after the notification sound, 7 keystrokes previewed at 70ms intervals starting 0.38s later)
   const configs = [
     { startFreq: 1400, endFreq: 480, lowFreq: 320, noiseMix: 0.08 },
     { startFreq: 1250, endFreq: 420, lowFreq: 280, noiseMix: 0.06 },
@@ -563,7 +563,7 @@ if (btnTestSound) {
   btnTestSound.addEventListener('click', playTestPreviewSound);
 }
 
-// マスコット表示サイズ（スケール）のリアルタイム切替 (Issue #25)
+// Real-time mascot display size (scale) switching (Issue #25)
 scaleRadios.forEach(radio => {
   radio.addEventListener('change', async (e) => {
     if (e.target.checked) {
@@ -576,13 +576,13 @@ scaleRadios.forEach(radio => {
   });
 });
 
-// フォルダを開くボタン
+// Open-folder buttons
 btnOpenAvatarsDir.addEventListener('click', async () => {
   try {
     await invoke('open_avatar_dir', { target: 'avatars' });
   } catch (err) {
     console.error(err);
-    showStatus('フォルダを開けませんでした', 'error');
+    showStatus('Could not open the folder', 'error');
   }
 });
 
@@ -591,13 +591,13 @@ btnOpenPluginDir.addEventListener('click', async () => {
     await invoke('open_avatar_dir', { target: 'plugin' });
   } catch (err) {
     console.error(err);
-    showStatus('フォルダを開けませんでした', 'error');
+    showStatus('Could not open the folder', 'error');
   }
 });
 
-// デフォルト設定にリセット
+// Reset to default settings
 btnResetDefaults.addEventListener('click', () => {
-  if (!confirm('タイマー設定とセリフ設定を初期状態にリセットしますか？')) return;
+  if (!confirm('Reset the timer and line settings to their initial state?')) return;
 
   if (inputIdleThreshold) inputIdleThreshold.value = 180;
   if (inputActionInterval) inputActionInterval.value = 180;
@@ -627,39 +627,39 @@ btnResetDefaults.addEventListener('click', () => {
 
   currentQuotes = {
     touch_reactions: [
-      "はーい！呼んだ？",
-      "なになに〜？",
-      "ここにいるよ！",
-      "がんばろうね！",
-      "何か聞きたいことある？",
-      "えへへ、よろしくね！"
+      "Yaaay! Did you call me?",
+      "What is it~?",
+      "I'm right here!",
+      "Let's do our best!",
+      "Got something you want to ask?",
+      "Hehe, nice to meet you!"
     ],
     default_idle_quotes: [
-      "いつでも呼んでね！",
-      "今日もいい天気だね〜",
-      "お茶でも飲んで一息つこう！",
-      "何か手伝えることがあったら言ってね！"
+      "Call me anytime!",
+      "Such lovely weather today!",
+      "Let's have some tea and take a break!",
+      "Let me know if there's anything I can help with!"
     ],
     time_specific_quotes: {
       morning: [
-        "おはよう！今日も一日がんばろうね！",
-        "朝の空気、気持ちいいね！深呼吸してみて！",
-        "朝ごはんは食べた？しっかりエネルギー補給しよう！"
+        "Good morning! Let's make today a great day!",
+        "The morning air feels so fresh! Take a deep breath!",
+        "Did you eat breakfast? Let's fuel up properly!"
       ],
       afternoon: [
-        "こんにちは！お昼からもファイトだよ！",
-        "少し休憩してお茶でも飲まない？",
-        "集中しててすごい！でもたまには肩の力を抜いてね。"
+        "Good afternoon! Let's keep going strong!",
+        "How about a little break and some tea?",
+        "You're focusing so hard — amazing! But remember to relax your shoulders sometimes."
       ],
       evening: [
-        "今日も一日お疲れさま！よくがんばったね！",
-        "そろそろ夕暮れ時だね〜。今日の予定はひと段落ついた？",
-        "暗くなってきたね。目を休めながら進めよう！"
+        "Great work today! You did so well!",
+        "It's getting to sunset~. Are you about done with today's plans?",
+        "It's getting dark. Let's keep going while giving your eyes a rest!"
       ],
       night: [
-        "夜更かししすぎないようにね！",
-        "もう遅い時間だから、無理せず休んでね。",
-        "今日もたくさん進んだね！おやすみなさい…zzz"
+        "Try not to stay up too late!",
+        "It's already late, so take it easy and get some rest.",
+        "You got so much done today! Good night… zzz"
       ]
     },
     videos: {
@@ -672,9 +672,9 @@ btnResetDefaults.addEventListener('click', () => {
         weight: 2,
         quote_probability: 1.0,
         quotes: [
-          "もぐもぐ…たい焼き、甘くておいしい〜！",
-          "ちょっとおやつタイムにするね♪",
-          "頭を使ったあとは甘いものに限るね！"
+          "Nom nom… this taiyaki is so sweet and yummy!",
+          "Time for a little snack break♪",
+          "After using your brain, nothing beats something sweet!"
         ]
       },
       "makeup.mp4": {
@@ -686,9 +686,9 @@ btnResetDefaults.addEventListener('click', () => {
         weight: 1,
         quote_probability: 1.0,
         quotes: [
-          "ちょっと身だしなみチェック中…♪",
-          "よし、今日もバッチリかな！",
-          "パタパタ…どう？似合うかな？"
+          "Just doing a quick appearance check…♪",
+          "Alright, looking perfect today!",
+          "Pat pat… how do I look?"
         ]
       },
       "sleeping.mp4": {
@@ -700,9 +700,9 @@ btnResetDefaults.addEventListener('click', () => {
         weight: 1,
         quote_probability: 1.0,
         quotes: [
-          "すやぁ…ちょっとだけうたた寝…",
-          "ふぁ〜…少し眠くなってきちゃった…zzZ",
-          "むにゃむにゃ…いつでも起こしてね…"
+          "Zzz… just a tiny nap…",
+          "Yaaawn… I'm getting a little sleepy… zzZ",
+          "Mumble mumble… wake me up anytime…"
         ]
       },
       "smartphone.mp4": {
@@ -714,9 +714,9 @@ btnResetDefaults.addEventListener('click', () => {
         weight: 3,
         quote_probability: 1.0,
         quotes: [
-          "スマホでちょっとトレンドチェック中〜",
-          "ふむふむ、面白いニュース見つけたよ！",
-          "何か新しい連絡きてないかな〜"
+          "Just checking the latest trends on my phone~",
+          "Hmm, I found some interesting news!",
+          "I wonder if there's any new message~"
         ]
       },
       "waking.mp4": {
@@ -728,9 +728,9 @@ btnResetDefaults.addEventListener('click', () => {
         weight: 3,
         quote_probability: 1.0,
         quotes: [
-          "ふぁ〜、背伸び！リフレッシュ完了！",
-          "ずっと座ってたから、ちょっとストレッチ♪",
-          "いつでも動けるように準備万端だよ！"
+          "Yaaawn, big stretch! Feeling refreshed!",
+          "I've been sitting so long — time for a little stretch♪",
+          "All ready to jump into action anytime!"
         ]
       },
       "working.mp4": {
@@ -742,19 +742,19 @@ btnResetDefaults.addEventListener('click', () => {
         weight: 4,
         quote_probability: 1.0,
         quotes: [
-          "カタカタ…次のタスクの予習をしておくね！",
-          "今のうちにちょっとメモを整理中…",
-          "いつでもサポートできるように準備中だよ！"
+          "Tap tap… let me prep for the next task!",
+          "Tidying up my notes while I have a moment…",
+          "Getting ready so I can support you anytime!"
         ]
       }
     }
   };
 
   renderAllQuotes();
-  showStatus('初期設定の値をフォームに読み込みました。「保存して適用」を押すと反映されます。');
+  showStatus('Loaded the default values into the form. Press "Save and Apply" to apply them.');
 });
 
-// 保存処理
+// Save
 btnSave.addEventListener('click', async () => {
   try {
     currentSetting.idle_threshold_sec = parseInt(inputIdleThreshold.value, 10) || 180;
@@ -787,14 +787,14 @@ btnSave.addEventListener('click', async () => {
       await invoke('set_mascot_scale', { scale: checkedScale.value });
     }
 
-    showStatus('設定を保存してマスコットへ適用しました！', 'success');
+    showStatus('Settings saved and applied to the mascot!', 'success');
   } catch (err) {
     console.error('Failed to save configs:', err);
-    showStatus(`保存エラー: ${err}`, 'error');
+    showStatus(`Save error: ${err}`, 'error');
   }
 });
 
-// キャンセル / 閉じる
+// Cancel / close
 btnCancel.addEventListener('click', async () => {
   try {
     await invoke('close_settings_window');
@@ -804,5 +804,5 @@ btnCancel.addEventListener('click', async () => {
   }
 });
 
-// 初期ロード
+// Initial load
 document.addEventListener('DOMContentLoaded', loadConfigs);
