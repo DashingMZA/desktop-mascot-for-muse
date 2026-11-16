@@ -373,6 +373,7 @@ Left-click toggles between the session screen ⇄ mascot.
 | v1.1.8 | App name and Git repository name changed to Desktop Mascot for Muse (Issue #64) |
 | v1.1.9 | Support for shortcut-labeled items in the two-level Settings menu (Settings Ctrl+,) and generic popover elements (Issue #67) |
 | v1.1.10 | Integration of beginner-friendly "one-click shortcuts" into quick one-line input (Issue #68) |
+| v1.1.11 | English-only project, Meta Accounts Center login redirects kept in-app (facebook.com, instagram.com, meta.com), Rust edition 2024 compatibility, pnpm migration, Tauri signing config |
 
 ---
 

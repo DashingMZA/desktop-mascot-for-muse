@@ -2358,6 +2358,20 @@ async fn inspect_session_reload_safety(app: AppHandle) -> Result<serde_json::Val
     run_bridge_action(&session, "inspect_reload_safety", &serde_json::json!({}), 3000).await
 }
 
+/// URL a session reload should land on. A blank session can never be fixed
+/// by reloading: reloading `about:blank` just returns `about:blank`, and the
+/// restore branch in `reload_session` only runs for `https://` before-urls.
+/// So a blank (or empty) session navigates to the Muse session URL instead.
+/// Any real page — including a mid-login auth page — reloads in place, so a
+/// reload never yanks the user out of an OAuth redirect.
+fn session_reload_target_url(before_url: &str) -> &str {
+    if before_url == "about:blank" || before_url.is_empty() {
+        SESSION_URL
+    } else {
+        before_url
+    }
+}
+
 #[tauri::command]
 async fn reload_session(
     app: AppHandle,
@@ -2475,7 +2489,32 @@ async fn reload_session(
         &format!("reason={}, force={}, before_url={}", reason_str, is_force, before_url),
     );
 
-    if let Err(e) = session.reload() {
+    // Self-heal a blank session: a plain reload of about:blank just returns
+    // about:blank, so navigate to the Muse session URL instead. Any real
+    // page reloads in place (see session_reload_target_url).
+    let target_url = session_reload_target_url(&before_url);
+    let from_blank = before_url == "about:blank" || before_url.is_empty();
+    if from_blank {
+        append_recovery_log(
+            &app,
+            "reload_navigate_blank",
+            &format!(
+                "reason={}, before_url={} (navigating to session URL)",
+                reason_str, before_url
+            ),
+        );
+        if let Ok(target) = SESSION_URL.parse::<tauri::Url>() {
+            if let Err(e) = session.navigate(target) {
+                let msg = format!("Session navigate failed: {}", e);
+                append_recovery_log(
+                    &app,
+                    "reload_failed",
+                    &format!("reason={}, error={}, before_url={}", reason_str, msg, before_url),
+                );
+                return Err(msg);
+            }
+        }
+    } else if let Err(e) = session.reload() {
         let msg = format!("Session reload failed: {}", e);
         append_recovery_log(
             &app,
@@ -2489,9 +2528,12 @@ async fn reload_session(
         .await
         .unwrap_or(false);
     let mut after_url = session.url().ok().map(|u| u.to_string()).unwrap_or_default();
-    let mut url_matched = is_same_chat_url(&before_url, &after_url);
+    let mut url_matched = is_same_chat_url(target_url, &after_url);
 
-    if !url_matched && before_url.starts_with("https://") {
+    // Only restore when an existing https page was reloaded: a blank session
+    // was already navigated to its target above, and re-navigating would just
+    // repeat the site's own redirect (e.g. to the login page).
+    if !from_blank && !url_matched && before_url.starts_with("https://") {
         append_recovery_log(
             &app,
             "reload_url_mismatch",
@@ -3254,6 +3296,30 @@ mod tests {
             "https://muse.ai/"
         ));
         assert!(!is_same_chat_url("", "https://muse.ai/"));
+    }
+
+    #[test]
+    fn test_session_reload_target_url() {
+        // A blank session must navigate to the Muse session URL: reloading
+        // about:blank just returns about:blank (2026-11-16: reload_incomplete
+        // with before_url=about:blank, after_url=about:blank).
+        assert_eq!(session_reload_target_url("about:blank"), SESSION_URL);
+        assert_eq!(session_reload_target_url(""), SESSION_URL);
+        // Any real page reloads in place.
+        assert_eq!(
+            session_reload_target_url("https://muse.ai/?__pwa=1"),
+            "https://muse.ai/?__pwa=1"
+        );
+        assert_eq!(
+            session_reload_target_url("https://muse.ai/thread/abc"),
+            "https://muse.ai/thread/abc"
+        );
+        // Even a mid-login auth page reloads in place (do not yank the user
+        // out of an OAuth redirect back to Muse).
+        assert_eq!(
+            session_reload_target_url("https://auth.meta.com/aymh/redirect-cycle/?t=6"),
+            "https://auth.meta.com/aymh/redirect-cycle/?t=6"
+        );
     }
 
     #[test]
