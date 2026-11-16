@@ -34,6 +34,13 @@ src-tauri/assets/avatars/plugin/*.mp4
 *.sln
 *.sw?
 
+# Env
+.env*
+!.env.example
+
+#Key
+MascotMuseAI.key
+MascotMuseAI.key.pub
 
 # Automated test outputs
 test-results/
