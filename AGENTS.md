@@ -9,7 +9,7 @@
 ビルド、パッケージング、ドキュメント更新、および GitHub Release 作業を行う際は、**ワークスペース内に古いファイルや一時ファイルのゴミが絶対に残らないよう** 以下を徹底すること：
 
 1. **配布用 ZIP アーカイブの整理（ルートディレクトリ）**
-   - 新しいバージョン（例: `desktop-mascot-for-muse-v1.1.8-windows-x64.zip`）を作成・配置する際は、直前に必ず古いバージョンの ZIP ファイル（`*-v*.zip`）を削除すること。
+   - 配布用 ZIP（`desktop-mascot-for-muse-windows-x64.zip`）を作成・配置する際は、直前に必ず古いバージョン付き ZIP ファイル（`*-v*.zip`）や既存の同名 ZIP を削除・上書きすること。
 2. **`dist/` フォルダの最新化またはクリーンアップ**
    - `dist/` フォルダが存在する場合、リリースビルド完了時に必ず `dist/desktop-mascot-for-muse.exe`、`dist/README.md`、`dist/avatars/setting.json`、`dist/avatars/plugin/quotes.json` を最新ビルドの成果物で上書き更新すること（古いバージョンの `.exe` を放置しない）。
 3. **ドキュメント・画像差し替え時の不要ファイル削除（`docs/` 等）**
@@ -42,7 +42,11 @@
 - **開発・各 Issue の動作確認時（`dev/*` ブランチ等）**:
   - ビルド時間の短縮のため、**Debug ビルド（`cargo build`）** で実施し、生成された `src-tauri/target/debug/desktop-mascot-for-muse.exe` を `dist/desktop-mascot-for-muse.exe` へ配置して動作確認を行うこと（配布用 ZIP やインストーラの作成はスキップ）。
 - **Release 時（`main` ブランチへマージする直前）**:
-  - バージョンの全機能が揃い、ユーザーから「Releaseします！」と指示された `main` マージ直前のタイミングでのみ、**Release ビルドおよびインストーラ作成（`npm run build:installer` / `npx tauri build`）** を行い、最適化された `.exe` を `dist/` へ上書き配置し、配布用 ZIP アーカイブ（`desktop-mascot-for-muse-v*.zip`）および NSIS セットアップインストーラを作成・Release へ添付すること。通常開発時はインストーラ作成を行わないこと。
+  - バージョンの全機能が揃い、ユーザーから「Releaseします！」と指示された `main` マージ直前のタイミングでのみ、**Release ビルドおよびインストーラ作成（`npm run build:installer` / `npx tauri build`）** を行い、最適化された `.exe` を `dist/` へ上書き配置し、配布用 ZIP アーカイブおよび NSIS セットアップインストーラを作成・Release へ添付すること。通常開発時はインストーラ作成を行わないこと。
+  - **Release 添付アセットの固定名統一ルール（v1.1.9 以降）**:
+    - 紹介ページの固定リンク（`releases/latest/download/...`）運用のため、GitHub Release へ添付するアセットは**バージョン番号を含まない固定名（無印）のみ**とし、版付きアセットは添付しないこと。
+      - インストーラ：`Desktop-Mascot-for-Muse_x64-setup.exe`（ビルド生成物 `Desktop Mascot for Muse_<version>_x64-setup.exe` を当該固定名でアップロード）
+      - ZIP アーカイブ：`desktop-mascot-for-muse-windows-x64.zip`
   - **Release 前ドキュメント同期チェックリスト**（ビルド・タグ打ちの前に必ず確認すること）：
     1. `git log <前回タグ>..HEAD --oneline` で対象バージョンの全変更（Issue）を洗い出す。
     2. `README.md` のバージョンバッジ（`version-vX.Y.Z`）および記載内容を最新化し、`dist/README.md` へ同期する。
