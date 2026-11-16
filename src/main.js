@@ -431,7 +431,7 @@ function startTypingLoop(text) {
       currentTypingIdx++;
       scrollMascotBubbleToBottom();
       // Play the tap-tap typing sound for anything other than spaces and newlines
-      if (char !== ' ' && char !== '\n' && char !== '\r' && char !== '\t' && char !== '　') {
+      if (char !== ' ' && char !== '\n' && char !== '\r' && char !== '\t') {
         playTypingSound();
       }
     } else {
@@ -1058,9 +1058,9 @@ function extractAndStoreLiveQuotes(text) {
   for (let line of rawLines) {
     line = line
       .trim()
-      .replace(/^[-*・•]\s*/, '')
-      .replace(/^\d+[.)．、]\s*/, '')
-      .replace(/^「(.*)」$/, '$1')
+      .replace(/^[-*•]\s*/, '')
+      .replace(/^\d+[.)]\s*/, '')
+      .replace(/^"(.*)"$/, '$1')
       .trim();
 
     if (!line) continue;
@@ -1748,7 +1748,7 @@ async function syncAvatarStateWithMuse() {
         const normalizedStatus = statusText.replace(/^(\p{Emoji}|[\u2600-\u27BF]|\s)+/gu, '').trim().toLowerCase();
         const isAvatarNameOnly = Boolean(currentAvatarName) && normalizedStatus === currentAvatarName;
         const effectiveStatusText = isAvatarNameOnly ? '' : statusText;
-        const isIdleText = effectiveStatusText && /リンク|オンライン|待機|接続|ready|idle|online|connected/i.test(effectiveStatusText);
+        const isIdleText = effectiveStatusText && /ready|idle|online|connected/i.test(effectiveStatusText);
         if (state === 'idle' || isIdleText) {
           avatarStatusPillEl.classList.add('hidden');
         } else {

@@ -166,7 +166,7 @@ All items passed. It was proven that the design premise (the DOM read/write appr
    - Inside the session WebView, `fetch(video.src)` → get the blob and pass it to the local UI side, allowing the real animation to loop-play
 3. **Message read/write: ✅**
    - Reading: The latest N items can be obtained with senders distinguished from `[class*="group/msg"]` (the inner `span.sr-only.whitespace-pre` / `.hatch-chat-groupable-bubble`)
-   - Writing: Setting a React native value setter + firing an input event on `<textarea placeholder="メッセージ">` enables `button[aria-label="送信"]`, and `.click()` sends it
+   - Writing: Setting a React native value setter + firing an input event on `<textarea placeholder="Message">` enables `button[aria-label="Send"]`, and `.click()` sends it
 4. **Usage limit: ✅ (real values)**
    - Location: Settings (`button.hatch-dock-reveal-item`) > General > Usage
    - Elements obtained: plan name `span.text-body.text-text-primary` / usage rate `span.text-subheadline` (e.g. "17% used" → can be turned into a remaining-amount gauge) / reset date `p.text-footnote`
@@ -192,7 +192,7 @@ All items passed. It was proven that the design premise (the DOM read/write appr
 The biggest remaining risk is "Muse's web UI changes break the DOM selectors". Since there is no public API, this risk itself cannot be eliminated, so instead of "make it harder to break", the policy is to "**break safely, visibly, and in a way that is easy to fix**".
 
 1. **Fallback (degraded operation)**: A feature whose selector is not found is not left silently misbehaving; disable only that feature and show "Integration is temporarily unavailable". Since the R7 full-UI toggle always works, at worst it still functions as a "launcher to open the official screen"
-2. **Multiple selectors**: Hold several candidates per element. Prioritize high-stability attributes (`aria-label="送信"`, `placeholder`, and other accessibility attributes, which tend to survive screen revisions) and keep class names (`hatch-*` ones may change in revisions) as backups
+2. **Multiple selectors**: Hold several candidates per element. Prioritize high-stability attributes (`aria-label="Send"`, `placeholder`, and other accessibility attributes, which tend to survive screen revisions) and keep class names (`hatch-*` ones may change in revisions) as backups
 3. **Startup health check**: At startup, check that each selector is alive and show the state of R1/R2/R3/R5 in the UI in a small form. Make breakage noticeable right away and eliminate silent failures
 4. **Minimizing fix cost**: Selectors are already consolidated in the one session-bridge file (design §4). Keep the structure so that, in principle, a web-side change can be fixed by replacing that file
 5. **Stating the premise explicitly**: This approach has the same structure as google-ai-limit-monitor depending on Antigravity's internal specification. For personal use, the "fix it when it breaks" cost is acceptable, but for Store sales it needs to be reconsidered as in §13

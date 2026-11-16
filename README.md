@@ -54,7 +54,7 @@ It normally sits unobtrusively in a corner of the desktop as a circular avatar m
       </td>
       <td align="center">
         <img src="docs/mascot_status_danger.png" alt="Danger (red frame, 15% + unread notification badge)" width="170" /><br />
-        <b><code>[ Lucky 15% ]</code> ＋ 🔴<code>1</code></b>
+        <b><code>[ Lucky 15% ]</code> + 🔴<code>1</code></b>
       </td>
     </tr>
   </table>

@@ -8,11 +8,9 @@
  *
  * Transport: Document Title Bridge (instant messaging + chunked handshake Pull)
  *
- * NOTE ON JAPANESE STRINGS IN THIS FILE: Muse's own web UI can be displayed
- * in Japanese, so Japanese selector / regex / label matches are DELIBERATELY
- * KEPT here as fallbacks. Every Japanese match has an English equivalent
- * alongside it; do not remove the Japanese alternatives, or matching will
- * break for users whose Muse UI is in Japanese.
+ * NOTE ON LANGUAGE: this bridge is English-only. It matches Muse's web UI
+ * in English only; if the Muse UI is displayed in another language (e.g.
+ * Japanese), the selectors and label matches below will not recognise it.
  */
 
 window.__MUSE_STORE__ = window.__MUSE_STORE__ || {};
@@ -24,8 +22,7 @@ window.__MUSE_FETCHING_LIMIT__ = window.__MUSE_FETCHING_LIMIT__ || false;
  * §17.2 Multiplexed selector definitions
  * Accessibility attributes (aria-label, placeholder, .sr-only) take top
  * priority; volatile class names (hatch-*, group/msg) are backup candidates.
- * Japanese matches are kept as fallbacks for a Japanese Muse UI; each has
- * an English equivalent alongside it.
+ * Selectors match Muse's English UI only.
  */
 const SELECTORS = {
   avatarVideo: [
@@ -41,52 +38,32 @@ const SELECTORS = {
     '[class*="hatch-chat-groupable-bubble"]'
   ],
   chatInput: [
-    'textarea[placeholder*="メッセージ"]',
     'textarea[placeholder*="Message"]',
-    'textarea[aria-label*="メッセージ"]',
     'textarea[aria-label*="Message"]',
-    '[role="textbox"][aria-label*="メッセージ"]',
     '[role="textbox"][aria-label*="Message"]',
     'main textarea',
     'textarea:not([readonly])'
   ],
   sendButton: [
-    'button[aria-label="送信"]:not([disabled])',
     'button[aria-label="Send"]:not([disabled])',
-    'button[aria-label*="送信"]:not([disabled])',
     'button[aria-label*="Send"]:not([disabled])',
     'button[aria-label*="send" i]:not([disabled])',
     'button[type="submit"]:not([disabled])'
   ],
   settingsButton: [
-    'button[aria-label="設定"]',
-    'button[aria-label*="設定"]',
-    'button[title*="設定"]',
-    'a[aria-label="設定"]',
-    'a[aria-label*="設定"]',
-    'a[title*="設定"]',
     'button[aria-label*="settings" i]',
     'button[title*="settings" i]',
     'a[aria-label*="settings" i]',
     'a[title*="settings" i]',
-    'button.hatch-dock-reveal-item[aria-label*="設定"]',
-    '[role="button"][aria-label*="設定"]',
     '[role="button"][aria-label*="settings" i]',
     '[data-testid*="settings" i]'
   ],
   chatNavButton: [
-    'button[aria-label="チャット"]',
-    'button[aria-label*="チャット"]',
-    'a[aria-label="チャット"]',
-    'a[aria-label*="チャット"]',
     'button[aria-label*="chat" i]',
     'a[aria-label*="chat" i]'
   ],
   modalCloseButton: [
-    '[role="dialog"] button[aria-label="閉じる"]',
-    '[role="dialog"] button[aria-label*="閉じる"]',
     '[role="dialog"] button[aria-label*="close" i]',
-    'button[aria-label="閉じる"]',
     'button[aria-label*="close" i]'
   ]
 };
@@ -108,12 +85,11 @@ function queryAllFirst(candidates, root = document) {
       if (list.length > 0) return { list, selector: sel };
     } catch (_) {}
   }
-  // Fallback: parents of elements whose sr-only text is "自分:" / "アシスタントメッセージ:"
-  // ("You:" / "Assistant message:" in English; Japanese kept as a fallback)
+  // Fallback: parents of elements whose sr-only text is "You:" / "Assistant message:"
   try {
     const srSpans = Array.from(root.querySelectorAll('span.sr-only')).filter(s => {
       const t = (s.textContent || '').trim();
-      return t.startsWith('自分:') || t.startsWith('アシスタントメッセージ:') || t.startsWith('You:') || t.startsWith('Assistant message:');
+      return t.startsWith('You:') || t.startsWith('Assistant message:');
     });
     if (srSpans.length > 0) {
       return {
@@ -139,7 +115,7 @@ function findActiveStopButton() {
     if (style && (style.display === 'none' || style.visibility === 'hidden')) continue;
     const label = `${btn.getAttribute('aria-label') || ''} ${btn.getAttribute('title') || ''}`.trim();
     if (!label) continue;
-    if (/停止/.test(label) || /(?:^|[\s_-])stop(?:$|[\s_-])/i.test(label)) {
+    if (/(?:^|[\s_-])stop(?:$|[\s_-])/i.test(label)) {
       return btn;
     }
   }
@@ -184,7 +160,7 @@ function scanDomForLimit() {
   const planEl = document.querySelector('span.text-body.text-text-primary, [class*="plan" i]');
   if (planEl) {
     const t = (planEl.textContent || '').trim();
-    if (t.includes('プラン') || t.includes('Plan') || t.includes('Free') || t.includes('無料') || t.includes('Pro')) {
+    if (t.includes('Plan') || t.includes('Free') || t.includes('Pro')) {
       planName = t;
     }
   }
@@ -206,7 +182,7 @@ function scanDomForLimit() {
     if (p !== null) {
       const container = bar.closest('[role="dialog"], [class*="modal" i], div');
       const parentTxt = (container?.innerText || container?.textContent || '').toLowerCase();
-      if (parentTxt.includes('残り') || parentTxt.includes('left') || parentTxt.includes('remaining')) {
+      if (parentTxt.includes('left') || parentTxt.includes('remaining')) {
         remainingPercent = p;
         usedPercent = 100 - p;
       } else {
@@ -221,7 +197,7 @@ function scanDomForLimit() {
   const allText = document.body ? (document.body.innerText || document.body.textContent || '') : '';
   if (allText) {
     if (usedPercent === null) {
-      const mUsed = allText.match(/(\d+(?:\.\d+)?)\s*%\s*(?:使用済み|使用|used|consumed)/i);
+      const mUsed = allText.match(/(\d+(?:\.\d+)?)\s*%\s*(?:used|consumed)/i);
       if (mUsed) {
         usedPercent = Math.round(parseFloat(mUsed[1]));
         if (remainingPercent === null) {
@@ -230,8 +206,8 @@ function scanDomForLimit() {
       }
     }
     if (remainingPercent === null) {
-      const mRem1 = allText.match(/(?:残り|残|remaining|left)\s*[:：]?\s*(\d+(?:\.\d+)?)\s*%/i);
-      const mRem2 = allText.match(/(\d+(?:\.\d+)?)\s*%\s*(?:残り|残|remaining|left)/i);
+      const mRem1 = allText.match(/(?:remaining|left)\s*:?\s*(\d+(?:\.\d+)?)\s*%/i);
+      const mRem2 = allText.match(/(\d+(?:\.\d+)?)\s*%\s*(?:remaining|left)/i);
       if (mRem1) {
         remainingPercent = Math.round(parseFloat(mRem1[1]));
         if (usedPercent === null) usedPercent = Math.max(0, 100 - remainingPercent);
@@ -241,7 +217,7 @@ function scanDomForLimit() {
       }
     }
     if (!resetText) {
-      const mReset = allText.match(/(\d+週間の上限は[^\n。]*リセットされます|\d+月\d+日にリセットされます|リセット\s*[:：]?\s*[^\n。]+|(?:weekly limit\s+)?resets?\s+on\s+[^\n.]+|will\s+reset\s+[^\n.]+|reset\s*[:：]?\s*[^\n.]+)/i);
+      const mReset = allText.match(/((?:weekly limit\s+)?resets?\s+on\s+[^\n.]+|will\s+reset\s+[^\n.]+|reset\s*:?\s*[^\n.]+)/i);
       if (mReset) {
         resetText = mReset[1].trim();
       }
@@ -256,15 +232,15 @@ function scanDomForLimit() {
       const txt = (node.textContent || '').trim();
       if (!txt) continue;
       if (usedPercent === null) {
-        const matchUsed = txt.match(/(\d+(?:\.\d+)?)\s*%\s*(?:使用済み|使用|used|consumed)/i);
+        const matchUsed = txt.match(/(\d+(?:\.\d+)?)\s*%\s*(?:used|consumed)/i);
         if (matchUsed) {
           usedPercent = Math.round(parseFloat(matchUsed[1]));
           if (remainingPercent === null) remainingPercent = Math.max(0, 100 - usedPercent);
         }
       }
       if (remainingPercent === null) {
-        const matchRem1 = txt.match(/(?:残り|残|remaining|left)\s*[:：]?\s*(\d+(?:\.\d+)?)\s*%/i);
-        const matchRem2 = txt.match(/(\d+(?:\.\d+)?)\s*%\s*(?:残り|残|remaining|left)/i);
+        const matchRem1 = txt.match(/(?:remaining|left)\s*:?\s*(\d+(?:\.\d+)?)\s*%/i);
+        const matchRem2 = txt.match(/(\d+(?:\.\d+)?)\s*%\s*(?:remaining|left)/i);
         if (matchRem1) {
           remainingPercent = Math.round(parseFloat(matchRem1[1]));
           if (usedPercent === null) usedPercent = Math.max(0, 100 - remainingPercent);
@@ -274,7 +250,7 @@ function scanDomForLimit() {
         }
       }
       if (!resetText) {
-        const matchReset = txt.match(/(\d+週間の上限は[^\n。]*リセットされます|\d+月\d+日にリセットされます|リセット\s*[:：]?\s*[^\n。]+|(?:weekly limit\s+)?resets?\s+on\s+[^\n.]+|will\s+reset\s+[^\n.]+|reset\s*[:：]?\s*[^\n.]+)/i);
+        const matchReset = txt.match(/((?:weekly limit\s+)?resets?\s+on\s+[^\n.]+|will\s+reset\s+[^\n.]+|reset\s*:?\s*[^\n.]+)/i);
         if (matchReset) resetText = matchReset[1].trim();
       }
     }
@@ -292,32 +268,32 @@ function scanDomForLimit() {
 }
 
 function findGeneralTab() {
-  // 1. Prefer explicit tab / menu / button elements whose text is "一般" or "General"
+  // 1. Prefer explicit tab / menu / button elements whose text is "General"
   const interactiveCandidates = Array.from(
     document.querySelectorAll('[role="tab"], [role="menuitem"], button, a, [role="button"]')
   );
   const exactInteractive = interactiveCandidates.find(t => {
     const txt = (t.textContent || '').trim();
-    return txt === '一般' || /^general$/i.test(txt);
+    return /^general$/i.test(txt);
   });
   if (exactInteractive) return exactInteractive;
 
-  // 2. Leaf elements with no children (to avoid misclicking a parent container) whose text is "一般" or "General"
+  // 2. Leaf elements with no children (to avoid misclicking a parent container) whose text is "General"
   const leafCandidates = Array.from(
     document.querySelectorAll('button, a, [role="tab"], [role="menuitem"], [role="button"], div, span')
   );
   const exactLeaf = leafCandidates.find(t => {
     if (t.children.length > 0) return false;
     const txt = (t.textContent || '').trim();
-    return txt === '一般' || /^general$/i.test(txt) || (txt.length <= 10 && txt.includes('一般'));
+    return /^general$/i.test(txt);
   });
   return exactLeaf || null;
 }
 
 /**
- * Detect the "設定" / "Settings" item inside the popover menu that opens after
+ * Detect the "Settings" item inside the popover menu that opens after
  * clicking the first-level Settings button (Issue #63, #67).
- * Also handles shortcut notation (e.g. "設定Ctrl+," / "SettingsCtrl+,") and
+ * Also handles shortcut notation (e.g. "SettingsCtrl+,") and
  * popovers without role="dialog".
  */
 function findSettingsSubmenuItem(excludeEl) {
@@ -325,7 +301,7 @@ function findSettingsSubmenuItem(excludeEl) {
     if (!el || el === excludeEl) return false;
     const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
     if (!txt) return false;
-    return /^(?:設定|settings)(?:\s*(?:ctrl|cmd|command|alt|shift|meta|⌘|⌥|⌃|⇧)[^\n]{0,12})?$/i.test(txt);
+    return /^settings(?:\s*(?:ctrl|cmd|command|alt|shift|meta|⌘|⌥|⌃|⇧)[^\n]{0,12})?$/i.test(txt);
   };
 
   const scopes = Array.from(
@@ -346,7 +322,7 @@ function findSettingsSubmenuItem(excludeEl) {
   return fallbackCandidates.find(isMatch) || null;
 }
 
-// Passive watch: automatically cache the usage limit when the user or a script opens "設定 ＞ 一般" / "Settings > General" (Issue #49)
+// Passive watch: automatically cache the usage limit when the user or a script opens "Settings > General" (Issue #49)
 if (!window.__MUSE_PASSIVE_WATCHER__) {
   window.__MUSE_PASSIVE_WATCHER__ = setInterval(() => {
     try {
@@ -364,7 +340,7 @@ window.__MUSE_BRIDGE__ = {
    */
   extractAvatarName() {
     try {
-      // 1. Look for the line just before "リンク済み" / "Linked" in an ancestor container of the <video>
+      // 1. Look for the line just before "Linked" in an ancestor container of the <video>
       const { el: video } = queryFirst(SELECTORS.avatarVideo);
       let curr = video ? video.parentElement : null;
       for (let depth = 0; depth < 6 && curr; depth++) {
@@ -372,10 +348,10 @@ window.__MUSE_BRIDGE__ = {
           .split(/\n+/)
           .map(s => s.trim())
           .filter(s => s.length > 0 && s.length <= 24);
-        const linkIdx = lines.findIndex(l => l.includes('リンク済み') || l.includes('Linked'));
+        const linkIdx = lines.findIndex(l => l.includes('Linked'));
         if (linkIdx > 0) {
           const candidate = lines[linkIdx - 1];
-          if (candidate && !candidate.includes('招待') && !candidate.includes('Invite') && !candidate.includes('チャット') && !candidate.includes('Chat')) {
+          if (candidate && !candidate.includes('Invite') && !candidate.includes('Chat')) {
             window.__MUSE_CACHED_AVATAR_NAME__ = candidate;
             return candidate;
           }
@@ -383,9 +359,9 @@ window.__MUSE_BRIDGE__ = {
         curr = curr.parentElement;
       }
 
-      // 2. Search from the parent of a "リンク済み" / "Linked" element on the page
+      // 2. Search from the parent of a "Linked" element on the page
       const allEls = Array.from(document.querySelectorAll('span, div, p'));
-      const linkEl = allEls.find(e => e.children.length === 0 && ((e.textContent || '').trim() === 'リンク済み' || (e.textContent || '').trim() === 'Linked'));
+      const linkEl = allEls.find(e => e.children.length === 0 && (e.textContent || '').trim() === 'Linked');
       if (linkEl) {
         let p = linkEl.parentElement;
         for (let d = 0; d < 4 && p; d++) {
@@ -393,7 +369,7 @@ window.__MUSE_BRIDGE__ = {
             .split(/\n+/)
             .map(s => s.trim())
             .filter(s => s.length > 0 && s.length <= 24);
-          const idx = lines.findIndex(l => l.includes('リンク済み') || l.includes('Linked'));
+          const idx = lines.findIndex(l => l.includes('Linked'));
           if (idx > 0) {
             window.__MUSE_CACHED_AVATAR_NAME__ = lines[idx - 1];
             return lines[idx - 1];
@@ -461,7 +437,7 @@ window.__MUSE_BRIDGE__ = {
         curr = curr.parentElement;
       }
 
-      // 2. Get the status text under the avatar (e.g. "🛠️ is working", "リンク済み" / "Linked") (Issue #35)
+      // 2. Get the status text under the avatar (e.g. "🛠️ is working", "Linked") (Issue #35)
       let statusText = '';
       let statusEl = null;
 
@@ -471,7 +447,7 @@ window.__MUSE_BRIDGE__ = {
         return !!el.closest('main, [class*="chat" i], [class*="prose" i], [class*="group/msg" i], [role="log"], textarea');
       };
 
-      const STATUS_TEXT_REGEX = /動作中|リンク済み|考え中|思考|作業中|実行中|作成|生成|構築|描画|検索|調査|確認|返信|オンライン|待機中|待機|オフライン|準備完了|接続|working|thinking|making|creating|building|generating|searching|running|waiting|ready|idle|online|connected|linked|drawing|rendering|researching|checking|replying|offline/i;
+      const STATUS_TEXT_REGEX = /working|thinking|making|creating|building|generating|searching|running|waiting|ready|idle|online|connected|linked|drawing|rendering|researching|checking|replying|offline/i;
 
       // Priority search: look for the status string inside the container nearest to avatar video v, or near the avatar name (fixed XPaths have all been removed)
       try {
@@ -539,7 +515,7 @@ window.__MUSE_BRIDGE__ = {
         return { state: fiberState, statusText, source: 'fiber' };
       }
 
-      // 3. If the status text clearly indicates an idle state such as "リンク済み" / "Linked", map to idle; if it indicates activity, map to the matching state
+      // 3. If the status text clearly indicates an idle state such as "Linked", map to idle; if it indicates activity, map to the matching state
       const mapStatusTextToState = (txt) => {
         if (!txt) return null;
         const t = txt.trim();
@@ -547,19 +523,19 @@ window.__MUSE_BRIDGE__ = {
         if (validStates.has(lower)) {
           return normalizeState(lower);
         }
-        if (t === 'リンク済み' || t === 'Linked' || t === 'オンライン' || t === 'Online' || t === '待機中' || t === 'Waiting' || /接続|linked|online|idle|ready|connected/i.test(t)) {
+        if (t === 'Linked' || t === 'Online' || t === 'Waiting' || /linked|online|idle|ready|connected/i.test(t)) {
           return 'idle';
         }
-        if (/起動|目覚め|waking/i.test(t)) {
+        if (/waking/i.test(t)) {
           return 'waking';
         }
-        if (/歓喜|レベルアップ|達成|milestone|level.?up|celebrat|achievement/i.test(t)) {
+        if (/milestone|level.?up|celebrat|achievement/i.test(t)) {
           return 'milestone_level_up';
         }
-        if (/作成|生成|構築|描画|コード|ファイル|making|creating|building|generating|code|file/i.test(t)) {
+        if (/making|creating|building|generating|code|file/i.test(t)) {
           return 'making_something';
         }
-        if (/作業|考え|思考|返信|検索|調査|確認|サブエージェント|待機|実行|working|thinking|searching|waiting|running|replying|researching|checking|subagent/i.test(t)) {
+        if (/working|thinking|searching|waiting|running|replying|researching|checking|subagent/i.test(t)) {
           return 'working';
         }
         // Any other status text being shown is treated as working
@@ -601,7 +577,7 @@ window.__MUSE_BRIDGE__ = {
 
         const cached = window.__MUSE_BLOB_STATE_MAP__[currentBlob];
         if (cached && cached.state) {
-          // Even if the video Blob is idle, prefer the status display when the status text clearly indicates activity (anything other than "リンク済み" / "Linked")
+          // Even if the video Blob is idle, prefer the status display when the status text clearly indicates activity (anything other than "Linked")
           if (cached.state === 'idle' && textMappedState && textMappedState !== 'idle') {
             return {
               state: textMappedState,
@@ -712,8 +688,7 @@ window.__MUSE_BRIDGE__ = {
 
     // For extracting options (quick replies / suggestion buttons) (Issue #32)
     const systemKeywords = [
-      'コピー', 'オプション', '再生成', '評価', '編集', '共有', '削除', 'フィードバック',
-      '詳細', '閉じる', 'メニュー', 'いいね', '低評価', 'good', 'bad', 'copy', 'option',
+      'good', 'bad', 'copy', 'option',
       'details', 'like', 'dislike', 'rating',
       'edit', 'share', 'delete', 'retry', 'regenerate', 'feedback', 'menu', 'close'
     ];
@@ -755,7 +730,7 @@ window.__MUSE_BRIDGE__ = {
       const srText = srEl ? (srEl.textContent || '').trim() : '';
       const hasProse = !!el.querySelector('.prose');
       const rawElText = (el.innerText || '').trim();
-      const isUser = srText.startsWith('自分:') || srText.startsWith('You:') || (!hasProse && (rawElText.startsWith('自分:') || rawElText.startsWith('You:')));
+      const isUser = srText.startsWith('You:') || (!hasProse && rawElText.startsWith('You:'));
       const role = isUser ? 'user' : 'assistant';
 
       const { el: bubbleEl } = queryFirst(SELECTORS.messageBubble, el);
@@ -769,7 +744,7 @@ window.__MUSE_BRIDGE__ = {
       }
 
       let text = rawText
-        .replace(/^(自分:|アシスタントメッセージ:|You:|Assistant message:)\s*/i, '')
+        .replace(/^(You:|Assistant message:)\s*/i, '')
         .replace(/^[\s\uFEFF\xA0\u3000]+/g, '')
         .replace(/[\s\uFEFF\xA0\u3000]+$/g, '')
         .replace(/^[ \t\u3000]+/gm, '')
@@ -815,7 +790,7 @@ window.__MUSE_BRIDGE__ = {
     // Identify any message containing material-related keywords, if one exists
     const materialMsg = messageEls.slice().reverse().find(m => {
       const t = m.innerText || '';
-      return t.includes('素材') || t.includes('material') || t.includes('7パターン') || t.includes('7 patterns') || t.includes('MP4') || t.includes('idle');
+      return t.includes('material') || t.includes('7 patterns') || t.includes('MP4') || t.includes('idle');
     }) || targetMsg;
 
     function extractMedia(el) {
@@ -880,7 +855,7 @@ window.__MUSE_BRIDGE__ = {
 
     const recent = messageEls.slice(-5).map(m => {
       const sr = m.querySelector('.sr-only');
-      const role = sr && ((sr.textContent || '').includes('自分') || (sr.textContent || '').includes('You')) ? 'user' : 'assistant';
+      const role = sr && (sr.textContent || '').includes('You') ? 'user' : 'assistant';
       return {
         role,
         text: (m.innerText || '').trim()
@@ -933,7 +908,7 @@ window.__MUSE_BRIDGE__ = {
       if (!btn) return false;
       const label = (btn.getAttribute('aria-label') || btn.getAttribute('title') || btn.textContent || '').toLowerCase();
       const cls = (btn.className || '').toLowerCase();
-      return label.includes('stop') || label.includes('停止') || label.includes('キャンセル') || label.includes('cancel') || label.includes('interrupt') || cls.includes('stop');
+      return label.includes('stop') || label.includes('cancel') || label.includes('interrupt') || cls.includes('stop');
     };
 
     const { el: sendBtn } = queryFirst(SELECTORS.sendButton);
@@ -1035,13 +1010,13 @@ window.__MUSE_BRIDGE__ = {
 
     window.__MUSE_FETCHING_LIMIT__ = true;
     try {
-      // 2. When hidden, open "設定 ＞ 一般" / "Settings > General" to check, then explicitly return to the main chat per guardrail ③
+      // 2. When hidden, open "Settings > General" to check, then explicitly return to the main chat per guardrail ③
       const { el: settingsBtn, selector: settingsSel } = queryFirst(SELECTORS.settingsButton);
       if (settingsBtn) {
         const sBtnDesc = (settingsBtn.getAttribute('aria-label') || settingsBtn.getAttribute('title') || settingsBtn.textContent || '').trim().slice(0, 30);
         triggerReactClick(settingsBtn);
 
-        // After clicking Settings, poll up to maxTabWaitMs for the "一般" / "General" tab or the usage limit to finish rendering (Issue #49, #63)
+        // After clicking Settings, poll up to maxTabWaitMs for the "General" tab or the usage limit to finish rendering (Issue #49, #63)
         // Also supports the two-step menu (Settings button → Settings item in the popover → settings modal)
         let afterClick = null;
         let generalTab = null;
@@ -1136,7 +1111,7 @@ window.__MUSE_BRIDGE__ = {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true }));
         await new Promise(r => setTimeout(r, closeWaitMs));
 
-        // If the main chat input is not visible, explicitly click the "チャット" / "Chat" button in the left dock
+        // If the main chat input is not visible, explicitly click the "Chat" button in the left dock
         if (!isSessionVisible()) {
           const { el: inputAfter } = queryFirst(SELECTORS.chatInput);
           if (!inputAfter) {
