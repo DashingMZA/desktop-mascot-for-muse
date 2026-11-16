@@ -5,6 +5,25 @@
   "description": "Windows Desktop Mascot for Muse AI",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DashingMZA/desktop-mascot-for-muse.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DashingMZA/desktop-mascot-for-muse/issues"
+  },
+  "homepage": "https://github.com/DashingMZA/desktop-mascot-for-muse#readme",
+  "keywords": [
+    "Muse AI Mascot",
+    "Mascot for Muse AI",
+    "Desktop Mascot for Muse AI",
+    "Windows Desktop Mascot for Muse AI",
+    "Windows Desktop Mascot"
+  ],
+  "packageManager": "pnpm@12.19.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
