@@ -6,7 +6,8 @@ mod single_instance {
     use std::ptr::null;
     const ERROR_ALREADY_EXISTS: u32 = 183;
 
-    extern "system" {
+    // Rust edition 2024 requires `unsafe` on extern blocks.
+    unsafe extern "system" {
         fn CreateMutexW(
             lpMutexAttributes: *const std::ffi::c_void,
             bInitialOwner: i32,
