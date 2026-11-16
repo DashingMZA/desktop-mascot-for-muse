@@ -5,7 +5,6 @@ description = "Desktop mascot for Windows to interact with Muse AI"
 license = "MIT"
 authors = ["kusak"]
 edition = "2024"
-rust-version = "1.100.0"
 
 [lib]
 name = "desktop_mascot_for_muse_lib"
