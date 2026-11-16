@@ -16,6 +16,9 @@ dist-ssr
 src-tauri/target/
 **/target/
 *.zip
+src-tauri/gen/
+**/gen/
+
 
 # User-specific avatar videos (excluded from Git; JSON configs are tracked)
 src-tauri/assets/avatars/*.mp4
