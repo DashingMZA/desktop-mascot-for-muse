@@ -569,4 +569,52 @@ describe('session_bridge.js DOM Scraping & Guardrails Suite', () => {
     expect(res.used_percent).toBe(21);
     expect(res.remaining_percent).toBe(79);
   });
+
+  it('fetchUsageLimit (Issue #67): role="dialog"無しのポップオーバーや「設定Ctrl+,」表記の2段階メニューにも対応する', async () => {
+    document.body.innerHTML = `<button aria-label="設定" id="btn-settings">設定</button>`;
+    Object.defineProperty(document.body, 'innerText', { value: '', configurable: true });
+
+    let subSettingsClicked = false;
+    document.getElementById('btn-settings').addEventListener('click', () => {
+      const popover = document.createElement('div');
+      popover.className = 'popover-content';
+      popover.innerHTML = `
+        <button>キーボードショートカット<span>Ctrl+/</span></button>
+        <button>アプリをダウンロード</button>
+        <button>問題を報告</button>
+        <button id="btn-sub-settings">設定<span>Ctrl+,</span></button>
+      `;
+      document.body.appendChild(popover);
+
+      document.getElementById('btn-sub-settings').addEventListener('click', () => {
+        subSettingsClicked = true;
+        popover.remove();
+        const modal = document.createElement('div');
+        modal.setAttribute('role', 'dialog');
+        modal.innerHTML = `
+          <button role="tab" id="tab-general">一般</button>
+          <button aria-label="閉じる" id="btn-close">×</button>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('tab-general').addEventListener('click', () => {
+          const content = document.createElement('div');
+          content.innerHTML = '<div role="progressbar" aria-valuenow="29"></div><span>29% 使用済み</span>';
+          modal.appendChild(content);
+          Object.defineProperty(document.body, 'innerText', { value: '29% 使用済み', configurable: true });
+        });
+        document.getElementById('btn-close').addEventListener('click', () => modal.remove());
+      });
+    });
+
+    const res = await window.__MUSE_BRIDGE__.fetchUsageLimit(false, {
+      pollIntervalMs: 10,
+      maxTabWaitMs: 80,
+      maxLimitWaitMs: 80,
+      closeWaitMs: 10,
+      navWaitMs: 10,
+    });
+    expect(subSettingsClicked).toBe(true);
+    expect(res.used_percent).toBe(29);
+    expect(res.remaining_percent).toBe(71);
+  });
 });

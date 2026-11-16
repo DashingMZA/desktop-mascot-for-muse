@@ -297,22 +297,33 @@ function findGeneralTab() {
 }
 
 /**
- * 1段目の「設定」ボタンクリック後に開くポップオーバーメニュー内の「設定」項目を検出する (Issue #63)
+ * 1段目の「設定」ボタンクリック後に開くポップオーバーメニュー内の「設定」項目を検出する (Issue #63, #67)
+ * ショートカット表記（例: "設定Ctrl+," / "SettingsCtrl+,"）や role="dialog" 以外のポップオーバーにも対応する。
  */
 function findSettingsSubmenuItem(excludeEl) {
-  const scopes = Array.from(document.querySelectorAll('[role="dialog"], [role="menu"]'));
+  const isMatch = (el) => {
+    if (!el || el === excludeEl) return false;
+    const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!txt) return false;
+    return /^(?:設定|settings)(?:\s*(?:ctrl|cmd|command|alt|shift|meta|⌘|⌥|⌃|⇧)[^\n]{0,12})?$/i.test(txt);
+  };
+
+  const scopes = Array.from(
+    document.querySelectorAll('[role="dialog"], [role="menu"], [data-radix-popper-content-wrapper]')
+  );
   for (const scope of scopes) {
     const candidates = Array.from(
       scope.querySelectorAll('[role="menuitem"], button, a, [role="button"]')
     );
-    const found = candidates.find(el => {
-      if (el === excludeEl) return false;
-      const txt = (el.textContent || '').trim();
-      return txt === '設定' || /^settings$/i.test(txt);
-    });
+    const found = candidates.find(isMatch);
     if (found) return found;
   }
-  return null;
+
+  // フォールバック: ポップオーバーに role="dialog"/"menu" が無い場合も全メニュー項目・ボタンから検出
+  const fallbackCandidates = Array.from(
+    document.querySelectorAll('[role="menuitem"], button, a, [role="button"]')
+  );
+  return fallbackCandidates.find(isMatch) || null;
 }
 
 // パッシブ監視: ユーザーまたはスクリプトが「設定 ＞ 一般」を開いた際に自動的に利用枠をキャッシュ (Issue #49)
