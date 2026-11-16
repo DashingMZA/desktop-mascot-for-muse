@@ -9,8 +9,8 @@ You are responsible for implementing a Windows desktop gadget. The design is com
 A resident Windows desktop gadget for Muse (a personal AI agent). It has its own UI and keeps a logged-in muse.ai session in a background WebView to integrate with chat.
 
 ## Repository
-- Implementation target (currently empty): https://github.com/mowthow-works/desktop-mascot-for-muse
-- Reference implementation (read this first, without fail): https://github.com/mowthow-works/google-ai-limit-monitor
+- Implementation target (currently empty): https://github.com/DashingMZA/desktop-mascot-for-muse
+- Reference implementation (read this first, without fail): https://github.com/DashingMZA/google-ai-limit-monitor
   - Tauri 2.0 + Rust, Vanilla HTML/CSS/JS. Follow its approach for the frameless, transparent, always-on-top small window and tray residency.
 
 ## Requirements (finalized)

@@ -1,7 +1,7 @@
 # Muse Windows Gadget Design Document (v0.2 / Design Phase)
 
-- Repository: https://github.com/mowthow-works/desktop-mascot-for-muse
-- Reference implementation: https://github.com/mowthow-works/google-ai-limit-monitor (Tauri 2.0 + Rust, built as a separate app)
+- Repository: https://github.com/DashingMZA/desktop-mascot-for-muse
+- Reference implementation: https://github.com/DashingMZA/google-ai-limit-monitor (Tauri 2.0 + Rust, built as a separate app)
 - Status: Design complete. Implementation has been handed off to another AI, and **all Phase 0 technical verification items passed on 2026-11-02** (see the v0.3 changes below)
 - Changes in v0.2: The goals (requirements R1–R6) were finalized, so the architecture was revised from "show the web as-is" to a "**custom UI + background WebView session**" approach
 - Changes in v0.2.1: Added the size-switching requirement R7 as an alternative/complement to R6 (open in browser)
@@ -128,7 +128,7 @@ desktop-mascot-for-muse/
       └─ session-bridge.js (equivalent)  # Consolidation point for DOM selectors and injection logic
 ```
 
-- identifier proposal: `works.mowthow.muse.gadgets`
+- identifier proposal: `com.csofts.muse.gadgets`
 - productName proposal: `Muse Gadget` (the Store sales name is to be considered separately, as in §12)
 
 ## 12. Implementation Phase Plan
@@ -151,7 +151,7 @@ desktop-mascot-for-muse/
 
 1. The default value for N, the number of latest messages shown (5 assumed), and whether they are ordered oldest-first or newest-first
 2. Whether the default hotkey (e.g. Ctrl+Shift+M) conflicts with an existing environment such as AutoHotkey
-3. The display name (Muse Gadget, or a mowthow-works-style original name)
+3. The display name (Muse Gadget, or a DashingMZA-style original name)
 4. For R6, whether the browser opens the main screen or a deep link to the relevant thread (the URL specification needs checking)
 
 ## 15. Phase 0 Verification Results (2026-11-02, Verified by the Implementing AI)

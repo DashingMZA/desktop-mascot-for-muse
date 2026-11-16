@@ -1,6 +1,6 @@
 # Desktop Mascot for Muse
 
-[![Release](https://img.shields.io/badge/version-v1.1.10-blue.svg)](https://github.com/mowthow-works/desktop-mascot-for-muse/releases)
+[![Release](https://img.shields.io/badge/version-v1.1.10-blue.svg)](https://github.com/DashingMZA/desktop-mascot-for-muse/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg)](https://www.microsoft.com/windows)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -64,7 +64,7 @@ It normally sits unobtrusively in a corner of the desktop as a circular avatar m
 
 ## 📥 Installation
 
-Download and run the installer (`Desktop-Mascot-for-Muse_x64-setup.exe`) or the portable ZIP (`desktop-mascot-for-muse-windows-x64.zip`) from [Releases](https://github.com/mowthow-works/desktop-mascot-for-muse/releases). The installer needs no administrator privileges (per-user installation), and the desktop shortcut and uninstaller are set up automatically.
+Download and run the installer (`Desktop-Mascot-for-Muse_x64-setup.exe`) or the portable ZIP (`desktop-mascot-for-muse-windows-x64.zip`) from [Releases](https://github.com/DashingMZA/desktop-mascot-for-muse/releases). The installer needs no administrator privileges (per-user installation), and the desktop shortcut and uninstaller are set up automatically.
 
 ### If a Windows SmartScreen warning appears
 
@@ -119,7 +119,7 @@ For copyright reasons and because every user has a different avatar, this reposi
 
 - **GUI Settings screen**: From "Settings..." in the tray menu, you can adjust behavior timers (idle time, speech-bubble duration, etc.), toggle each idle video on/off, and add or edit lines
 - **Hot reload**: `setting.json` and `quotes.json` are automatically applied within 3 seconds of saving, even while the app is running
-- **Where to place videos**: Accessible via "Open folder" in the Settings screen ("Folder & Data Management" tab). To prevent videos and settings from being lost when the app updates, the OS persistent data area (`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`) is normally used. Place the 5 basic videos (`idle` / `waking` / `working` / `making_something` / `milestone_level_up`) directly under `avatars/`, and idle-action videos in the `avatars/plugin/` folder (placing a `portable` file next to the executable also lets you use the local `avatars/` folder in portable mode)
+- **Where to place videos**: Accessible via "Open folder" in the Settings screen ("Folder & Data Management" tab). To prevent videos and settings from being lost when the app updates, the OS persistent data area (`%LOCALAPPDATA%\com.csofts.muse.gadgets\avatars\`) is normally used. Place the 5 basic videos (`idle` / `waking` / `working` / `making_something` / `milestone_level_up`) directly under `avatars/`, and idle-action videos in the `avatars/plugin/` folder (placing a `portable` file next to the executable also lets you use the local `avatars/` folder in portable mode)
 
 For how to obtain and place videos, the full reference for every item in `setting.json` / `quotes.json`, every tray menu item, and examples of using the developer tools, see the **[Customization Guide](docs/CUSTOMIZE.md)**.
 
@@ -174,21 +174,21 @@ See the [Customization Guide](docs/CUSTOMIZE.md) for details on the settings.
 $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\Program Files\nodejs;" + $env:PATH
 
 # Install dependencies (first time only)
-npm install
+pnpm install
 
 # Start development mode
-npm run dev
+pnpm dev
 ```
 
 ### Running automated tests
 ```powershell
 # Run all 3 layers of tests at once (Vitest unit + Playwright E2E + Rust unit)
-npm test
+pnpm test
 
 # Run individually
-npm run test:unit   # Frontend & bridge unit tests (Vitest + jsdom)
-npm run test:e2e    # Real-browser UI / layout regression tests (Playwright + Edge)
-npm run test:rust   # Rust backend unit tests (cargo test)
+pnpm test:unit   # Frontend & bridge unit tests (Vitest + jsdom)
+pnpm test:e2e    # Real-browser UI / layout regression tests (Playwright + Edge)
+pnpm test:rust   # Rust backend unit tests (cargo test)
 ```
 
 ### Production build
@@ -201,7 +201,7 @@ cargo build --release --manifest-path "src-tauri/Cargo.toml"
 
 NSIS setup installer (for general distribution):
 ```powershell
-npm run build:installer
+pnpm build:installer
 # or
 npx tauri build
 # Output: src-tauri/target/release/bundle/nsis/Desktop Mascot for Muse_<version>_x64-setup.exe
@@ -211,4 +211,4 @@ npx tauri build
 
 ## 📜 License
 
-[MIT License](LICENSE) © 2026 mowthow-works
+[MIT License](LICENSE) © 2026 Muhammad Zaheer Ahmad. See the LICENSE file for details.

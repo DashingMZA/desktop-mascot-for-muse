@@ -1,6 +1,6 @@
 # Desktop Mascot for Muse Feature Specification
 
-This document defines the current feature specification of Desktop Mascot for Muse (mowthow-works/desktop-mascot-for-muse) and is the **implementation source of truth (single source of truth)**.
+This document defines the current feature specification of Desktop Mascot for Muse (DashingMZA/desktop-mascot-for-muse) and is the **implementation source of truth (single source of truth)**.
 
 - The README is the entry point and summary, and the customization guide (`docs/CUSTOMIZE.md`) is strictly a user reference; this document is authoritative for detailed feature specifications. Do not duplicate the same rule across multiple documents.
 - The initial design remains in `DESIGN.md`, but this document takes precedence for current specifications.
@@ -72,11 +72,11 @@ This app assumes a general-purpose design that any Muse user can use in the same
 
 | Target | During development | Distributed version (normal) | Distributed version (portable) |
 | :--- | :--- | :--- | :--- |
-| Avatar videos, settings, lines | `src-tauri/assets/avatars/` | `%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\` (persistent area) | `avatars/` in the same folder as the `.exe` |
+| Avatar videos, settings, lines | `src-tauri/assets/avatars/` | `%LOCALAPPDATA%\com.csofts.muse.gadgets\avatars\` (persistent area) | `avatars/` in the same folder as the `.exe` |
 | Session cookie | — | App-specific local folder `webview2_session` | Same as left |
-| Live pool | `avatars/plugin/live_quotes.json` | `%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\plugin\live_quotes.json` | `avatars/plugin/live_quotes.json` |
+| Live pool | `avatars/plugin/live_quotes.json` | `%LOCALAPPDATA%\com.csofts.muse.gadgets\avatars\plugin\live_quotes.json` | `avatars/plugin/live_quotes.json` |
 
-- To prevent user settings and video files from disappearing entirely when updating via the installer (NSIS) (during the old-version uninstallation), the top-priority read/write location in normal mode is the OS persistent user-data area (`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`).
+- To prevent user settings and video files from disappearing entirely when updating via the installer (NSIS) (during the old-version uninstallation), the top-priority read/write location in normal mode is the OS persistent user-data area (`%LOCALAPPDATA%\com.csofts.muse.gadgets\avatars\`).
 - Only when a `portable` file or folder exists next to the executable is the local `avatars/` folder used with top priority, as portable mode.
 - Only `setting.json` and `quotes.json` are initially bundled in the distribution package; avatar videos (`.mp4`) are not included (for copyright and general-purpose reasons). If no config files exist in the user-data area, the initial templates are automatically seeded on first launch.
 - `setting.json` and `quotes.json` are automatically applied within 3 seconds of saving, even while the app is running (hot reload).

@@ -12,7 +12,7 @@ For basic usage, see the [README](../README.md); for internal details and the au
 
 ## 1. Preparing and Placing Avatar Videos
 
-You can open the placement folder in one click via "Open folder" in the Settings screen ("Folder & Data Management" tab). To prevent videos and settings from being lost when the app updates, the OS persistent data area (`%LOCALAPPDATA%\works.mowthow.muse.gadgets\avatars\`) is normally used (the local `avatars/` folder is used only if a `portable` file is placed next to the executable).
+You can open the placement folder in one click via "Open folder" in the Settings screen ("Folder & Data Management" tab). To prevent videos and settings from being lost when the app updates, the OS persistent data area (`%LOCALAPPDATA%\com.csofts.muse.gadgets\avatars\`) is normally used (the local `avatars/` folder is used only if a `portable` file is placed next to the executable).
 
 ### Step 1: Basic status videos (5 types)
 
