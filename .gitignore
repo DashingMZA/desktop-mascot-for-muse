@@ -14,10 +14,9 @@ dist-ssr
 
 # Tauri build artifacts
 src-tauri/target/
+src-tauri/gen/
 **/target/
 *.zip
-src-tauri/gen/
-**/gen/
 
 
 # User-specific avatar videos (excluded from Git; JSON configs are tracked)
