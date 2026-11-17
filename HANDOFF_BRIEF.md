@@ -42,7 +42,7 @@ A resident Windows desktop gadget for Muse (a personal AI agent). It has its own
 3. Commit in small units and report "what works now" for each Phase
 
 ## Environment
-- Windows 11, Node.js 20+, Rust (MSVC), Visual Studio C++ Build Tools (same prerequisites as the reference repository's README)
+- Windows 11, Node.js 24+, Rust (MSVC), Visual Studio C++ Build Tools (same prerequisites as the reference repository's README)
 - The developer speaks English. Report and ask questions in English
 
 ## Open items (ask about these instead of deciding them yourself)
