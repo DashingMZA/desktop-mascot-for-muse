@@ -9,7 +9,10 @@ name: CI
 #   (bundle targets: ["nsis"] in src-tauri/tauri.conf.json), which
 #   cannot be built on Linux.
 # `pnpm run test:rust` (cargo test) already compiles the full Rust
-# backend, so Rust compile breakage is still caught here.
+# backend, so Rust compile breakage is still caught here. It compiles
+# the Tauri crates, which link system libraries (glib-2.0 and friends),
+# so the Linux system dependencies below are installed first — without
+# them the `glib-sys` build fails with "Package glib-2.0 was not found".
 
 on:
   push:
@@ -49,5 +52,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Unit tests
         run: pnpm run test:unit
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
+            patchelf build-essential curl wget file libssl-dev libgtk-3-dev libxdo-dev
       - name: Rust tests
         run: pnpm run test:rust
