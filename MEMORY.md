@@ -32,11 +32,18 @@ animations matched to Muse's state, and opens the full Muse chat screen
 
 ## 2. Current Project State
 
-- **Branch:** `main`, remote at `69d7c3d` (2026-11-16, "Install Linux
-  system dependencies in CI workflow"). Working tree CLEAN and in sync
-  with remote (verified 2026-11-16).
+- **Branch:** `main`, remote at `d7feb9b` (2026-11-16, "Add project
+  docs: MEMORY, CLAUDE, release guide, contributing, security, conduct,
+  accessibility, PR template, changelog"), tagged `v1.1.11` and
+  released. Working tree CLEAN and in sync with remote (verified
+  2026-11-16).
 - **Version:** 1.1.11 (package.json, Cargo.toml, tauri.conf.json, README
   badge, SPEC.md §18 all in sync).
+- **v1.1.11 RELEASED + PUBLISHED 2026-11-16** (tag `v1.1.11` on
+  `d7feb9b`): assets = portable ZIP + installer + `.sig` +
+  `latest.json`. Installer attached under the versioned name
+  `Desktop.Mascot.for.Muse_1.1.11_x64-setup.exe`, not the AGENTS.md §4
+  fixed name — decision still open.
 - **Last verified checks (2026-11-16, sandbox):** `pnpm run test:unit`
   36/36 PASS. Rust tests and e2e NOT RUN in sandbox (no cargo, no Edge)
   — covered by CI and by the owner's Windows runs.
@@ -48,9 +55,8 @@ animations matched to Muse's state, and opens the full Muse chat screen
   `npm test` on Windows still pending (owner to run).
 - **GitHub Issues are DISABLED** in this repo — issue templates exist but
   only appear once Issues are enabled in repo Settings.
-- **Labels:** the Labeler/Dependabot labels (`dependencies`,
-  `workflows`, `frontend`, `backend`, `tests`) still need to be created
-  in repo Settings.
+- **Labels:** all 5 created 2026-11-16 (`dependencies`, `workflows`,
+  `frontend`, `backend`, `tests`).
 
 ## 3. Architecture and Directory Map
 
@@ -276,11 +282,24 @@ artifacts (`latest.json`). Full steps in `release.md`.
   NOT touched — the repo already has its own mascot-specific
   `AGENTS.md`.
 
+### 2026-11-16 — v1.1.11 release (published)
+
+- Tag `v1.1.11` created on `d7feb9b`; `release.yml` built the Windows
+  NSIS installer + portable ZIP + updater artifacts; owner published
+  the release ("Desktop Mascot for Muse v1.1.11") with the drafted
+  What's new / Fixed / Notes text (English-only app, in-app Meta login,
+  blank-session self-heal, Rust edition 2024 + pnpm, fresh login needed
+  once after updating, SmartScreen note).
+- Assets: `desktop-mascot-for-muse-windows-x64.zip`,
+  `Desktop.Mascot.for.Muse_1.1.11_x64-setup.exe`,
+  `Desktop.Mascot.for.Muse_1.1.11_x64-setup.exe.sig`, `latest.json`.
+- NOTE: installer attached under the versioned name, not the AGENTS.md
+  §4 fixed name (`Desktop-Mascot-for-Muse_x64-setup.exe`) — the
+  fixed-name decision is still open; the direct fixed-name download
+  link does not resolve for this release.
+
 ## 8. In-Progress Work
 
-- 5 labels still to be created in repo Settings (`dependencies`,
-  `workflows`, `frontend`, `backend`, `tests`) — without them the
-  Labeler workflow fails and Dependabot skips its labels.
 - Fixed-name installer vs tauri-action versioned name (AGENTS.md §4) —
   undecided: tauri-action uploads the versioned installer name, not the
   fixed `Desktop-Mascot-for-Muse_x64-setup.exe`; fixing it needs care
@@ -371,11 +390,11 @@ artifacts (`latest.json`). Full steps in `release.md`.
 
 - **P0:** Owner runs full `npm test` on Windows; confirms rebuilt app
   (login, session, mascot send, blank-session self-heal).
-- **P1:** Create the 5 labels in repo Settings.
+- **P1 (DONE 2026-11-16):** 5 labels created in repo Settings.
 - **P1:** Decide the fixed-name installer approach for release.yml.
 - **P2:** Enable GitHub Issues (optional) so the templates show.
-- **P2:** First `v*` tag release end-to-end (installer + ZIP +
-  `latest.json`).
+- **P2 (DONE 2026-11-16):** First `v*` tag release end-to-end — v1.1.11
+  published (installer + ZIP + `.sig` + `latest.json`; see §7).
 
 ## 15. Important References
 
