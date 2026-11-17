@@ -1,0 +1,101 @@
+name: Release
+
+# Pushing a git tag that starts with "v" (for example v1.1.11) runs this
+# workflow — it builds the Windows app and creates a GitHub Release
+# (draft) with the installer, the updater artifacts (latest.json) and
+# the portable ZIP attached.
+#
+# How to trigger it:
+#   git tag v1.1.11
+#   git push origin v1.1.11
+#
+# Windows only: this app targets Windows (bundle targets: ["nsis"] in
+# src-tauri/tauri.conf.json), matching the upstream releases, which ship
+# a Windows installer and a portable ZIP only.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+# Required to create the release and upload assets, otherwise
+# tauri-action fails with a permission error such as
+# "Resource not accessible by integration".
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Install pnpm BEFORE setup-node — setup-node's pnpm cache option
+      # (below) looks for an already-available pnpm executable.
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        # No `version:` input here: package.json already pins the pnpm
+        # version via `packageManager`, and pnpm/action-setup v6 errors
+        # out when both are set ("Multiple versions of pnpm specified").
+        with:
+          run_install: false
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Verify Node and pnpm
+        run: |
+          node --version
+          pnpm --version
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify Rust
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Desktop Mascot for Muse ${{ github.ref_name }}"
+          releaseBody: |
+            ## Distribution assets
+
+            - **Installer**: `Desktop-Mascot-for-Muse_x64-setup.exe`
+            - **Portable ZIP**: `desktop-mascot-for-muse-windows-x64.zip` (avatar videos `.mp4` are not included, for copyright reasons)
+          releaseDraft: true
+          prerelease: false
+
+      # The portable ZIP is not produced by tauri-action, so it is built
+      # here with the same layout as the upstream releases: the built
+      # exe, the bundled avatar resources and the README. Avatar videos
+      # (.mp4) are intentionally NOT included.
+      - name: Build portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path portable/avatars/plugin | Out-Null
+          Copy-Item src-tauri/target/release/desktop-mascot-for-muse.exe portable/
+          Copy-Item src-tauri/assets/avatars/setting.json portable/avatars/
+          Copy-Item src-tauri/assets/avatars/plugin/quotes.json portable/avatars/plugin/
+          Copy-Item README.md portable/
+          Compress-Archive -Path portable/* -DestinationPath desktop-mascot-for-muse-windows-x64.zip
+
+      - name: Upload portable ZIP to the release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} desktop-mascot-for-muse-windows-x64.zip --clobber
