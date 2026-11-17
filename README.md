@@ -164,7 +164,7 @@ See the [Customization Guide](docs/CUSTOMIZE.md) for details on the settings.
 
 ### Requirements
 - Windows 11 / 10
-- Node.js 20+
+- Node.js 24+
 - Rust (stable, MSVC toolchain)
 - Visual Studio C++ Build Tools
 
